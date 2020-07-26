@@ -11,9 +11,11 @@ import {
 } from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
 import Panzoom from "https://cdn.skypack.dev/panzoom/";
 
+const mode = new URLSearchParams(location.search).get("mode");
+
 const initData = [...Array(40)].map(() =>
   [...Array(40)].map(() => {
-    return Math.random() >= 0.9;
+    return Math.random() >= 0.95;
   })
 );
 
@@ -135,9 +137,11 @@ function DebugGrid({ className }) {
           setDragging(true);
         }
 
-        const x = e.offsetX - 50 / 2;
-        const y = e.offsetY - 50 / 2;
-        container$.current.style.backgroundPosition = `${x}px ${y}px`;
+        const { offsetX, offsetY } = e;
+        const snappedX = ((offsetX - (offsetX % 50)) / 50) * 50;
+        const snappedY = ((offsetY - (offsetY % 50)) / 50) * 50;
+
+        container$.current.style.backgroundPosition = `${snappedX}px ${snappedY}px`;
       }}
       onDragLeave=${() => {
         setDragging(false);
@@ -151,33 +155,36 @@ function DebugGrid({ className }) {
           left: -50%;
           width: 200%;
           height: 200%;
-          background-position: top left;
-          background-image: repeating-linear-gradient(
-              90deg,
-              currentColor 0px,
-              currentColor 0.5px,
-              transparent 0.5px,
-              transparent 49.5px,
-              currentColor 49.5px,
-              currentColor 50px
-            ),
-            repeating-linear-gradient(
-              180deg,
-              currentColor 0px,
-              currentColor 0.5px,
-              transparent 0.5px,
-              transparent 49.5px,
-              currentColor 49.5px,
-              currentColor 50px
-            );
         `,
+        className,
+        mode === "debug" &&
+          css`
+            background-position: top left;
+            background-image: repeating-linear-gradient(
+                90deg,
+                currentColor 0px,
+                currentColor 0.5px,
+                transparent 0.5px,
+                transparent 49.5px,
+                currentColor 49.5px,
+                currentColor 50px
+              ),
+              repeating-linear-gradient(
+                180deg,
+                currentColor 0px,
+                currentColor 0.5px,
+                transparent 0.5px,
+                transparent 49.5px,
+                currentColor 49.5px,
+                currentColor 50px
+              );
+          `,
         dragging &&
           css`
             background-repeat: no-repeat;
             background-size: 50px 50px;
             background-image: linear-gradient(currentColor, currentColor);
-          `,
-        className
+          `
       )}
     ></div>
   `;
