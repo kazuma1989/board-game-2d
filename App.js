@@ -10,7 +10,7 @@ import {
 } from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
 import produce from "https://cdn.skypack.dev/immer";
 import Panzoom from "https://cdn.skypack.dev/panzoom/";
-import { Card } from "./Card.js";
+import { Pile } from "./Pile.js";
 import { Grid } from "./Grid.js";
 import { mode } from "./mode.js";
 
@@ -75,8 +75,8 @@ export function App() {
           };
 
           return html`
-            <${Card}
-              text=${pile.cards.length}
+            <${Pile}
+              cards=${pile.cards}
               x=${50 * (col - 10)}
               y=${50 * (row - 10)}
               onMouseDown=${() => {
