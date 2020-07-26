@@ -2,6 +2,7 @@
 /// <reference path="./typings.d.ts" />
 
 import { css, cx } from "https://cdn.skypack.dev/emotion";
+import produce from "https://cdn.skypack.dev/immer";
 import {
   html,
   render,
@@ -20,6 +21,8 @@ const initData = [...Array(40)].map(() =>
 );
 
 function App() {
+  mode === "debug" && console.count("render App");
+
   const container$ = useRef();
   const panzoom$ = useRef();
   useEffect(() => {
@@ -36,7 +39,8 @@ function App() {
     };
   }, [container$]);
 
-  const [data] = useState(initData);
+  const [cards, setCards] = useState(initData);
+  const [draggingIndex, setDraggingIndex] = useState({ col: -1, row: -1 });
 
   return html`
     <div
@@ -50,26 +54,39 @@ function App() {
       `}
     >
       <${DebugGrid}
+        onDrop=${(dest) => {
+          const { row, col } = draggingIndex;
+          if (row === -1 || col === -1) return;
+
+          setCards(
+            produce((cards) => {
+              cards[row][col] = false;
+              cards[dest.row][dest.col] = true;
+            })
+          );
+        }}
         className=${css`
           color: rgba(0, 255, 0, 0.4);
         `}
       />
 
-      ${data.flatMap((row, rowI) => {
-        return row.map((col, colI) => {
-          if (!col) return;
+      ${cards.flatMap((rowData, row) => {
+        return rowData.map((colData, col) => {
+          if (!colData) return;
 
           return html`
             <${Card}
-              x=${50 * (colI - 10)}
-              y=${50 * (rowI - 10)}
+              x=${50 * (col - 10)}
+              y=${50 * (row - 10)}
               onMouseDown=${() => {
                 panzoom$.current?.pause();
               }}
               onDragStart=${() => {
+                setDraggingIndex({ col, row });
                 panzoom$.current?.pause();
               }}
               onDragEnd=${() => {
+                setDraggingIndex({ col: -1, row: -1 });
                 panzoom$.current?.resume();
               }}
             />
@@ -122,16 +139,20 @@ function Card({ x, y, className, style, onDragStart, onDragEnd, ...props }) {
   `;
 }
 
-function DebugGrid({ className }) {
+function DebugGrid({ onDrop, className, ...props }) {
+  mode === "debug" && console.count("render DebugGrid");
+
   const container$ = useRef();
   const [dragging, setDragging] = useState(false);
+
+  const position$ = useRef({ x: 0, y: 0 });
 
   return html`
     <div
       ref=${container$}
       onDragOver=${/** @param {DragEvent} e */
       (e) => {
-        if (!container$.current) return;
+        e.preventDefault();
 
         if (!dragging) {
           setDragging(true);
@@ -141,11 +162,30 @@ function DebugGrid({ className }) {
         const snappedX = ((offsetX - (offsetX % 50)) / 50) * 50;
         const snappedY = ((offsetY - (offsetY % 50)) / 50) * 50;
 
+        position$.current.x = snappedX;
+        position$.current.y = snappedY;
+
+        if (!container$.current) return;
         container$.current.style.backgroundPosition = `${snappedX}px ${snappedY}px`;
       }}
       onDragLeave=${() => {
         setDragging(false);
 
+        if (!container$.current) return;
+        container$.current.style.backgroundPosition = null;
+      }}
+      onDrop=${() => {
+        setDragging(false);
+
+        const { x, y } = position$.current;
+        onDrop?.({
+          col: x / 50,
+          row: y / 50,
+          x,
+          y,
+        });
+
+        if (!container$.current) return;
         container$.current.style.backgroundPosition = null;
       }}
       className=${cx(
@@ -186,6 +226,7 @@ function DebugGrid({ className }) {
             background-image: linear-gradient(currentColor, currentColor);
           `
       )}
+      ...${props}
     ></div>
   `;
 }
