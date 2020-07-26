@@ -8,12 +8,14 @@ import {
 } from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
 
 export function Card({
+  text,
   x,
   y,
   className,
   style,
   onDragStart,
   onDragEnd,
+  onDrop,
   ...props
 }) {
   const [dragging, setDragging] = useState(false);
@@ -28,6 +30,12 @@ export function Card({
       onDragEnd=${() => {
         setDragging(false);
         onDragEnd?.();
+      }}
+      onDragOver=${(e) => {
+        e.preventDefault();
+      }}
+      onDrop=${() => {
+        onDrop?.();
       }}
       className=${cx(
         css`
@@ -52,7 +60,7 @@ export function Card({
       }}
       ...${props}
     >
-      Card
+      ${text}
     </div>
   `;
 }
