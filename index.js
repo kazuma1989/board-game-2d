@@ -1,14 +1,17 @@
 // @ts-check
 /// <reference path="./typings.d.ts" />
 
+import { css, cx } from "https://cdn.skypack.dev/emotion";
 import {
   html,
   render,
-  useRef,
   useEffect,
+  useRef,
+  useState,
 } from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
-import { css, cx } from "https://cdn.skypack.dev/emotion";
 import panzoom from "https://cdn.skypack.dev/panzoom/";
+
+const initData = [...Array(40)].map(() => [...Array(40)]);
 
 function App() {
   const container$ = useRef();
@@ -24,6 +27,8 @@ function App() {
     };
   }, [container$.current]);
 
+  const [data] = useState(initData);
+
   return html`
     <div
       ref=${container$}
@@ -35,15 +40,17 @@ function App() {
         background-position: center;
       `}
     >
+      ${data.flatMap((row, rowI) => {
+        return row.map((col, colI) => {
+          return html`<${Card} x=${50 * (colI - 10)} y=${50 * (rowI - 10)} />`;
+        });
+      })}
+
       <${DebugGrid}
         className=${css`
-          color: silver;
+          color: lime;
         `}
       />
-
-      <${Card} x=${50} y=${50} />
-      <${Card} x=${100} y=${50} />
-      <${Card} x=${150} y=${50} />
     </div>
   `;
 }
@@ -75,8 +82,11 @@ function DebugGrid({ className }) {
       className=${cx(
         css`
           pointer-events: none;
-          width: 100%;
-          height: 100%;
+          position: relative;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
           background-position: top left;
           background-image: repeating-linear-gradient(
               90deg,
