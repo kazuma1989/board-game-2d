@@ -9,23 +9,30 @@ import {
   useRef,
   useState,
 } from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
-import panzoom from "https://cdn.skypack.dev/panzoom/";
+import Panzoom from "https://cdn.skypack.dev/panzoom/";
 
-const initData = [...Array(40)].map(() => [...Array(40)]);
+const initData = [...Array(40)].map(() =>
+  [...Array(40)].map(() => {
+    return Math.random() >= 0.9;
+  })
+);
 
 function App() {
   const container$ = useRef();
+  const panzoom$ = useRef();
   useEffect(() => {
-    const p = panzoom(container$.current, {
+    const p = Panzoom(container$.current, {
       maxZoom: 10,
       minZoom: 0.2,
       smoothScroll: false,
     });
 
+    panzoom$.current = p;
+
     return () => {
       p.dispose();
     };
-  }, [container$.current]);
+  }, [container$]);
 
   const [data] = useState(initData);
 
@@ -40,36 +47,73 @@ function App() {
         background-position: center;
       `}
     >
-      ${data.flatMap((row, rowI) => {
-        return row.map((col, colI) => {
-          return html`<${Card} x=${50 * (colI - 10)} y=${50 * (rowI - 10)} />`;
-        });
-      })}
-
       <${DebugGrid}
         className=${css`
-          color: lime;
+          color: rgba(0, 255, 0, 0.4);
         `}
       />
+
+      ${data.flatMap((row, rowI) => {
+        return row.map((col, colI) => {
+          if (!col) return;
+
+          return html`
+            <${Card}
+              x=${50 * (colI - 10)}
+              y=${50 * (rowI - 10)}
+              onMouseDown=${() => {
+                panzoom$.current?.pause();
+              }}
+              onDragStart=${() => {
+                panzoom$.current?.pause();
+              }}
+              onDragEnd=${() => {
+                panzoom$.current?.resume();
+              }}
+            />
+          `;
+        });
+      })}
     </div>
   `;
 }
 
-function Card({ x, y }) {
+function Card({ x, y, className, style, onDragStart, onDragEnd, ...props }) {
+  const [dragging, setDragging] = useState(false);
+
   return html`
     <div
-      className=${css`
-        border: solid 1px gray;
-        width: 50px;
-        height: 70px;
-        position: absolute;
-        box-shadow: 0px 1px 5px;
-        background-color: white;
-      `}
+      draggable
+      onDragStart=${() => {
+        setDragging(true);
+        onDragStart?.();
+      }}
+      onDragEnd=${() => {
+        setDragging(false);
+        onDragEnd?.();
+      }}
+      className=${cx(
+        css`
+          border: solid 1px gray;
+          width: 50px;
+          height: 70px;
+          position: absolute;
+          box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.1);
+          background-color: white;
+          cursor: move;
+        `,
+        dragging &&
+          css`
+            opacity: 0.5;
+          `,
+        className
+      )}
       style=${{
         left: x,
         top: y,
+        ...style,
       }}
+      ...${props}
     >
       Card
     </div>
@@ -77,11 +121,31 @@ function Card({ x, y }) {
 }
 
 function DebugGrid({ className }) {
+  const container$ = useRef();
+  const [dragging, setDragging] = useState(false);
+
   return html`
     <div
+      ref=${container$}
+      onDragOver=${/** @param {DragEvent} e */
+      (e) => {
+        if (!container$.current) return;
+
+        if (!dragging) {
+          setDragging(true);
+        }
+
+        const x = e.offsetX - 50 / 2;
+        const y = e.offsetY - 50 / 2;
+        container$.current.style.backgroundPosition = `${x}px ${y}px`;
+      }}
+      onDragLeave=${() => {
+        setDragging(false);
+
+        container$.current.style.backgroundPosition = null;
+      }}
       className=${cx(
         css`
-          pointer-events: none;
           position: relative;
           top: -50%;
           left: -50%;
@@ -107,6 +171,12 @@ function DebugGrid({ className }) {
               currentColor 50px
             );
         `,
+        dragging &&
+          css`
+            background-repeat: no-repeat;
+            background-size: 50px 50px;
+            background-image: linear-gradient(currentColor, currentColor);
+          `,
         className
       )}
     ></div>
