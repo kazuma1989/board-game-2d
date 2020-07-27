@@ -10,13 +10,10 @@ import {
 } from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
 import produce from "https://cdn.skypack.dev/immer";
 import Panzoom from "https://cdn.skypack.dev/panzoom/";
-import { Pile } from "./Pile.js";
 import { Grid } from "./Grid.js";
-import { mode } from "./mode.js";
+import { Pile } from "./Pile.js";
 
 export function App() {
-  mode === "debug" && console.count("render App");
-
   const container$ = useRef();
   const panzoom$ = useRef();
   useEffect(() => {
@@ -91,6 +88,9 @@ export function App() {
                 panzoom$.current?.resume();
               }}
               onDrop=${() => {
+                setDraggingIndex({ col: -1, row: -1 });
+                panzoom$.current?.resume();
+
                 const { row, col } = draggingIndex;
                 if (row === -1 || col === -1) return;
                 if (row === dest.row && col === dest.col) return;

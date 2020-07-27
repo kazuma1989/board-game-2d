@@ -10,8 +10,6 @@ import {
 import { mode } from "./mode.js";
 
 export function Grid({ onDrop, className, ...props }) {
-  mode === "debug" && console.count("render DebugGrid");
-
   const container$ = useRef();
   const [dragging, setDragging] = useState(false);
 

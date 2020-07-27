@@ -4,6 +4,7 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion";
 import {
   html,
+  useMemo,
   useState,
 } from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
 
@@ -19,6 +20,37 @@ export function Pile({
   ...props
 }) {
   const [dragging, setDragging] = useState(false);
+
+  const cardElements = useMemo(() => {
+    return cards.map(({ text }, i, { length }) => {
+      const m = length - (length % 5);
+      const n = i - m;
+
+      return html`
+        <${Card}
+          key=${i}
+          text=${text}
+          className=${css`
+            position: absolute;
+          `}
+          style=${n >= 0
+            ? m === 0
+              ? {
+                  left: -3 * n,
+                  top: -2 * n,
+                }
+              : {
+                  left: -3 * (n + 1) - 1 * m,
+                  top: -2 * (n + 1) - 0.5 * m,
+                }
+            : {
+                left: -1 * i,
+                top: -0.5 * i,
+              }}
+        />
+      `;
+    });
+  }, [cards]);
 
   return html`
     <div
@@ -54,26 +86,7 @@ export function Pile({
       }}
       ...${props}
     >
-      ${cards.map(({ text }, i, { length }) => {
-        return html`
-          <${Card}
-            key=${i}
-            text=${text}
-            className=${css`
-              position: absolute;
-            `}
-            style=${length <= 5
-              ? {
-                  left: -3 * i,
-                  top: -2 * i,
-                }
-              : {
-                  left: -1 * i,
-                  top: -0.5 * i,
-                }}
-          />
-        `;
-      })}
+      ${cardElements}
     </div>
   `;
 }
