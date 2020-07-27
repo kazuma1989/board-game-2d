@@ -1,12 +1,12 @@
 // @ts-check
 /// <reference path="./typings.d.ts" />
 
-import { css, cx } from "https://cdn.skypack.dev/emotion";
+import { css, cx } from "https://cdn.skypack.dev/emotion"
 import {
   html,
   useMemo,
   useState,
-} from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
+} from "https://cdn.skypack.dev/htm/preact/standalone.module.js"
 
 export function Pile({
   cards,
@@ -19,12 +19,12 @@ export function Pile({
   onDrop,
   ...props
 }) {
-  const [dragging, setDragging] = useState(false);
+  const [dragging, setDragging] = useState(false)
 
   const cardElements = useMemo(() => {
     return cards.map(({ text }, i, { length }) => {
-      const m = length - (length % 5);
-      const n = i - m;
+      const m = length - (length % 5)
+      const n = i - m
 
       return html`
         <${Card}
@@ -48,26 +48,26 @@ export function Pile({
                 top: -0.5 * i,
               }}
         />
-      `;
-    });
-  }, [cards]);
+      `
+    })
+  }, [cards])
 
   return html`
     <div
       draggable
       onDragStart=${() => {
-        setDragging(true);
-        onDragStart?.();
+        setDragging(true)
+        onDragStart?.()
       }}
       onDragEnd=${() => {
-        setDragging(false);
-        onDragEnd?.();
+        setDragging(false)
+        onDragEnd?.()
       }}
-      onDragOver=${(e) => {
-        e.preventDefault();
+      onDragOver=${e => {
+        e.preventDefault()
       }}
       onDrop=${() => {
-        onDrop?.();
+        onDrop?.()
       }}
       className=${cx(
         css`
@@ -77,7 +77,7 @@ export function Pile({
           css`
             opacity: 0.5;
           `,
-        className
+        className,
       )}
       style=${{
         left: x,
@@ -88,7 +88,7 @@ export function Pile({
     >
       ${cardElements}
     </div>
-  `;
+  `
 }
 
 function Card({ text, className, ...props }) {
@@ -103,11 +103,11 @@ function Card({ text, className, ...props }) {
           background-color: white;
           cursor: move;
         `,
-        className
+        className,
       )}
       ...${props}
     >
       ${text}
     </div>
-  `;
+  `
 }

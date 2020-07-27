@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    // Target latest browsers
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+
+    // Required: Use module="ESNext" so that TS won't compile/disallow any ESM syntax.
+    "module": "ESNext",
+
+    // Required for some packages.
+    "moduleResolution": "Node",
+
+    // `import React` instead of `import * as React`
+    "allowSyntheticDefaultImports": true,
+
+    // <div /> => React.createElement("div")
+    "jsx": "react",
+
+    // cf. https://github.com/DefinitelyTyped/DefinitelyTyped/issues/33311
+    // cf. https://stackoverflow.com/a/55540896
+    "skipLibCheck": true,
+
+    // Useful type checks.
+    "strictNullChecks": true
+  },
+
+  "include": ["./src/**/*"]
+}

@@ -1,23 +1,23 @@
 // @ts-check
 /// <reference path="./typings.d.ts" />
 
-import { css } from "https://cdn.skypack.dev/emotion";
+import { css } from "https://cdn.skypack.dev/emotion"
 import {
   html,
   useEffect,
   useRef,
   useState,
-} from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
-import produce from "https://cdn.skypack.dev/immer";
-import Panzoom from "https://cdn.skypack.dev/panzoom/";
-import { Grid } from "./Grid.js";
-import { Pile } from "./Pile.js";
+} from "https://cdn.skypack.dev/htm/preact/standalone.module.js"
+import produce from "https://cdn.skypack.dev/immer"
+import Panzoom from "https://cdn.skypack.dev/panzoom/"
+import { Grid } from "./Grid.js"
+import { Pile } from "./Pile.js"
 
 export function App() {
-  const container$ = useRef();
+  const container$ = useRef()
   useEffect(() => {
-    const container = container$.current;
-    if (!container) return;
+    const container = container$.current
+    if (!container) return
 
     const p = Panzoom(container, {
       maxZoom: 10,
@@ -31,23 +31,23 @@ export function App() {
        */
       beforeMouseDown(e) {
         if (e.shiftKey) {
-          return true;
+          return true
         }
 
         // @ts-ignore
         if (!("pannable" in e.target.dataset)) {
-          return true;
+          return true
         }
       },
-    });
+    })
 
     return () => {
-      p.dispose();
-    };
-  }, [container$]);
+      p.dispose()
+    }
+  }, [container$])
 
-  const [piles, setPiles] = useState(initPiles);
-  const draggingIndex$ = useRef({ col: -1, row: -1 });
+  const [piles, setPiles] = useState(initPiles)
+  const draggingIndex$ = useRef({ col: -1, row: -1 })
 
   return html`
     <div
@@ -62,17 +62,17 @@ export function App() {
       data-pannable
     >
       <${Grid}
-        onDrop=${(dest) => {
-          const { row, col } = draggingIndex$.current;
-          if (row === -1 || col === -1) return;
-          if (row === dest.row && col === dest.col) return;
+        onDrop=${dest => {
+          const { row, col } = draggingIndex$.current
+          if (row === -1 || col === -1) return
+          if (row === dest.row && col === dest.col) return
 
           setPiles(
-            produce((piles) => {
-              piles[dest.row][dest.col] = piles[row][col];
-              piles[row][col] = null;
-            })
-          );
+            produce(piles => {
+              piles[dest.row][dest.col] = piles[row][col]
+              piles[row][col] = null
+            }),
+          )
         }}
         className=${css`
           color: rgba(0, 255, 0, 0.4);
@@ -82,12 +82,12 @@ export function App() {
 
       ${piles.flatMap((rowPiles, row) => {
         return rowPiles.map((pile, col) => {
-          if (!pile) return;
+          if (!pile) return
 
           const dest = {
             row,
             col,
-          };
+          }
 
           return html`
             <${Pile}
@@ -95,41 +95,41 @@ export function App() {
               x=${50 * (col - 10)}
               y=${50 * (row - 10)}
               onDragStart=${() => {
-                draggingIndex$.current = { col, row };
+                draggingIndex$.current = { col, row }
               }}
               onDragEnd=${() => {
-                draggingIndex$.current = { col: -1, row: -1 };
+                draggingIndex$.current = { col: -1, row: -1 }
               }}
               onDrop=${() => {
-                const { row, col } = draggingIndex$.current;
-                draggingIndex$.current = { col: -1, row: -1 };
+                const { row, col } = draggingIndex$.current
+                draggingIndex$.current = { col: -1, row: -1 }
 
-                if (row === -1 || col === -1) return;
-                if (row === dest.row && col === dest.col) return;
+                if (row === -1 || col === -1) return
+                if (row === dest.row && col === dest.col) return
 
                 setPiles(
-                  produce((piles) => {
+                  produce(piles => {
                     piles[dest.row][dest.col].cards.push(
-                      ...piles[row][col].cards
-                    );
-                    piles[row][col] = null;
-                  })
-                );
+                      ...piles[row][col].cards,
+                    )
+                    piles[row][col] = null
+                  }),
+                )
               }}
             />
-          `;
-        });
+          `
+        })
       })}
     </div>
-  `;
+  `
 }
 
 const initPiles = [...Array(40)].map(() =>
   [...Array(40)].map(() => {
     const pile = {
       cards: [{ text: "card" }],
-    };
+    }
 
-    return Math.random() >= 0.95 ? pile : null;
-  })
-);
+    return Math.random() >= 0.95 ? pile : null
+  }),
+)
