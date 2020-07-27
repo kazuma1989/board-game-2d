@@ -47,7 +47,7 @@ export function App() {
   }, [container$]);
 
   const [piles, setPiles] = useState(initPiles);
-  const [draggingIndex, setDraggingIndex] = useState({ col: -1, row: -1 });
+  const draggingIndex$ = useRef({ col: -1, row: -1 });
 
   return html`
     <div
@@ -63,7 +63,7 @@ export function App() {
     >
       <${Grid}
         onDrop=${(dest) => {
-          const { row, col } = draggingIndex;
+          const { row, col } = draggingIndex$.current;
           if (row === -1 || col === -1) return;
           if (row === dest.row && col === dest.col) return;
 
@@ -95,15 +95,15 @@ export function App() {
               x=${50 * (col - 10)}
               y=${50 * (row - 10)}
               onDragStart=${() => {
-                setDraggingIndex({ col, row });
+                draggingIndex$.current = { col, row };
               }}
               onDragEnd=${() => {
-                setDraggingIndex({ col: -1, row: -1 });
+                draggingIndex$.current = { col: -1, row: -1 };
               }}
               onDrop=${() => {
-                setDraggingIndex({ col: -1, row: -1 });
+                const { row, col } = draggingIndex$.current;
+                draggingIndex$.current = { col: -1, row: -1 };
 
-                const { row, col } = draggingIndex;
                 if (row === -1 || col === -1) return;
                 if (row === dest.row && col === dest.col) return;
 
