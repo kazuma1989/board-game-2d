@@ -15,16 +15,31 @@ import { Pile } from "./Pile.js";
 
 export function App() {
   const container$ = useRef();
-  const panzoom$ = useRef();
   useEffect(() => {
-    const p = Panzoom(container$.current, {
+    const container = container$.current;
+    if (!container) return;
+
+    const p = Panzoom(container, {
       maxZoom: 10,
       minZoom: 0.2,
       smoothScroll: false,
       zoomDoubleClickSpeed: 2.5,
-    });
 
-    panzoom$.current = p;
+      /**
+       * @param {MouseEvent} e
+       * @returns {boolean | undefined} should ignore
+       */
+      beforeMouseDown(e) {
+        if (e.shiftKey) {
+          return true;
+        }
+
+        // @ts-ignore
+        if (!("pannable" in e.target.dataset)) {
+          return true;
+        }
+      },
+    });
 
     return () => {
       p.dispose();
@@ -44,6 +59,7 @@ export function App() {
         background-size: cover;
         background-position: center;
       `}
+      data-pannable
     >
       <${Grid}
         onDrop=${(dest) => {
@@ -61,6 +77,7 @@ export function App() {
         className=${css`
           color: rgba(0, 255, 0, 0.4);
         `}
+        data-pannable
       />
 
       ${piles.flatMap((rowPiles, row) => {
@@ -77,23 +94,14 @@ export function App() {
               cards=${pile.cards}
               x=${50 * (col - 10)}
               y=${50 * (row - 10)}
-              onMouseDown=${() => {
-                panzoom$.current?.pause();
-              }}
-              onMouseUp=${() => {
-                panzoom$.current?.resume();
-              }}
               onDragStart=${() => {
                 setDraggingIndex({ col, row });
-                panzoom$.current?.pause();
               }}
               onDragEnd=${() => {
                 setDraggingIndex({ col: -1, row: -1 });
-                panzoom$.current?.resume();
               }}
               onDrop=${() => {
                 setDraggingIndex({ col: -1, row: -1 });
-                panzoom$.current?.resume();
 
                 const { row, col } = draggingIndex;
                 if (row === -1 || col === -1) return;
