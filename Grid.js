@@ -11,13 +11,55 @@ import { mode } from "./mode.js";
 
 export function Grid({ onDrop, className, ...props }) {
   const container$ = useRef();
-  const [dragging, setDragging] = useState(false);
 
-  const position$ = useRef({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const draggingPosition$ = useRef({ x: 0, y: 0 });
+
+  const [selecting, setSelecting] = useState(false);
+  const selectingPosition$ = useRef({ x: 0, y: 0 });
 
   return html`
     <div
       ref=${container$}
+      onMouseDown=${/** @param {MouseEvent} e */
+      (e) => {
+        if (!e.shiftKey) return;
+
+        if (!selecting) {
+          setSelecting(true);
+        }
+
+        const { offsetX, offsetY } = e;
+
+        selectingPosition$.current.x = offsetX;
+        selectingPosition$.current.y = offsetY;
+      }}
+      onMouseMove=${/** @param {MouseEvent} e */
+      (e) => {
+        if (!selecting) return;
+
+        if (!container$.current) return;
+
+        const { x: startX, y: startY } = selectingPosition$.current;
+        const { offsetX, offsetY } = e;
+
+        const [left, right] =
+          startX <= offsetX ? [startX, offsetX] : [offsetX, startX];
+        const [top, bottom] =
+          startY <= offsetY ? [startY, offsetY] : [offsetY, startY];
+
+        container$.current.style.backgroundPosition = `${left}px ${top}px`;
+        container$.current.style.backgroundSize = `${right - left}px ${
+          bottom - top
+        }px`;
+      }}
+      onMouseUp=${() => {
+        setSelecting(false);
+
+        if (!container$.current) return;
+        container$.current.style.backgroundPosition = null;
+        container$.current.style.backgroundSize = null;
+      }}
       onDragOver=${/** @param {DragEvent} e */
       (e) => {
         e.preventDefault();
@@ -27,11 +69,11 @@ export function Grid({ onDrop, className, ...props }) {
         }
 
         const { offsetX, offsetY } = e;
-        const snappedX = ((offsetX - (offsetX % 50)) / 50) * 50;
-        const snappedY = ((offsetY - (offsetY % 50)) / 50) * 50;
+        const snappedX = offsetX - (offsetX % 50);
+        const snappedY = offsetY - (offsetY % 50);
 
-        position$.current.x = snappedX;
-        position$.current.y = snappedY;
+        draggingPosition$.current.x = snappedX;
+        draggingPosition$.current.y = snappedY;
 
         if (!container$.current) return;
         container$.current.style.backgroundPosition = `${snappedX}px ${snappedY}px`;
@@ -45,7 +87,7 @@ export function Grid({ onDrop, className, ...props }) {
       onDrop=${() => {
         setDragging(false);
 
-        const { x, y } = position$.current;
+        const { x, y } = draggingPosition$.current;
         onDrop?.({
           col: x / 50,
           row: y / 50,
@@ -87,7 +129,7 @@ export function Grid({ onDrop, className, ...props }) {
                 currentColor 50px
               );
           `,
-        dragging &&
+        (dragging || selecting) &&
           css`
             background-repeat: no-repeat;
             background-size: 50px 50px;
