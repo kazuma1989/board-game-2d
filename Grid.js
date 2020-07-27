@@ -9,85 +9,19 @@ import {
 } from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
 import { mode } from "./mode.js";
 
-export function Grid({ onDrop, onSelect, className, ...props }) {
+export function Grid({ onDrop, className, ...props }) {
   const container$ = useRef();
 
   const [dragging, setDragging] = useState(false);
   const draggingPosition$ = useRef({ x: 0, y: 0 });
 
-  const [selecting, setSelecting] = useState(false);
-  const selectingPosition$ = useRef({ x: 0, y: 0 });
-
   return html`
     <div
       ref=${container$}
-      onMouseDown=${/** @param {MouseEvent} e */
-      (e) => {
-        if (!e.shiftKey) return;
-
-        if (!selecting) {
-          setSelecting(true);
-        }
-
-        const { offsetX, offsetY } = e;
-
-        selectingPosition$.current.x = offsetX;
-        selectingPosition$.current.y = offsetY;
-      }}
-      onMouseMove=${/** @param {MouseEvent} e */
-      (e) => {
-        if (!selecting) return;
-
-        if (!container$.current) return;
-
-        const { x: startX, y: startY } = selectingPosition$.current;
-        const { offsetX, offsetY } = e;
-
-        const [left, right] =
-          startX <= offsetX ? [startX, offsetX] : [offsetX, startX];
-        const [top, bottom] =
-          startY <= offsetY ? [startY, offsetY] : [offsetY, startY];
-
-        container$.current.style.backgroundPosition = `${left}px ${top}px`;
-        container$.current.style.backgroundSize = `${right - left}px ${
-          bottom - top
-        }px`;
-      }}
-      onMouseUp=${/** @param {MouseEvent} e */
-      (e) => {
-        setSelecting(false);
-
-        if (selecting) {
-          const { x: startX, y: startY } = selectingPosition$.current;
-          const { offsetX, offsetY } = e;
-
-          const [left, right] =
-            startX <= offsetX ? [startX, offsetX] : [offsetX, startX];
-          const [top, bottom] =
-            startY <= offsetY ? [startY, offsetY] : [offsetY, startY];
-
-          onSelect?.(
-            {
-              col: (left - (left % 50)) / 50,
-              row: (top - (top % 50)) / 50,
-              x: left,
-              y: top,
-            },
-            {
-              col: (right - (right % 50)) / 50,
-              row: (bottom - (bottom % 50)) / 50,
-              x: right,
-              y: bottom,
-            }
-          );
-        }
-
-        if (!container$.current) return;
-        container$.current.style.backgroundPosition = null;
-        container$.current.style.backgroundSize = null;
-      }}
-      onDragOver=${/** @param {DragEvent} e */
-      (e) => {
+      onMouseDown=${/** @param {MouseEvent} e */ (e) => {}}
+      onMouseMove=${/** @param {MouseEvent} e */ (e) => {}}
+      onMouseUp=${/** @param {MouseEvent} e */ (e) => {}}
+      onDragOver=${/** @param {DragEvent} e */ (e) => {
         e.preventDefault();
 
         if (!dragging) {
@@ -155,7 +89,7 @@ export function Grid({ onDrop, onSelect, className, ...props }) {
                 currentColor 50px
               );
           `,
-        (dragging || selecting) &&
+        dragging &&
           css`
             background-repeat: no-repeat;
             background-size: 50px 50px;
