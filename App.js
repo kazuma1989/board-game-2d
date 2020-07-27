@@ -21,6 +21,7 @@ export function App() {
       maxZoom: 10,
       minZoom: 0.2,
       smoothScroll: false,
+      zoomDoubleClickSpeed: 2.5,
     });
 
     panzoom$.current = p;
@@ -78,6 +79,9 @@ export function App() {
               y=${50 * (row - 10)}
               onMouseDown=${() => {
                 panzoom$.current?.pause();
+              }}
+              onMouseUp=${() => {
+                panzoom$.current?.resume();
               }}
               onDragStart=${() => {
                 setDraggingIndex({ col, row });
