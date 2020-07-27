@@ -9,7 +9,7 @@ import {
 } from "https://cdn.skypack.dev/htm/preact/standalone.module.js";
 import { mode } from "./mode.js";
 
-export function Grid({ onDrop, className, ...props }) {
+export function Grid({ onDrop, onSelect, className, ...props }) {
   const container$ = useRef();
 
   const [dragging, setDragging] = useState(false);
@@ -53,8 +53,34 @@ export function Grid({ onDrop, className, ...props }) {
           bottom - top
         }px`;
       }}
-      onMouseUp=${() => {
+      onMouseUp=${/** @param {MouseEvent} e */
+      (e) => {
         setSelecting(false);
+
+        if (selecting) {
+          const { x: startX, y: startY } = selectingPosition$.current;
+          const { offsetX, offsetY } = e;
+
+          const [left, right] =
+            startX <= offsetX ? [startX, offsetX] : [offsetX, startX];
+          const [top, bottom] =
+            startY <= offsetY ? [startY, offsetY] : [offsetY, startY];
+
+          onSelect?.(
+            {
+              col: (left - (left % 50)) / 50,
+              row: (top - (top % 50)) / 50,
+              x: left,
+              y: top,
+            },
+            {
+              col: (right - (right % 50)) / 50,
+              row: (bottom - (bottom % 50)) / 50,
+              x: right,
+              y: bottom,
+            }
+          );
+        }
 
         if (!container$.current) return;
         container$.current.style.backgroundPosition = null;

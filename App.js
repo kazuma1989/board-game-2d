@@ -1,7 +1,7 @@
 // @ts-check
 /// <reference path="./typings.d.ts" />
 
-import { css } from "https://cdn.skypack.dev/emotion";
+import { css, cx } from "https://cdn.skypack.dev/emotion";
 import {
   html,
   useEffect,
@@ -62,6 +62,19 @@ export function App() {
       data-pannable
     >
       <${Grid}
+        onSelect=${(start, end) => {
+          setPiles(
+            produce((piles) => {
+              piles.slice(start.row, end.row + 1).forEach((rowPiles) => {
+                rowPiles.slice(start.col, end.col + 1).forEach((pile) => {
+                  if (!pile) return;
+
+                  pile.selected = true;
+                });
+              });
+            })
+          );
+        }}
         onDrop=${(dest) => {
           const { row, col } = draggingIndex$.current;
           if (row === -1 || col === -1) return;
@@ -91,6 +104,14 @@ export function App() {
 
           return html`
             <${Pile}
+              className=${cx(
+                pile.selected &&
+                  css`
+                    > * {
+                      border-color: red;
+                    }
+                  `
+              )}
               cards=${pile.cards}
               x=${50 * (col - 10)}
               y=${50 * (row - 10)}
@@ -127,6 +148,7 @@ export function App() {
 const initPiles = [...Array(40)].map(() =>
   [...Array(40)].map(() => {
     const pile = {
+      selected: false,
       cards: [{ text: "card" }],
     };
 
