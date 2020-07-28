@@ -13,7 +13,10 @@ export function Pile({
   onDrop,
   ...props
 }: {
-  cards: any[]
+  cards: {
+    text?: string
+    src?: string
+  }[]
   x: number
   y: number
   onDragStart?(): void
@@ -26,7 +29,7 @@ export function Pile({
   const [dragging, setDragging] = useState(false)
 
   const cardElements = useMemo(() => {
-    return cards.map(({ text }, i, { length }) => {
+    return cards.map(({ text, src }, i, { length }) => {
       const m = length - (length % 5)
       const n = i - m
 
@@ -34,6 +37,7 @@ export function Pile({
         <Card
           key={i}
           text={text}
+          src={src}
           className={css`
             position: absolute;
           `}
@@ -113,20 +117,41 @@ export function Pile({
   )
 }
 
-function Card({ text, className, ...props }) {
+function Card({
+  text,
+  src,
+  className,
+  style,
+  ...props
+}: {
+  text?: string
+  src?: string
+  className?: string
+  style?: any
+}) {
   return (
     <div
       className={cx(
         css`
           border: solid 1px gray;
           width: 50px;
-          height: 70px;
+          height: 76px;
           box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
           background-color: white;
-          cursor: move;
+          cursor: grab;
+
+          :active {
+            cursor: grabbing;
+          }
         `,
+        src &&
+          css`
+            background-image: url(${src});
+            background-size: cover;
+          `,
         className,
       )}
+      style={style}
       {...props}
     >
       {text}
