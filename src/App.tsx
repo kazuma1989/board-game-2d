@@ -1,15 +1,11 @@
-// @ts-check
-/// <reference path="./typings.d.ts" />
-
 import { css } from "https://cdn.skypack.dev/emotion"
-import {
-  html,
+import produce from "https://cdn.skypack.dev/immer"
+import Panzoom from "https://cdn.skypack.dev/panzoom/"
+import React, {
   useEffect,
   useRef,
   useState,
-} from "https://cdn.skypack.dev/htm/preact/standalone.module.js"
-import produce from "https://cdn.skypack.dev/immer"
-import Panzoom from "https://cdn.skypack.dev/panzoom/"
+} from "https://cdn.skypack.dev/preact/compat"
 import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
 
@@ -26,16 +22,15 @@ export function App() {
       zoomDoubleClickSpeed: 2.5,
 
       /**
-       * @param {MouseEvent} e
-       * @returns {boolean | undefined} should ignore
+       * @returns should ignore
        */
-      beforeMouseDown(e) {
+      beforeMouseDown(e: MouseEvent): boolean | undefined {
         if (e.shiftKey) {
           return true
         }
 
-        // @ts-ignore
-        if (!("pannable" in e.target.dataset)) {
+        const target = e.target as HTMLElement
+        if (!("pannable" in target?.dataset)) {
           return true
         }
       },
@@ -49,20 +44,20 @@ export function App() {
   const [piles, setPiles] = useState(initPiles)
   const draggingIndex$ = useRef({ col: -1, row: -1 })
 
-  return html`
+  return (
     <div
-      ref=${container$}
-      className=${css`
+      ref={container$}
+      className={css`
         width: 1000px;
         height: 1000px;
-        background: url(./bg.svg) no-repeat;
+        background: url(/bg.svg) no-repeat;
         background-size: cover;
         background-position: center;
       `}
       data-pannable
     >
-      <${Grid}
-        onDrop=${dest => {
+      <Grid
+        onDrop={dest => {
           const { row, col } = draggingIndex$.current
           if (row === -1 || col === -1) return
           if (row === dest.row && col === dest.col) return
@@ -74,13 +69,13 @@ export function App() {
             }),
           )
         }}
-        className=${css`
+        className={css`
           color: rgba(0, 255, 0, 0.4);
         `}
         data-pannable
       />
 
-      ${piles.flatMap((rowPiles, row) => {
+      {piles.flatMap((rowPiles, row) => {
         return rowPiles.map((pile, col) => {
           if (!pile) return
 
@@ -89,18 +84,18 @@ export function App() {
             col,
           }
 
-          return html`
-            <${Pile}
-              cards=${pile.cards}
-              x=${50 * (col - 10)}
-              y=${50 * (row - 10)}
-              onDragStart=${() => {
+          return (
+            <Pile
+              cards={pile.cards}
+              x={50 * (col - 10)}
+              y={50 * (row - 10)}
+              onDragStart={() => {
                 draggingIndex$.current = { col, row }
               }}
-              onDragEnd=${() => {
+              onDragEnd={() => {
                 draggingIndex$.current = { col: -1, row: -1 }
               }}
-              onDrop=${() => {
+              onDrop={() => {
                 const { row, col } = draggingIndex$.current
                 draggingIndex$.current = { col: -1, row: -1 }
 
@@ -117,11 +112,11 @@ export function App() {
                 )
               }}
             />
-          `
+          )
         })
       })}
     </div>
-  `
+  )
 }
 
 const initPiles = [...Array(40)].map(() =>

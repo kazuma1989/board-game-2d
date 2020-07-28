@@ -1,27 +1,28 @@
-// @ts-check
-/// <reference path="./typings.d.ts" />
-
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import {
-  html,
-  useRef,
-  useState,
-} from "https://cdn.skypack.dev/htm/preact/standalone.module.js"
+import React, { useRef, useState } from "https://cdn.skypack.dev/preact/compat"
 import { mode } from "./mode.js"
 
-export function Grid({ onDrop, className, ...props }) {
+export function Grid({
+  onDrop,
+  className,
+  ...props
+}: {
+  onDrop?(dest: { col: number; row: number; x: number; y: number }): void
+  className?: string
+  style?: any
+}) {
   const container$ = useRef()
 
   const [dragging, setDragging] = useState(false)
   const draggingPosition$ = useRef({ x: 0, y: 0 })
 
-  return html`
+  return (
     <div
-      ref=${container$}
-      onMouseDown=${/** @param {MouseEvent} e */ e => {}}
-      onMouseMove=${/** @param {MouseEvent} e */ e => {}}
-      onMouseUp=${/** @param {MouseEvent} e */ e => {}}
-      onDragOver=${/** @param {DragEvent} e */ e => {
+      ref={container$}
+      onMouseDown={(e: MouseEvent) => {}}
+      onMouseMove={(e: MouseEvent) => {}}
+      onMouseUp={(e: MouseEvent) => {}}
+      onDragOver={(e: DragEvent) => {
         e.preventDefault()
 
         if (!dragging) {
@@ -38,13 +39,13 @@ export function Grid({ onDrop, className, ...props }) {
         if (!container$.current) return
         container$.current.style.backgroundPosition = `${snappedX}px ${snappedY}px`
       }}
-      onDragLeave=${() => {
+      onDragLeave={() => {
         setDragging(false)
 
         if (!container$.current) return
         container$.current.style.backgroundPosition = null
       }}
-      onDrop=${() => {
+      onDrop={() => {
         setDragging(false)
 
         const { x, y } = draggingPosition$.current
@@ -58,7 +59,7 @@ export function Grid({ onDrop, className, ...props }) {
         if (!container$.current) return
         container$.current.style.backgroundPosition = null
       }}
-      className=${cx(
+      className={cx(
         css`
           position: relative;
           top: -50%;
@@ -96,7 +97,7 @@ export function Grid({ onDrop, className, ...props }) {
             background-image: linear-gradient(currentColor, currentColor);
           `,
       )}
-      ...${props}
+      {...props}
     ></div>
-  `
+  )
 }

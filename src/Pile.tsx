@@ -1,12 +1,5 @@
-// @ts-check
-/// <reference path="./typings.d.ts" />
-
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import {
-  html,
-  useMemo,
-  useState,
-} from "https://cdn.skypack.dev/htm/preact/standalone.module.js"
+import React, { useMemo, useState } from "https://cdn.skypack.dev/preact/compat"
 
 export function Pile({
   cards,
@@ -18,6 +11,15 @@ export function Pile({
   onDragEnd,
   onDrop,
   ...props
+}: {
+  cards: any[]
+  x: number
+  y: number
+  onDragStart?(): void
+  onDragEnd?(): void
+  onDrop?(): void
+  className?: string
+  style?: any
 }) {
   const [dragging, setDragging] = useState(false)
 
@@ -26,50 +28,52 @@ export function Pile({
       const m = length - (length % 5)
       const n = i - m
 
-      return html`
-        <${Card}
-          key=${i}
-          text=${text}
-          className=${css`
+      return (
+        <Card
+          key={i}
+          text={text}
+          className={css`
             position: absolute;
           `}
-          style=${n >= 0
-            ? m === 0
-              ? {
-                  left: -3 * n,
-                  top: -2 * n,
-                }
+          style={
+            n >= 0
+              ? m === 0
+                ? {
+                    left: -3 * n,
+                    top: -2 * n,
+                  }
+                : {
+                    left: -3 * (n + 1) - 1 * m,
+                    top: -2 * (n + 1) - 0.5 * m,
+                  }
               : {
-                  left: -3 * (n + 1) - 1 * m,
-                  top: -2 * (n + 1) - 0.5 * m,
+                  left: -1 * i,
+                  top: -0.5 * i,
                 }
-            : {
-                left: -1 * i,
-                top: -0.5 * i,
-              }}
+          }
         />
-      `
+      )
     })
   }, [cards])
 
-  return html`
+  return (
     <div
       draggable
-      onDragStart=${() => {
+      onDragStart={() => {
         setDragging(true)
         onDragStart?.()
       }}
-      onDragEnd=${() => {
+      onDragEnd={() => {
         setDragging(false)
         onDragEnd?.()
       }}
-      onDragOver=${e => {
+      onDragOver={e => {
         e.preventDefault()
       }}
-      onDrop=${() => {
+      onDrop={() => {
         onDrop?.()
       }}
-      className=${cx(
+      className={cx(
         css`
           position: absolute;
         `,
@@ -79,22 +83,22 @@ export function Pile({
           `,
         className,
       )}
-      style=${{
+      style={{
         left: x,
         top: y,
         ...style,
       }}
-      ...${props}
+      {...props}
     >
-      ${cardElements}
+      {cardElements}
     </div>
-  `
+  )
 }
 
 function Card({ text, className, ...props }) {
-  return html`
+  return (
     <div
-      className=${cx(
+      className={cx(
         css`
           border: solid 1px gray;
           width: 50px;
@@ -105,9 +109,9 @@ function Card({ text, className, ...props }) {
         `,
         className,
       )}
-      ...${props}
+      {...props}
     >
-      ${text}
+      {text}
     </div>
-  `
+  )
 }
