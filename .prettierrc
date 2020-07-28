@@ -2,5 +2,13 @@
   "arrowParens": "avoid",
   "endOfLine": "lf",
   "semi": false,
-  "trailingComma": "all"
+  "trailingComma": "all",
+  "overrides": [
+    {
+      "files": ["src/allCards.ts"],
+      "options": {
+        "printWidth": 120
+      }
+    }
+  ]
 }

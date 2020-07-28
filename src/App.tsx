@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
 } from "https://cdn.skypack.dev/preact/compat"
+import { allCards } from "./allCards.js"
 import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
 import { randomID } from "./util.js"
@@ -140,64 +141,13 @@ type Pile = {
   id: string & { readonly u: unique symbol }
   cards: {
     text: string
-    src: string
+    src: {
+      face: string
+      back: string
+    }
+    state: "face" | "back"
   }[]
 }
-
-const allCards = [
-  { text: "", src: "/assets/card/face_C_10.png" },
-  { text: "", src: "/assets/card/face_C__2.png" },
-  { text: "", src: "/assets/card/face_C__3.png" },
-  { text: "", src: "/assets/card/face_C__4.png" },
-  { text: "", src: "/assets/card/face_C__5.png" },
-  { text: "", src: "/assets/card/face_C__6.png" },
-  { text: "", src: "/assets/card/face_C__7.png" },
-  { text: "", src: "/assets/card/face_C__8.png" },
-  { text: "", src: "/assets/card/face_C__9.png" },
-  { text: "", src: "/assets/card/face_C__A.png" },
-  { text: "", src: "/assets/card/face_C__J.png" },
-  { text: "", src: "/assets/card/face_C__K.png" },
-  { text: "", src: "/assets/card/face_C__Q.png" },
-  { text: "", src: "/assets/card/face_D_10.png" },
-  { text: "", src: "/assets/card/face_D__2.png" },
-  { text: "", src: "/assets/card/face_D__3.png" },
-  { text: "", src: "/assets/card/face_D__4.png" },
-  { text: "", src: "/assets/card/face_D__5.png" },
-  { text: "", src: "/assets/card/face_D__6.png" },
-  { text: "", src: "/assets/card/face_D__7.png" },
-  { text: "", src: "/assets/card/face_D__8.png" },
-  { text: "", src: "/assets/card/face_D__9.png" },
-  { text: "", src: "/assets/card/face_D__A.png" },
-  { text: "", src: "/assets/card/face_D__J.png" },
-  { text: "", src: "/assets/card/face_D__K.png" },
-  { text: "", src: "/assets/card/face_D__Q.png" },
-  { text: "", src: "/assets/card/face_H_10.png" },
-  { text: "", src: "/assets/card/face_H__2.png" },
-  { text: "", src: "/assets/card/face_H__3.png" },
-  { text: "", src: "/assets/card/face_H__4.png" },
-  { text: "", src: "/assets/card/face_H__5.png" },
-  { text: "", src: "/assets/card/face_H__6.png" },
-  { text: "", src: "/assets/card/face_H__7.png" },
-  { text: "", src: "/assets/card/face_H__8.png" },
-  { text: "", src: "/assets/card/face_H__9.png" },
-  { text: "", src: "/assets/card/face_H__A.png" },
-  { text: "", src: "/assets/card/face_H__J.png" },
-  { text: "", src: "/assets/card/face_H__K.png" },
-  { text: "", src: "/assets/card/face_H__Q.png" },
-  { text: "", src: "/assets/card/face_S_10.png" },
-  { text: "", src: "/assets/card/face_S__2.png" },
-  { text: "", src: "/assets/card/face_S__3.png" },
-  { text: "", src: "/assets/card/face_S__4.png" },
-  { text: "", src: "/assets/card/face_S__5.png" },
-  { text: "", src: "/assets/card/face_S__6.png" },
-  { text: "", src: "/assets/card/face_S__7.png" },
-  { text: "", src: "/assets/card/face_S__8.png" },
-  { text: "", src: "/assets/card/face_S__9.png" },
-  { text: "", src: "/assets/card/face_S__A.png" },
-  { text: "", src: "/assets/card/face_S__J.png" },
-  { text: "", src: "/assets/card/face_S__K.png" },
-  { text: "", src: "/assets/card/face_S__Q.png" },
-]
 
 const initPiles = [...Array(40)].map(() =>
   [...Array(40)].map(() => {
@@ -210,7 +160,12 @@ const initPiles = [...Array(40)].map(() =>
 
     const pile: Pile = {
       id: randomID() as Pile["id"],
-      cards: [card],
+      cards: [
+        {
+          ...card,
+          state: Math.random() >= 0.5 ? "face" : "back",
+        },
+      ],
     }
 
     return pile

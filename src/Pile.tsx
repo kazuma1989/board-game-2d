@@ -14,8 +14,12 @@ export function Pile({
   ...props
 }: {
   cards: {
-    text?: string
-    src?: string
+    text: string
+    src: {
+      face: string
+      back: string
+    }
+    state: "face" | "back"
   }[]
   x: number
   y: number
@@ -29,7 +33,7 @@ export function Pile({
   const [dragging, setDragging] = useState(false)
 
   const cardElements = useMemo(() => {
-    return cards.map(({ text, src }, i, { length }) => {
+    return cards.map(({ text, src, state }, i, { length }) => {
       const m = length - (length % 5)
       const n = i - m
 
@@ -37,7 +41,7 @@ export function Pile({
         <Card
           key={i}
           text={text}
-          src={src}
+          src={src[state]}
           className={css`
             position: absolute;
           `}
