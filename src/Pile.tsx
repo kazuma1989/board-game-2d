@@ -9,6 +9,7 @@ export function Pile({
   style,
   onDragStart,
   onDragEnd,
+  onDragEnter,
   onDrop,
   ...props
 }: {
@@ -17,6 +18,7 @@ export function Pile({
   y: number
   onDragStart?(): void
   onDragEnd?(): void
+  onDragEnter?(): void
   onDrop?(): void
   className?: string
   style?: any
@@ -69,6 +71,11 @@ export function Pile({
       }}
       onDragOver={e => {
         e.preventDefault()
+      }}
+      onDragEnter={e => {
+        if (!e.shiftKey) return
+
+        onDragEnter?.()
       }}
       onDrop={() => {
         onDrop?.()

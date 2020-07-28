@@ -127,6 +127,20 @@ export function App() {
               onDragEnd={() => {
                 draggingIndex$.current = { col: -1, row: -1 }
               }}
+              onDragEnter={() => {
+                const { row, col } = draggingIndex$.current
+                if (row === -1 || col === -1) return
+                if (row === dest.row && col === dest.col) return
+
+                setPiles(
+                  produce((draft: typeof piles) => {
+                    draft[row][col]?.cards.unshift(
+                      ...(draft[dest.row][dest.col]?.cards ?? []),
+                    )
+                    draft[dest.row][dest.col] = null
+                  }),
+                )
+              }}
               onDrop={() => {
                 const { row, col } = draggingIndex$.current
                 draggingIndex$.current = { col: -1, row: -1 }
