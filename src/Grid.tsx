@@ -4,10 +4,12 @@ import { mode } from "./mode.js"
 
 export function Grid({
   onDrop,
+  onMove,
   className,
   ...props
 }: {
   onDrop?(dest: { col: number; row: number; x: number; y: number }): void
+  onMove?(dest: { col: number; row: number; x: number; y: number }): void
   className?: string
   style?: any
 }) {
@@ -20,7 +22,17 @@ export function Grid({
     <div
       ref={container$}
       onMouseDown={e => {}}
-      onMouseMove={e => {}}
+      onMouseMove={e => {
+        if (!e.shiftKey) return
+
+        const { offsetX: x, offsetY: y } = e
+        onMove?.({
+          col: (x - (x % 50)) / 50,
+          row: (y - (y % 50)) / 50,
+          x,
+          y,
+        })
+      }}
       onMouseUp={e => {}}
       onDragOver={e => {
         e.preventDefault()
@@ -29,35 +41,40 @@ export function Grid({
           setDragging(true)
         }
 
-        const { offsetX, offsetY } = e
-        const snappedX = offsetX - (offsetX % 50)
-        const snappedY = offsetY - (offsetY % 50)
+        const { offsetX: x, offsetY: y } = e
+        draggingPosition$.current.x = x
+        draggingPosition$.current.y = y
 
-        draggingPosition$.current.x = snappedX
-        draggingPosition$.current.y = snappedY
+        const container = container$.current
+        if (!container) return
 
-        if (!container$.current) return
-        container$.current.style.backgroundPosition = `${snappedX}px ${snappedY}px`
+        container.style.backgroundPosition = `${x - (x % 50)}px ${
+          y - (y % 50)
+        }px`
       }}
       onDragLeave={() => {
         setDragging(false)
 
-        if (!container$.current) return
-        container$.current.style.backgroundPosition = ""
+        const container = container$.current
+        if (!container) return
+
+        container.style.backgroundPosition = ""
       }}
       onDrop={() => {
         setDragging(false)
 
         const { x, y } = draggingPosition$.current
         onDrop?.({
-          col: x / 50,
-          row: y / 50,
+          col: (x - (x % 50)) / 50,
+          row: (y - (y % 50)) / 50,
           x,
           y,
         })
 
-        if (!container$.current) return
-        container$.current.style.backgroundPosition = ""
+        const container = container$.current
+        if (!container) return
+
+        container.style.backgroundPosition = ""
       }}
       className={cx(
         css`

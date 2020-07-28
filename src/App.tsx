@@ -8,6 +8,7 @@ import React, {
 } from "https://cdn.skypack.dev/preact/compat"
 import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
+import { randomID } from "./util.js"
 
 export function App() {
   const container$ = useRef<HTMLDivElement>()
@@ -29,8 +30,10 @@ export function App() {
           return true
         }
 
-        const target = e.target as HTMLElement
-        if (!("pannable" in target?.dataset)) {
+        if (
+          e.target instanceof HTMLElement &&
+          !("pannable" in e.target.dataset)
+        ) {
           return true
         }
       },
@@ -43,6 +46,8 @@ export function App() {
 
   const [piles, setPiles] = useState(initPiles)
   const draggingIndex$ = useRef({ col: -1, row: -1 })
+
+  const prevDest$ = useRef({ col: -1, row: -1 })
 
   return (
     <div
@@ -57,15 +62,34 @@ export function App() {
       data-pannable
     >
       <Grid
+        onMove={dest => {
+          const prev = prevDest$.current
+          if (prev.col === dest.col && prev.row === dest.row) return
+
+          prevDest$.current = {
+            col: dest.col,
+            row: dest.row,
+          }
+
+          setPiles(
+            produce((draft: typeof piles) => {
+              const pile = draft[dest.row][dest.col]
+              console.log(pile, dest)
+              if (!pile) return
+
+              pile.selected = true
+            }),
+          )
+        }}
         onDrop={dest => {
           const { row, col } = draggingIndex$.current
           if (row === -1 || col === -1) return
           if (row === dest.row && col === dest.col) return
 
           setPiles(
-            produce(piles => {
-              piles[dest.row][dest.col] = piles[row][col]
-              piles[row][col] = null
+            produce((draft: typeof piles) => {
+              draft[dest.row][dest.col] = draft[row][col]
+              draft[row][col] = null
             }),
           )
         }}
@@ -86,6 +110,15 @@ export function App() {
 
           return (
             <Pile
+              className={
+                pile.selected &&
+                css`
+                  > * {
+                    border-color: red !important;
+                  }
+                `
+              }
+              key={pile.id}
               cards={pile.cards}
               x={50 * (col - 10)}
               y={50 * (row - 10)}
@@ -103,11 +136,11 @@ export function App() {
                 if (row === dest.row && col === dest.col) return
 
                 setPiles(
-                  produce(piles => {
-                    piles[dest.row][dest.col].cards.push(
-                      ...piles[row][col].cards,
+                  produce((draft: typeof piles) => {
+                    draft[dest.row][dest.col]?.cards.push(
+                      ...(draft[row][col]?.cards ?? []),
                     )
-                    piles[row][col] = null
+                    draft[row][col] = null
                   }),
                 )
               }}
@@ -119,12 +152,23 @@ export function App() {
   )
 }
 
+type Pile = {
+  id: string & { readonly u: unique symbol }
+  cards: { text: string }[]
+  selected?: boolean
+}
+
 const initPiles = [...Array(40)].map(() =>
   [...Array(40)].map(() => {
-    const pile = {
+    if (Math.random() <= 0.95) {
+      return null
+    }
+
+    const pile: Pile = {
+      id: randomID() as Pile["id"],
       cards: [{ text: "card" }],
     }
 
-    return Math.random() >= 0.95 ? pile : null
+    return pile
   }),
 )
