@@ -22,6 +22,10 @@
     // <div /> => React.createElement("div")
     "jsx": "react",
 
+    // Enable sourcemaps
+    "sourceMap": true,
+    "inlineSources": true,
+
     // cf. https://github.com/DefinitelyTyped/DefinitelyTyped/issues/33311
     // cf. https://stackoverflow.com/a/55540896
     "skipLibCheck": true,
