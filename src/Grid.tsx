@@ -1,26 +1,42 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { useRef, useState } from "https://cdn.skypack.dev/preact/compat"
+import React, { useRef } from "https://cdn.skypack.dev/preact/compat"
+import type { ComponentChildren } from "preact"
 import { mode } from "./mode.js"
 
 export function Grid({
   onDrop,
   onMove,
   className,
+  style,
+  children,
   ...props
 }: {
   onDrop?(dest: { col: number; row: number; x: number; y: number }): void
   onMove?(dest: { col: number; row: number; x: number; y: number }): void
   className?: string
   style?: any
+  children?: ComponentChildren
 }) {
-  const container$ = useRef<HTMLDivElement>()
+  const indicator$ = useRef<HTMLDivElement>()
+  const updateHighlight = (x: number, y: number) => {
+    const indicator = indicator$.current
+    if (!indicator) return
 
-  const [dragging, setDragging] = useState(false)
+    indicator.classList.add(highlight)
+    indicator.style.backgroundPosition = `${x - (x % 50)}px ${y - (y % 50)}px`
+  }
+  const finishHighlight = () => {
+    const indicator = indicator$.current
+    if (!indicator) return
+
+    indicator.classList.remove(highlight)
+    indicator.style.backgroundPosition = ""
+  }
+
   const draggingPosition$ = useRef({ x: 0, y: 0 })
 
   return (
     <div
-      ref={container$}
       onMouseDown={e => {}}
       onMouseMove={e => {
         if (!e.shiftKey) return
@@ -37,31 +53,15 @@ export function Grid({
       onDragOver={e => {
         e.preventDefault()
 
-        if (!dragging) {
-          setDragging(true)
-        }
-
         const { offsetX: x, offsetY: y } = e
         draggingPosition$.current.x = x
         draggingPosition$.current.y = y
 
-        const container = container$.current
-        if (!container) return
-
-        container.style.backgroundPosition = `${x - (x % 50)}px ${
-          y - (y % 50)
-        }px`
+        updateHighlight(x, y)
       }}
-      onDragLeave={() => {
-        setDragging(false)
-
-        const container = container$.current
-        if (!container) return
-
-        container.style.backgroundPosition = ""
-      }}
+      onDragLeave={finishHighlight}
       onDrop={() => {
-        setDragging(false)
+        finishHighlight()
 
         const { x, y } = draggingPosition$.current
         onDrop?.({
@@ -70,11 +70,6 @@ export function Grid({
           x,
           y,
         })
-
-        const container = container$.current
-        if (!container) return
-
-        container.style.backgroundPosition = ""
       }}
       className={cx(
         css`
@@ -85,8 +80,17 @@ export function Grid({
           height: 200%;
         `,
         className,
-        mode === "debug" &&
-          css`
+      )}
+      style={style}
+      {...props}
+    >
+      {mode === "debug" && (
+        <div
+          className={css`
+            width: 100%;
+            height: 100%;
+            position: absolute;
+
             background-position: top left;
             background-image: repeating-linear-gradient(
                 90deg,
@@ -106,15 +110,26 @@ export function Grid({
                 currentColor 49.5px,
                 currentColor 50px
               );
-          `,
-        dragging &&
-          css`
-            background-repeat: no-repeat;
-            background-size: 50px 50px;
-            background-image: linear-gradient(currentColor, currentColor);
-          `,
+          `}
+        ></div>
       )}
-      {...props}
-    ></div>
+
+      <div
+        ref={indicator$}
+        className={css`
+          width: 100%;
+          height: 100%;
+          position: absolute;
+        `}
+      ></div>
+
+      {children}
+    </div>
   )
 }
+
+const highlight = css`
+  background-repeat: no-repeat;
+  background-size: 50px 50px;
+  background-image: linear-gradient(currentColor, currentColor);
+`

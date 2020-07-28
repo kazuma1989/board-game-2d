@@ -32,7 +32,7 @@ export function App() {
 
         if (
           e.target instanceof HTMLElement &&
-          !("pannable" in e.target.dataset)
+          e.target.closest("[data-no-pannable]")
         ) {
           return true
         }
@@ -59,7 +59,6 @@ export function App() {
         background-size: cover;
         background-position: center;
       `}
-      data-pannable
     >
       <Grid
         onMove={dest => {
@@ -96,7 +95,6 @@ export function App() {
         className={css`
           color: rgba(0, 255, 0, 0.4);
         `}
-        data-pannable
       />
 
       {piles.flatMap((rowPiles, row) => {
@@ -111,6 +109,7 @@ export function App() {
           return (
             <Pile
               className={
+                // FIXME とりあえずのスタイル
                 pile.selected &&
                 css`
                   > * {
@@ -144,6 +143,7 @@ export function App() {
                   }),
                 )
               }}
+              data-no-pannable
             />
           )
         })
