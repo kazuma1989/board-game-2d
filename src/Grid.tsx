@@ -1,21 +1,16 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React, { useRef } from "https://cdn.skypack.dev/preact/compat"
-import type { ComponentChildren } from "preact"
 import { mode } from "./mode.js"
 
 export function Grid({
   onDrop,
-  onMove,
   className,
   style,
-  children,
   ...props
 }: {
   onDrop?(dest: { col: number; row: number; x: number; y: number }): void
-  onMove?(dest: { col: number; row: number; x: number; y: number }): void
   className?: string
   style?: any
-  children?: ComponentChildren
 }) {
   const indicator$ = useRef<HTMLDivElement>()
   const updateHighlight = (x: number, y: number) => {
@@ -37,19 +32,6 @@ export function Grid({
 
   return (
     <div
-      onMouseDown={e => {}}
-      onMouseMove={e => {
-        if (!e.shiftKey) return
-
-        const { offsetX: x, offsetY: y } = e
-        onMove?.({
-          col: (x - (x % 50)) / 50,
-          row: (y - (y % 50)) / 50,
-          x,
-          y,
-        })
-      }}
-      onMouseUp={e => {}}
       onDragOver={e => {
         e.preventDefault()
 
@@ -122,8 +104,6 @@ export function Grid({
           position: absolute;
         `}
       ></div>
-
-      {children}
     </div>
   )
 }

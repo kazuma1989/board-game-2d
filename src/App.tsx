@@ -47,8 +47,6 @@ export function App() {
   const [piles, setPiles] = useState(initPiles)
   const draggingIndex$ = useRef({ col: -1, row: -1 })
 
-  const prevDest$ = useRef({ col: -1, row: -1 })
-
   return (
     <div
       ref={container$}
@@ -61,25 +59,6 @@ export function App() {
       `}
     >
       <Grid
-        onMove={dest => {
-          const prev = prevDest$.current
-          if (prev.col === dest.col && prev.row === dest.row) return
-
-          prevDest$.current = {
-            col: dest.col,
-            row: dest.row,
-          }
-
-          setPiles(
-            produce((draft: typeof piles) => {
-              const pile = draft[dest.row][dest.col]
-              console.log(pile, dest)
-              if (!pile) return
-
-              pile.selected = true
-            }),
-          )
-        }}
         onDrop={dest => {
           const { row, col } = draggingIndex$.current
           if (row === -1 || col === -1) return
@@ -108,15 +87,6 @@ export function App() {
 
           return (
             <Pile
-              className={
-                // FIXME とりあえずのスタイル
-                pile.selected &&
-                css`
-                  > * {
-                    border-color: red !important;
-                  }
-                `
-              }
               key={pile.id}
               cards={pile.cards}
               x={50 * (col - 10)}
@@ -169,7 +139,6 @@ export function App() {
 type Pile = {
   id: string & { readonly u: unique symbol }
   cards: { text: string }[]
-  selected?: boolean
 }
 
 const initPiles = [...Array(40)].map(() =>
