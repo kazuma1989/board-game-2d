@@ -61,12 +61,23 @@ export function Pile({
   return (
     <div
       draggable
-      onDragStart={() => {
+      onDragStart={e => {
         setDragging(true)
+
+        // ドラッグで掴んでいる位置と、Pile がドロップで配置される位置をなるべく近づける
+        const cardOnTop = e.currentTarget.lastElementChild
+        if (cardOnTop instanceof HTMLElement) {
+          const left = parseFloat(cardOnTop.style.left) || 0
+          const top = parseFloat(cardOnTop.style.top) || 0
+
+          e.dataTransfer?.setDragImage(e.currentTarget, -left + 25, -top + 25)
+        }
+
         onDragStart?.()
       }}
       onDragEnd={() => {
         setDragging(false)
+
         onDragEnd?.()
       }}
       onDragOver={e => {
