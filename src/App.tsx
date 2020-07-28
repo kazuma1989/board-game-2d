@@ -10,7 +10,7 @@ import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
 
 export function App() {
-  const container$ = useRef()
+  const container$ = useRef<HTMLDivElement>()
   useEffect(() => {
     const container = container$.current
     if (!container) return

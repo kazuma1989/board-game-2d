@@ -11,7 +11,7 @@ export function Grid({
   className?: string
   style?: any
 }) {
-  const container$ = useRef()
+  const container$ = useRef<HTMLDivElement>()
 
   const [dragging, setDragging] = useState(false)
   const draggingPosition$ = useRef({ x: 0, y: 0 })
@@ -19,10 +19,10 @@ export function Grid({
   return (
     <div
       ref={container$}
-      onMouseDown={(e: MouseEvent) => {}}
-      onMouseMove={(e: MouseEvent) => {}}
-      onMouseUp={(e: MouseEvent) => {}}
-      onDragOver={(e: DragEvent) => {
+      onMouseDown={e => {}}
+      onMouseMove={e => {}}
+      onMouseUp={e => {}}
+      onDragOver={e => {
         e.preventDefault()
 
         if (!dragging) {
@@ -43,7 +43,7 @@ export function Grid({
         setDragging(false)
 
         if (!container$.current) return
-        container$.current.style.backgroundPosition = null
+        container$.current.style.backgroundPosition = ""
       }}
       onDrop={() => {
         setDragging(false)
@@ -57,7 +57,7 @@ export function Grid({
         })
 
         if (!container$.current) return
-        container$.current.style.backgroundPosition = null
+        container$.current.style.backgroundPosition = ""
       }}
       className={cx(
         css`
