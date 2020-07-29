@@ -1,5 +1,5 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { useMemo, useState } from "https://cdn.skypack.dev/preact/compat"
+import React, { useMemo, useState } from "https://cdn.skypack.dev/react"
 
 export function Pile({
   cards,

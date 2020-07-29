@@ -5,14 +5,14 @@ import React, {
   useEffect,
   useRef,
   useState,
-} from "https://cdn.skypack.dev/preact/compat"
+} from "https://cdn.skypack.dev/react"
 import { allCards } from "./allCards.js"
 import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
 import { randomID } from "./util.js"
 
 export function App() {
-  const container$ = useRef<HTMLDivElement>()
+  const container$ = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const container = container$.current
     if (!container) return
