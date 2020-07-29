@@ -5,6 +5,7 @@
   "license": "MIT",
   "main": "dist/index.html",
   "scripts": {
+    "serve": "firebase serve --only hosting",
     "tsc": "tsc --incremental --outDir ./public/dist/",
     "format": "prettier --write \"./src/**/*.{ts,tsx}\""
   },
