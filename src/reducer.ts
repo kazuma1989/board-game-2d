@@ -12,14 +12,17 @@ export type State = {
 
 export type Pile = {
   id: string & { readonly u: unique symbol }
-  cards: {
-    text: string
-    src: {
-      face: string
-      back: string
-    }
-    state: "face" | "back"
-  }[]
+  cards: Card[]
+}
+
+export type Card = {
+  id: string & { readonly u: unique symbol }
+  text: string
+  src: {
+    face: string
+    back: string
+  }
+  state: "face" | "back"
 }
 
 const initialState: State = {
@@ -37,6 +40,7 @@ const initialState: State = {
         cards: [
           {
             ...card,
+            id: randomID() as Card["id"],
             state: Math.random() >= 0.5 ? "face" : "back",
           },
         ],
