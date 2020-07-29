@@ -21,16 +21,12 @@ export function App() {
       maxZoom: 10,
       minZoom: 0.2,
       smoothScroll: false,
-      zoomDoubleClickSpeed: 2.5,
 
-      /**
-       * @returns should ignore
-       */
+      // disable double click zoom
+      zoomDoubleClickSpeed: 1,
+
+      /** @returns should ignore */
       beforeMouseDown(e: MouseEvent): boolean | undefined {
-        if (e.shiftKey) {
-          return true
-        }
-
         if (
           e.target instanceof HTMLElement &&
           e.target.closest("[data-no-pannable]")
