@@ -23,18 +23,35 @@ try {
   console.error("Error loading the Firebase SDK, check the console.")
 }
 
-const store = createStore(
-  reducer,
-  undefined,
-  compose(
-    applyMiddleware(firestoreMiddleware),
-    self.__REDUX_DEVTOOLS_EXTENSION__?.() ?? (_ => _),
-  ),
-)
+const db = firebase.firestore()
 
-render(
-  <Provider store={store}>
-    <App />
-  </Provider>,
-  document.body,
-)
+db.collection("/games/1xNV05bl2ISPqgCjSQTq/piles")
+  .get()
+  .then(snapshot => {
+    const piles = snapshot.docs.map(d => ({
+      ...d.data(),
+      id: d.id,
+    }))
+
+    const store = createStore(
+      // @ts-expect-error
+      reducer,
+      {
+        user: {
+          id: "xxxx",
+        },
+        piles,
+      },
+      compose(
+        applyMiddleware(firestoreMiddleware),
+        self.__REDUX_DEVTOOLS_EXTENSION__?.() ?? (_ => _),
+      ),
+    )
+
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>,
+      document.body,
+    )
+  })
