@@ -3,7 +3,11 @@ import { allCards } from "./allCards.js"
 import { randomID } from "./util.js"
 
 export type State = {
-  piles: (Pile | null)[][]
+  // userId: string & { readonly u: unique symbol }
+
+  piles: Pile[]
+
+  // TODO draggingPile やめて Pile に dragger の ID 持たせたい
   draggingPile: {
     col: number
     row: number
@@ -13,6 +17,8 @@ export type State = {
 export type Pile = {
   id: string & { readonly u: unique symbol }
   cards: Card[]
+  col: number
+  row: number
 }
 
 export type Card = {
@@ -26,29 +32,33 @@ export type Card = {
 }
 
 const initialState: State = {
-  piles: [...Array(40)].map(() =>
-    [...Array(40)].map(() => {
-      if (Math.random() <= 0.95) {
-        return null
-      }
+  // userId: randomID() as State["userId"],
 
-      const i = Math.floor(Math.random() * allCards.length)
-      const card = allCards[i]
+  piles: allCards.reduce((piles, c) => {
+    const card: Card = {
+      ...c,
+      id: randomID() as Card["id"],
+      state: Math.random() >= 0.5 ? "face" : "back",
+    }
 
-      const pile: Pile = {
+    const col = Math.floor(10 + 20 * Math.random())
+    const row = Math.floor(10 + 20 * Math.random())
+
+    const pile = piles.find(p => p.col === col && p.row === row)
+    if (pile) {
+      pile.cards.push(card)
+    } else {
+      piles.push({
         id: randomID() as Pile["id"],
-        cards: [
-          {
-            ...card,
-            id: randomID() as Card["id"],
-            state: Math.random() >= 0.5 ? "face" : "back",
-          },
-        ],
-      }
+        cards: [card],
+        col,
+        row,
+      })
+    }
 
-      return pile
-    }),
-  ),
+    return piles
+  }, [] as State["piles"]),
+
   draggingPile: {
     col: -1,
     row: -1,
@@ -97,10 +107,12 @@ export const reducer = produce((draft: State, action: Action) => {
       draft.draggingPile = { col: -1, row: -1 }
 
       if (row === dest.row && col === dest.col) return
-      if (!draft.piles[dest.row] || !draft.piles[row]?.[col]) return
 
-      draft.piles[dest.row][dest.col] = draft.piles[row][col]
-      draft.piles[row][col] = null
+      const target = draft.piles.find(at(col, row))
+      if (target) {
+        target.col = dest.col
+        target.row = dest.row
+      }
 
       return
     }
@@ -124,12 +136,15 @@ export const reducer = produce((draft: State, action: Action) => {
       const { col, row } = draft.draggingPile
 
       if (row === dest.row && col === dest.col) return
-      if (!draft.piles[dest.row]?.[dest.col] || !draft.piles[row]?.[col]) return
 
-      draft.piles[row][col]!.cards.unshift(
-        ...draft.piles[dest.row][dest.col]!.cards,
-      )
-      draft.piles[dest.row][dest.col] = null
+      const index = draft.piles.findIndex(at(dest.col, dest.row))
+      const from = draft.piles[index]
+      const to = draft.piles.find(at(col, row))
+      if (from && to) {
+        draft.piles.splice(index, 1)
+
+        to.cards.unshift(...from.cards)
+      }
 
       return
     }
@@ -141,12 +156,15 @@ export const reducer = produce((draft: State, action: Action) => {
       draft.draggingPile = { col: -1, row: -1 }
 
       if (row === dest.row && col === dest.col) return
-      if (!draft.piles[dest.row]?.[dest.col] || !draft.piles[row]?.[col]) return
 
-      draft.piles[dest.row][dest.col]!.cards.push(
-        ...draft.piles[row][col]!.cards,
-      )
-      draft.piles[row][col] = null
+      const index = draft.piles.findIndex(at(col, row))
+      const from = draft.piles[index]
+      const to = draft.piles.find(at(dest.col, dest.row))
+      if (from && to) {
+        draft.piles.splice(index, 1)
+
+        to.cards.push(...from.cards)
+      }
 
       return
     }
@@ -156,3 +174,10 @@ export const reducer = produce((draft: State, action: Action) => {
     }
   }
 }, initialState)
+
+function at(
+  col: number,
+  row: number,
+): (p: { col: number; row: number }) => boolean {
+  return p => p.col === col && p.row === row
+}

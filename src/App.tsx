@@ -64,57 +64,39 @@ export function App() {
         `}
       />
 
-      {piles.flatMap((rowPiles, row) => {
-        return rowPiles.map((pile, col) => {
-          if (!pile) return
-
-          const dest = {
-            row,
-            col,
-          }
-
-          return (
-            <Pile
-              key={pile.id}
-              cards={pile.cards}
-              x={50 * (col - 10)}
-              y={50 * (row - 10)}
-              onDragStart={() => {
-                dispatch({
-                  type: "Pile.DragStart",
-                  payload: {
-                    col,
-                    row,
-                  },
-                })
-              }}
-              onDragEnd={() => {
-                dispatch({
-                  type: "Pile.DragEnd",
-                })
-              }}
-              onDragEnter={() => {
-                dispatch({
-                  type: "Pile.DragEnter",
-                  payload: {
-                    row: dest.row,
-                    col: dest.col,
-                  },
-                })
-              }}
-              onDrop={() => {
-                dispatch({
-                  type: "Pile.Drop",
-                  payload: {
-                    row: dest.row,
-                    col: dest.col,
-                  },
-                })
-              }}
-              data-no-pannable
-            />
-          )
-        })
+      {piles.map(({ col, row, ...pile }) => {
+        return (
+          <Pile
+            key={pile.id}
+            cards={pile.cards}
+            x={50 * (col - 10)}
+            y={50 * (row - 10)}
+            onDragStart={() => {
+              dispatch({
+                type: "Pile.DragStart",
+                payload: { col, row },
+              })
+            }}
+            onDragEnd={() => {
+              dispatch({
+                type: "Pile.DragEnd",
+              })
+            }}
+            onDragEnter={() => {
+              dispatch({
+                type: "Pile.DragEnter",
+                payload: { col, row },
+              })
+            }}
+            onDrop={() => {
+              dispatch({
+                type: "Pile.Drop",
+                payload: { col, row },
+              })
+            }}
+            data-no-pannable
+          />
+        )
       })}
     </div>
   )
