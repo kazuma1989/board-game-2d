@@ -1,9 +1,14 @@
 import React from "https://cdn.skypack.dev/react"
 import { render } from "https://cdn.skypack.dev/react-dom"
 import { Provider } from "https://cdn.skypack.dev/react-redux"
-import { createStore } from "https://cdn.skypack.dev/redux"
+import {
+  applyMiddleware,
+  compose,
+  createStore,
+} from "https://cdn.skypack.dev/redux"
 import { App } from "./App.js"
 import * as firebase from "./firebase.js"
+import { firestoreMiddleware } from "./firestoreMiddleware.js"
 import { reducer } from "./reducer.js"
 
 try {
@@ -21,7 +26,10 @@ try {
 const store = createStore(
   reducer,
   undefined,
-  self.__REDUX_DEVTOOLS_EXTENSION__?.(),
+  compose(
+    applyMiddleware(firestoreMiddleware),
+    self.__REDUX_DEVTOOLS_EXTENSION__?.() ?? (_ => _),
+  ),
 )
 
 render(
