@@ -1,5 +1,6 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { useMemo, useState } from "https://cdn.skypack.dev/preact/compat"
+import React, { useMemo, useState } from "https://cdn.skypack.dev/react"
+import { Card } from "./reducer"
 
 export function Pile({
   cards,
@@ -14,6 +15,7 @@ export function Pile({
   ...props
 }: {
   cards: {
+    id: Card["id"]
     text: string
     src: {
       face: string
@@ -33,13 +35,13 @@ export function Pile({
   const [dragging, setDragging] = useState(false)
 
   const cardElements = useMemo(() => {
-    return cards.map(({ text, src, state }, i, { length }) => {
+    return cards.map(({ id, text, src, state }, i, { length }) => {
       const m = length - (length % 5)
       const n = i - m
 
       return (
         <Card
-          key={i}
+          key={id}
           text={text}
           src={src[state]}
           className={css`

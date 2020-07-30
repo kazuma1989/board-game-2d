@@ -1,18 +1,12 @@
 import { css } from "https://cdn.skypack.dev/emotion"
-import produce from "https://cdn.skypack.dev/immer"
-import Panzoom from "https://cdn.skypack.dev/panzoom/"
-import React, {
-  useEffect,
-  useRef,
-  useState,
-} from "https://cdn.skypack.dev/preact/compat"
-import { allCards } from "./allCards.js"
+import Panzoom from "https://cdn.skypack.dev/panzoom"
+import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
+import { useDispatch, useSelector } from "https://cdn.skypack.dev/react-redux"
 import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
-import { randomID } from "./util.js"
 
 export function App() {
-  const container$ = useRef<HTMLDivElement>()
+  const container$ = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const container = container$.current
     if (!container) return
@@ -41,8 +35,8 @@ export function App() {
     }
   }, [container$])
 
-  const [piles, setPiles] = useState(initPiles)
-  const draggingIndex$ = useRef({ col: -1, row: -1 })
+  const dispatch = useDispatch()
+  const piles = useSelector(state => state.piles)
 
   return (
     <div
@@ -57,16 +51,13 @@ export function App() {
     >
       <Grid
         onDrop={dest => {
-          const { row, col } = draggingIndex$.current
-          if (row === -1 || col === -1) return
-          if (row === dest.row && col === dest.col) return
-
-          setPiles(
-            produce((draft: typeof piles) => {
-              draft[dest.row][dest.col] = draft[row][col]
-              draft[row][col] = null
-            }),
-          )
+          dispatch({
+            type: "Grid.Drop",
+            payload: {
+              row: dest.row,
+              col: dest.col,
+            },
+          })
         }}
         className={css`
           color: rgba(0, 255, 0, 0.4);
@@ -89,40 +80,36 @@ export function App() {
               x={50 * (col - 10)}
               y={50 * (row - 10)}
               onDragStart={() => {
-                draggingIndex$.current = { col, row }
+                dispatch({
+                  type: "Pile.DragStart",
+                  payload: {
+                    col,
+                    row,
+                  },
+                })
               }}
               onDragEnd={() => {
-                draggingIndex$.current = { col: -1, row: -1 }
+                dispatch({
+                  type: "Pile.DragEnd",
+                })
               }}
               onDragEnter={() => {
-                const { row, col } = draggingIndex$.current
-                if (row === -1 || col === -1) return
-                if (row === dest.row && col === dest.col) return
-
-                setPiles(
-                  produce((draft: typeof piles) => {
-                    draft[row][col]?.cards.unshift(
-                      ...(draft[dest.row][dest.col]?.cards ?? []),
-                    )
-                    draft[dest.row][dest.col] = null
-                  }),
-                )
+                dispatch({
+                  type: "Pile.DragEnter",
+                  payload: {
+                    row: dest.row,
+                    col: dest.col,
+                  },
+                })
               }}
               onDrop={() => {
-                const { row, col } = draggingIndex$.current
-                draggingIndex$.current = { col: -1, row: -1 }
-
-                if (row === -1 || col === -1) return
-                if (row === dest.row && col === dest.col) return
-
-                setPiles(
-                  produce((draft: typeof piles) => {
-                    draft[dest.row][dest.col]?.cards.push(
-                      ...(draft[row][col]?.cards ?? []),
-                    )
-                    draft[row][col] = null
-                  }),
-                )
+                dispatch({
+                  type: "Pile.Drop",
+                  payload: {
+                    row: dest.row,
+                    col: dest.col,
+                  },
+                })
               }}
               data-no-pannable
             />
@@ -132,38 +119,3 @@ export function App() {
     </div>
   )
 }
-
-type Pile = {
-  id: string & { readonly u: unique symbol }
-  cards: {
-    text: string
-    src: {
-      face: string
-      back: string
-    }
-    state: "face" | "back"
-  }[]
-}
-
-const initPiles = [...Array(40)].map(() =>
-  [...Array(40)].map(() => {
-    if (Math.random() <= 0.95) {
-      return null
-    }
-
-    const i = Math.floor(Math.random() * allCards.length)
-    const card = allCards[i]
-
-    const pile: Pile = {
-      id: randomID() as Pile["id"],
-      cards: [
-        {
-          ...card,
-          state: Math.random() >= 0.5 ? "face" : "back",
-        },
-      ],
-    }
-
-    return pile
-  }),
-)

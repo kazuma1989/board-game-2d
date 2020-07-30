@@ -1,9 +1,19 @@
-import React, { render } from "https://cdn.skypack.dev/preact/compat"
+import React from "https://cdn.skypack.dev/react"
+import { render } from "https://cdn.skypack.dev/react-dom"
+import { Provider } from "https://cdn.skypack.dev/react-redux"
+import { createStore } from "https://cdn.skypack.dev/redux"
 import { App } from "./App.js"
-import { mode } from "./mode.js"
+import { reducer } from "./reducer.js"
 
-if (mode === "debug") {
-  import("https://cdn.skypack.dev/preact/debug")
-}
+const store = createStore(
+  reducer,
+  undefined,
+  self.__REDUX_DEVTOOLS_EXTENSION__?.(),
+)
 
-render(<App />, document.body)
+render(
+  <Provider store={store}>
+    <App />
+  </Provider>,
+  document.body,
+)

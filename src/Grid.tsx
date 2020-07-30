@@ -1,5 +1,5 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { useRef } from "https://cdn.skypack.dev/preact/compat"
+import React, { useRef } from "https://cdn.skypack.dev/react"
 import { mode } from "./mode.js"
 
 export function Grid({
@@ -12,7 +12,7 @@ export function Grid({
   className?: string
   style?: any
 }) {
-  const indicator$ = useRef<HTMLDivElement>()
+  const indicator$ = useRef<HTMLDivElement>(null)
   const updateHighlight = (x: number, y: number) => {
     const indicator = indicator$.current
     if (!indicator) return
@@ -35,7 +35,7 @@ export function Grid({
       onDragOver={e => {
         e.preventDefault()
 
-        const { offsetX: x, offsetY: y } = e
+        const { offsetX: x, offsetY: y } = e.nativeEvent
         draggingPosition$.current.x = x
         draggingPosition$.current.y = y
 
