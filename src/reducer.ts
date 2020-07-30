@@ -94,8 +94,10 @@ export const reducer = produce((draft: State, action: Action) => {
       const dest = action.payload
       const { col, row } = draft.draggingPile
 
-      if (row === -1 || col === -1) return
+      draft.draggingPile = { col: -1, row: -1 }
+
       if (row === dest.row && col === dest.col) return
+      if (!draft.piles[dest.row] || !draft.piles[row]?.[col]) return
 
       draft.piles[dest.row][dest.col] = draft.piles[row][col]
       draft.piles[row][col] = null
@@ -121,11 +123,11 @@ export const reducer = produce((draft: State, action: Action) => {
       const dest = action.payload
       const { col, row } = draft.draggingPile
 
-      if (row === -1 || col === -1) return
       if (row === dest.row && col === dest.col) return
+      if (!draft.piles[dest.row]?.[dest.col] || !draft.piles[row]?.[col]) return
 
-      draft.piles[row][col]?.cards.unshift(
-        ...(draft.piles[dest.row][dest.col]?.cards ?? []),
+      draft.piles[row][col]!.cards.unshift(
+        ...draft.piles[dest.row][dest.col]!.cards,
       )
       draft.piles[dest.row][dest.col] = null
 
@@ -136,15 +138,15 @@ export const reducer = produce((draft: State, action: Action) => {
       const dest = action.payload
       const { col, row } = draft.draggingPile
 
-      if (row === -1 || col === -1) return
-      if (row === dest.row && col === dest.col) return
+      draft.draggingPile = { col: -1, row: -1 }
 
-      draft.piles[dest.row][dest.col]?.cards.push(
-        ...(draft.piles[row][col]?.cards ?? []),
+      if (row === dest.row && col === dest.col) return
+      if (!draft.piles[dest.row]?.[dest.col] || !draft.piles[row]?.[col]) return
+
+      draft.piles[dest.row][dest.col]!.cards.push(
+        ...draft.piles[row][col]!.cards,
       )
       draft.piles[row][col] = null
-
-      draft.draggingPile = { col: -1, row: -1 }
 
       return
     }
