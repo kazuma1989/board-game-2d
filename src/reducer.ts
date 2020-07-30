@@ -3,15 +3,13 @@ import { allCards } from "./allCards.js"
 import { randomID } from "./util.js"
 
 export type State = {
-  // userId: string & { readonly u: unique symbol }
+  user: User
 
   piles: Pile[]
+}
 
-  // TODO draggingPile やめて Pile に dragger の ID 持たせたい
-  draggingPile: {
-    col: number
-    row: number
-  }
+export type User = {
+  id: string & { readonly u: unique symbol }
 }
 
 export type Pile = {
@@ -19,6 +17,7 @@ export type Pile = {
   cards: Card[]
   col: number
   row: number
+  dragging?: User["id"]
 }
 
 export type Card = {
@@ -32,7 +31,9 @@ export type Card = {
 }
 
 const initialState: State = {
-  // userId: randomID() as State["userId"],
+  user: {
+    id: randomID() as User["id"],
+  },
 
   piles: allCards.reduce((piles, c) => {
     const card: Card = {
@@ -58,11 +59,6 @@ const initialState: State = {
 
     return piles
   }, [] as State["piles"]),
-
-  draggingPile: {
-    col: -1,
-    row: -1,
-  },
 }
 
 export type Action =
@@ -76,8 +72,7 @@ export type Action =
   | {
       type: "Pile.DragStart"
       payload: {
-        col: number
-        row: number
+        pileId: Pile["id"]
       }
     }
   | {
@@ -86,85 +81,81 @@ export type Action =
   | {
       type: "Pile.DragEnter"
       payload: {
-        col: number
-        row: number
+        pileId: Pile["id"]
       }
     }
   | {
       type: "Pile.Drop"
       payload: {
-        col: number
-        row: number
+        pileId: Pile["id"]
       }
     }
 
 export const reducer = produce((draft: State, action: Action) => {
   switch (action.type) {
     case "Grid.Drop": {
-      const dest = action.payload
-      const { col, row } = draft.draggingPile
+      const draggingPile = draft.piles.find(p => p.dragging === draft.user.id)
+      if (!draggingPile) return
 
-      draft.draggingPile = { col: -1, row: -1 }
+      draggingPile.dragging = undefined
 
-      if (row === dest.row && col === dest.col) return
-
-      const target = draft.piles.find(at(col, row))
-      if (target) {
-        target.col = dest.col
-        target.row = dest.row
-      }
+      const { col, row } = action.payload
+      draggingPile.col = col
+      draggingPile.row = row
 
       return
     }
 
     case "Pile.DragStart": {
-      const { col, row } = action.payload
+      const { pileId } = action.payload
+      const target = draft.piles.find(p => p.id === pileId)
+      if (!target) return
 
-      draft.draggingPile = { col, row }
+      target.dragging = draft.user.id
 
       return
     }
 
     case "Pile.DragEnd": {
-      draft.draggingPile = { col: -1, row: -1 }
+      const draggingPile = draft.piles.find(p => p.dragging === draft.user.id)
+      if (!draggingPile) return
+
+      draggingPile.dragging = undefined
 
       return
     }
 
     case "Pile.DragEnter": {
-      const dest = action.payload
-      const { col, row } = draft.draggingPile
+      const draggingPile = draft.piles.find(p => p.dragging === draft.user.id)
+      if (!draggingPile) return
 
-      if (row === dest.row && col === dest.col) return
+      // 掴みっぱなし
+      // draggingPile.dragging = undefined
 
-      const index = draft.piles.findIndex(at(dest.col, dest.row))
-      const from = draft.piles[index]
-      const to = draft.piles.find(at(col, row))
-      if (from && to) {
-        draft.piles.splice(index, 1)
+      const { pileId } = action.payload
+      const target = draft.piles.find(p => p.id === pileId)
+      if (!target) return
 
-        to.cards.unshift(...from.cards)
-      }
+      draft.piles.splice(draft.piles.indexOf(target), 1)
+
+      draggingPile.cards.unshift(...target.cards)
 
       return
     }
 
     case "Pile.Drop": {
-      const dest = action.payload
-      const { col, row } = draft.draggingPile
+      const draggingPile = draft.piles.find(p => p.dragging === draft.user.id)
+      if (!draggingPile) return
 
-      draft.draggingPile = { col: -1, row: -1 }
+      draggingPile.dragging = undefined
 
-      if (row === dest.row && col === dest.col) return
+      const { pileId } = action.payload
+      const target = draft.piles.find(p => p.id === pileId)
+      if (!target) return
 
-      const index = draft.piles.findIndex(at(col, row))
-      const from = draft.piles[index]
-      const to = draft.piles.find(at(dest.col, dest.row))
-      if (from && to) {
-        draft.piles.splice(index, 1)
+      draft.piles.splice(draft.piles.indexOf(draggingPile), 1)
 
-        to.cards.push(...from.cards)
-      }
+      target.cards.push(...draggingPile.cards)
 
       return
     }
@@ -174,10 +165,3 @@ export const reducer = produce((draft: State, action: Action) => {
     }
   }
 }, initialState)
-
-function at(
-  col: number,
-  row: number,
-): (p: { col: number; row: number }) => boolean {
-  return p => p.col === col && p.row === row
-}

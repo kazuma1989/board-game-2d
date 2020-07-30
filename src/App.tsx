@@ -74,7 +74,9 @@ export function App() {
             onDragStart={() => {
               dispatch({
                 type: "Pile.DragStart",
-                payload: { col, row },
+                payload: {
+                  pileId: pile.id,
+                },
               })
             }}
             onDragEnd={() => {
@@ -85,13 +87,17 @@ export function App() {
             onDragEnter={() => {
               dispatch({
                 type: "Pile.DragEnter",
-                payload: { col, row },
+                payload: {
+                  pileId: pile.id,
+                },
               })
             }}
             onDrop={() => {
               dispatch({
                 type: "Pile.Drop",
-                payload: { col, row },
+                payload: {
+                  pileId: pile.id,
+                },
               })
             }}
             data-no-pannable
