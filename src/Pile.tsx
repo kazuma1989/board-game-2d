@@ -1,6 +1,6 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React, { useMemo, useState } from "https://cdn.skypack.dev/react"
-import { Card } from "./reducer"
+import type { Card } from "./reducer"
 
 export function Pile({
   cards,
@@ -40,7 +40,7 @@ export function Pile({
       const n = i - m
 
       return (
-        <Card
+        <CardComp
           key={id}
           text={text}
           src={src[state]}
@@ -123,7 +123,7 @@ export function Pile({
   )
 }
 
-function Card({
+function CardComp({
   text,
   src,
   className,
