@@ -63,22 +63,6 @@ const initialState: State = {
 
 export type Action =
   | {
-      type: "Grid.Drop"
-      payload: {
-        col: number
-        row: number
-      }
-    }
-  | {
-      type: "Pile.DragStart"
-      payload: {
-        pileId: Pile["id"]
-      }
-    }
-  | {
-      type: "Pile.DragEnd"
-    }
-  | {
       type: "Pile.DragEnter"
       payload: {
         pileId: Pile["id"]
@@ -100,38 +84,6 @@ export type Action =
 
 export const reducer = produce((draft: State, action: Action) => {
   switch (action.type) {
-    case "Grid.Drop": {
-      const draggingPile = draft.piles.find(p => p.dragging === draft.user.id)
-      if (!draggingPile) return
-
-      draggingPile.dragging = undefined
-
-      const { col, row } = action.payload
-      draggingPile.col = col
-      draggingPile.row = row
-
-      return
-    }
-
-    case "Pile.DragStart": {
-      const { pileId } = action.payload
-      const target = draft.piles.find(p => p.id === pileId)
-      if (!target) return
-
-      target.dragging = draft.user.id
-
-      return
-    }
-
-    case "Pile.DragEnd": {
-      const draggingPile = draft.piles.find(p => p.dragging === draft.user.id)
-      if (!draggingPile) return
-
-      draggingPile.dragging = undefined
-
-      return
-    }
-
     case "Pile.DragEnter": {
       const draggingPile = draft.piles.find(p => p.dragging === draft.user.id)
       if (!draggingPile) return
