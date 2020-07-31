@@ -28,6 +28,24 @@
       }
     </style>
 
+    <script>
+      // デフォルトの拡大・縮小挙動を抑止（Panzoom で実現するため）
+      document.addEventListener(
+        "touchstart",
+        e => {
+          e.preventDefault()
+        },
+        { passive: false },
+      )
+      document.addEventListener(
+        "touchmove",
+        e => {
+          e.preventDefault()
+        },
+        { passive: false },
+      )
+    </script>
+
     <script type="module" src="/dist/index.js"></script>
   </head>
 
