@@ -1,14 +1,9 @@
 import React from "https://cdn.skypack.dev/react"
 import { render } from "https://cdn.skypack.dev/react-dom"
 import { Provider } from "https://cdn.skypack.dev/react-redux"
-import {
-  applyMiddleware,
-  compose,
-  createStore,
-} from "https://cdn.skypack.dev/redux"
+import { createStore } from "https://cdn.skypack.dev/redux"
 import { App } from "./App.js"
 import * as firebase from "./firebase.js"
-import { firestoreMiddleware } from "./firestoreMiddleware.js"
 import { reducer } from "./reducer.js"
 
 try {
@@ -42,10 +37,7 @@ db.collection("/games/1xNV05bl2ISPqgCjSQTq/piles")
         },
         piles,
       },
-      compose(
-        applyMiddleware(firestoreMiddleware),
-        self.__REDUX_DEVTOOLS_EXTENSION__?.() ?? (_ => _),
-      ),
+      self.__REDUX_DEVTOOLS_EXTENSION__?.(),
     )
 
     render(

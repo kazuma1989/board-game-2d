@@ -90,6 +90,13 @@ export type Action =
         pileId: Pile["id"]
       }
     }
+  | {
+      type: "Firestore.Update.Pile"
+      payload: {
+        id: string
+        pile: unknown
+      }
+    }
 
 export const reducer = produce((draft: State, action: Action) => {
   switch (action.type) {
@@ -160,8 +167,26 @@ export const reducer = produce((draft: State, action: Action) => {
       return
     }
 
+    case "Firestore.Update.Pile": {
+      const { id, pile } = action.payload
+      if (!isPileData(pile)) return
+
+      const targetIndex = draft.piles.findIndex(p => p.id === id)
+      draft.piles[targetIndex] = {
+        ...pile,
+        id: id as Pile["id"],
+      }
+
+      return
+    }
+
     default: {
       const _: never = action
     }
   }
 }, initialState)
+
+function isPileData(obj: unknown): obj is Omit<Pile, "id"> {
+  // TODO ちゃんとした実装
+  return true
+}
