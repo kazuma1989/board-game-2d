@@ -1,49 +1,13 @@
-import React from "https://cdn.skypack.dev/react"
+import React, { Suspense } from "https://cdn.skypack.dev/react"
 import { render } from "https://cdn.skypack.dev/react-dom"
-import { Provider } from "https://cdn.skypack.dev/react-redux"
-import { createStore } from "https://cdn.skypack.dev/redux"
-import { Board } from "./Board.js"
-import * as firebase from "./firebase.js"
-import { reducer } from "./reducer.js"
 
-try {
-  const app = firebase.app()
-  const features = ["auth", "firestore", "messaging", "storage"].filter(
-    feature => typeof app[feature] === "function",
-  )
+const App = React.lazy(() =>
+  import("./App.js").then(({ App }) => ({ default: App })),
+)
 
-  console.log(`Firebase SDK loaded with ${features.join(", ")}`)
-} catch (e) {
-  console.error(e)
-  console.error("Error loading the Firebase SDK, check the console.")
-}
-
-const db = firebase.firestore()
-
-db.collection("/games/1xNV05bl2ISPqgCjSQTq/piles")
-  .get()
-  .then(snapshot => {
-    const piles = snapshot.docs.map(d => ({
-      ...d.data(),
-      id: d.id,
-    }))
-
-    const store = createStore(
-      // @ts-expect-error
-      reducer,
-      {
-        user: {
-          id: "xxxx",
-        },
-        piles,
-      },
-      self.__REDUX_DEVTOOLS_EXTENSION__?.(),
-    )
-
-    render(
-      <Provider store={store}>
-        <Board />
-      </Provider>,
-      document.body,
-    )
-  })
+render(
+  <Suspense fallback={<div>Loading...</div>}>
+    <App />
+  </Suspense>,
+  document.body,
+)

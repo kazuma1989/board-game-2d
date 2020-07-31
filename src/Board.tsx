@@ -1,10 +1,6 @@
 import { css } from "https://cdn.skypack.dev/emotion"
 import Panzoom from "https://cdn.skypack.dev/panzoom"
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-} from "https://cdn.skypack.dev/react"
+import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
 import {
   useDispatch,
   useSelector,
@@ -13,6 +9,7 @@ import {
 import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
+import { useCollection } from "./piles.js"
 import { ms } from "./util.js"
 
 export function Board() {
@@ -48,15 +45,8 @@ export function Board() {
   const dispatch = useDispatch()
   const piles = useSelector(state => state.piles)
 
-  useSnapshot()
-
   const store = useStore()
-  const db = useMemo(() => firestore(), [])
-  const pilesRef = useMemo(
-    // TODO collection は Context で持ってくるのがよいか？
-    () => db.collection("/games/1xNV05bl2ISPqgCjSQTq/piles"),
-    [],
-  )
+  const pilesRef = useCollection()
 
   return (
     <div
@@ -80,7 +70,7 @@ export function Board() {
 
           const pileRef = pilesRef.doc(draggingPile.id)
 
-          await db.runTransaction(async t => {
+          await pileRef.firestore.runTransaction(async t => {
             const pile$ = await t.get(pileRef)
 
             const state = store.getState()
@@ -109,7 +99,7 @@ export function Board() {
             onDragStart={async () => {
               const pileRef = pilesRef.doc(pile.id)
 
-              await db
+              await pileRef.firestore
                 .runTransaction(async t => {
                   const pile$ = await t.get(pileRef)
                   if (pile$.data()?.dragging) {
@@ -130,7 +120,7 @@ export function Board() {
 
               const pileRef = pilesRef.doc(pile.id)
 
-              await db.runTransaction(async t => {
+              await pileRef.firestore.runTransaction(async t => {
                 const pile$ = await t.get(pileRef)
 
                 const state = store.getState()
@@ -163,41 +153,4 @@ export function Board() {
       })}
     </div>
   )
-}
-
-function useSnapshot() {
-  const dispatch = useDispatch()
-
-  useEffect(() => {
-    // TODO collection は Context で持ってくるのがよいか？
-    const pilesRef = firestore().collection("/games/1xNV05bl2ISPqgCjSQTq/piles")
-
-    return pilesRef.onSnapshot(pilesSnapshot => {
-      pilesSnapshot.docChanges().forEach(change => {
-        switch (change.type) {
-          case "added": {
-            return
-          }
-
-          case "modified": {
-            const pile$ = change.doc
-
-            dispatch({
-              type: "Firestore.Update.Pile",
-              payload: {
-                id: pile$.id,
-                pile: pile$.data(),
-              },
-            })
-
-            return
-          }
-
-          case "removed": {
-            return
-          }
-        }
-      })
-    })
-  }, [dispatch])
 }

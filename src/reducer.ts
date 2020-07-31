@@ -1,10 +1,8 @@
 import produce from "https://cdn.skypack.dev/immer"
-import { allCards } from "./allCards.js"
 import { randomID } from "./util.js"
 
 export type State = {
   user: User
-
   piles: Pile[]
 }
 
@@ -34,31 +32,7 @@ const initialState: State = {
   user: {
     id: randomID() as User["id"],
   },
-
-  piles: allCards.reduce((piles, c) => {
-    const card: Card = {
-      ...c,
-      id: randomID() as Card["id"],
-      state: Math.random() >= 0.5 ? "face" : "back",
-    }
-
-    const col = Math.floor(10 + 20 * Math.random())
-    const row = Math.floor(10 + 20 * Math.random())
-
-    const pile = piles.find(p => p.col === col && p.row === row)
-    if (pile) {
-      pile.cards.push(card)
-    } else {
-      piles.push({
-        id: randomID() as Pile["id"],
-        cards: [card],
-        col,
-        row,
-      })
-    }
-
-    return piles
-  }, [] as State["piles"]),
+  piles: [],
 }
 
 export type Action =
@@ -72,6 +46,13 @@ export type Action =
       type: "Pile.Drop"
       payload: {
         pileId: Pile["id"]
+      }
+    }
+  | {
+      type: "Firestore.Insert.Pile"
+      payload: {
+        id: string
+        pile: unknown
       }
     }
   | {
@@ -115,6 +96,18 @@ export const reducer = produce((draft: State, action: Action) => {
       draft.piles.splice(draft.piles.indexOf(draggingPile), 1)
 
       target.cards.push(...draggingPile.cards)
+
+      return
+    }
+
+    case "Firestore.Insert.Pile": {
+      const { id, pile } = action.payload
+      if (!isPileData(pile)) return
+
+      draft.piles.push({
+        ...pile,
+        id: id as Pile["id"],
+      })
 
       return
     }
