@@ -13,6 +13,7 @@ import {
 import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
+import { ms } from "./util.js"
 
 export function App() {
   const container$ = useRef<HTMLDivElement>(null)
@@ -112,7 +113,7 @@ export function App() {
                 .runTransaction(async t => {
                   const pile$ = await t.get(pileRef)
                   if (pile$.data()?.dragging) {
-                    throw "locked"
+                    throw `pile is locked: id=${pile$.id}`
                   }
 
                   const state = store.getState()
@@ -123,21 +124,23 @@ export function App() {
                 .catch(console.warn)
             }}
             // TODO イベントハンドラー内に大きなロジック書きたくないよね
-            // TODO onDragEnd と onDrop が連続発生すると Firestore が 400 エラーを返してうまくいかない
-            // onDragEnd={async () => {
-            //   const pileRef = pilesRef.doc(pile.id)
+            onDragEnd={async () => {
+              // onDrop と同時にトランザクションを開始するのを避ける
+              await ms(400)
 
-            //   await db.runTransaction(async t => {
-            //     const pile$ = await t.get(pileRef)
+              const pileRef = pilesRef.doc(pile.id)
 
-            //     const state = store.getState()
-            //     if (pile$.data()?.dragging !== state.user.id) return
+              await db.runTransaction(async t => {
+                const pile$ = await t.get(pileRef)
 
-            //     t.update(pileRef, {
-            //       dragging: firestore.FieldValue.delete(),
-            //     })
-            //   })
-            // }}
+                const state = store.getState()
+                if (pile$.data()?.dragging !== state.user.id) return
+
+                t.update(pileRef, {
+                  dragging: firestore.FieldValue.delete(),
+                })
+              })
+            }}
             onDragEnter={() => {
               dispatch({
                 type: "Pile.DragEnter",
@@ -169,19 +172,21 @@ function useSnapshot() {
     // TODO collection は Context で持ってくるのがよいか？
     const pilesRef = firestore().collection("/games/1xNV05bl2ISPqgCjSQTq/piles")
 
-    return pilesRef.onSnapshot(snapshot => {
-      snapshot.docChanges().forEach(change => {
+    return pilesRef.onSnapshot(pilesSnapshot => {
+      pilesSnapshot.docChanges().forEach(change => {
         switch (change.type) {
           case "added": {
             return
           }
 
           case "modified": {
+            const pile$ = change.doc
+
             dispatch({
               type: "Firestore.Update.Pile",
               payload: {
-                id: change.doc.id,
-                pile: change.doc.data(),
+                id: pile$.id,
+                pile: pile$.data(),
               },
             })
 
