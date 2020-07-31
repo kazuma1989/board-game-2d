@@ -2,7 +2,7 @@ import React from "https://cdn.skypack.dev/react"
 import { render } from "https://cdn.skypack.dev/react-dom"
 import { Provider } from "https://cdn.skypack.dev/react-redux"
 import { createStore } from "https://cdn.skypack.dev/redux"
-import { App } from "./App.js"
+import { Board } from "./Board.js"
 import * as firebase from "./firebase.js"
 import { reducer } from "./reducer.js"
 
@@ -42,7 +42,7 @@ db.collection("/games/1xNV05bl2ISPqgCjSQTq/piles")
 
     render(
       <Provider store={store}>
-        <App />
+        <Board />
       </Provider>,
       document.body,
     )

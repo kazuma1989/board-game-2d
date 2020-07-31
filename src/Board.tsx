@@ -15,7 +15,7 @@ import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
 import { ms } from "./util.js"
 
-export function App() {
+export function Board() {
   const container$ = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const container = container$.current
