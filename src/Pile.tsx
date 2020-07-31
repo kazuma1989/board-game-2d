@@ -1,17 +1,21 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { useMemo, useState } from "https://cdn.skypack.dev/react"
+import React, {
+  CSSProperties,
+  useMemo,
+  useState,
+} from "https://cdn.skypack.dev/react"
 import type { Card } from "./reducer"
 
 export function Pile({
   cards,
-  x,
-  y,
-  className,
-  style,
+  col,
+  row,
   onDragStart,
   onDragEnd,
   onDragEnter,
   onDrop,
+  className,
+  style,
   ...props
 }: {
   cards: {
@@ -23,14 +27,14 @@ export function Pile({
     }
     state: "face" | "back"
   }[]
-  x: number
-  y: number
+  col: number
+  row: number
   onDragStart?(): void
   onDragEnd?(): void
   onDragEnter?(): void
   onDrop?(): void
   className?: string
-  style?: any
+  style?: CSSProperties
 }) {
   const [dragging, setDragging] = useState(false)
 
@@ -39,30 +43,31 @@ export function Pile({
       const m = length - (length % 5)
       const n = i - m
 
+      // 読みづらいがいったんうまくいってるのでノータッチ
+      const { left, top } =
+        n >= 0
+          ? m === 0
+            ? {
+                left: -3 * n,
+                top: -2 * n,
+              }
+            : {
+                left: -3 * (n + 1) - 1 * m,
+                top: -2 * (n + 1) - 0.5 * m,
+              }
+          : {
+              left: -1 * i,
+              top: -0.5 * i,
+            }
+
       return (
         <CardComp
           key={id}
           text={text}
           src={src[state]}
-          className={css`
-            position: absolute;
-          `}
-          style={
-            n >= 0
-              ? m === 0
-                ? {
-                    left: -3 * n,
-                    top: -2 * n,
-                  }
-                : {
-                    left: -3 * (n + 1) - 1 * m,
-                    top: -2 * (n + 1) - 0.5 * m,
-                  }
-              : {
-                  left: -1 * i,
-                  top: -0.5 * i,
-                }
-          }
+          style={{
+            transform: `translate(${left}px, ${top}px)`,
+          }}
         />
       )
     })
@@ -104,6 +109,8 @@ export function Pile({
       className={cx(
         css`
           position: absolute;
+          left: -50%;
+          top: -50%;
         `,
         dragging &&
           css`
@@ -112,8 +119,7 @@ export function Pile({
         className,
       )}
       style={{
-        left: x,
-        top: y,
+        transform: `translate(${col * 50}px, ${row * 50}px)`,
         ...style,
       }}
       {...props}

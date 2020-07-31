@@ -93,8 +93,8 @@ export function Board() {
           <Pile
             key={pile.id}
             cards={pile.cards}
-            x={50 * (col - 10)}
-            y={50 * (row - 10)}
+            col={col}
+            row={row}
             // TODO イベントハンドラー内に大きなロジック書きたくないよね
             onDragStart={async () => {
               const pileRef = pilesRef.doc(pile.id)
