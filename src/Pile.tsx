@@ -5,6 +5,7 @@ import React, {
   useState,
 } from "https://cdn.skypack.dev/react"
 import type { Card } from "./reducer"
+import { useScale } from "./useScale.js"
 
 export function Pile({
   cards,
@@ -37,6 +38,7 @@ export function Pile({
   style?: CSSProperties
 }) {
   const [dragging, setDragging] = useState(false)
+  const scale$ = useScale()
 
   // cards に変化ないのに位置計算を毎回するのは無駄と考えて memoize した
   const cardElements = useMemo(() => {
@@ -90,16 +92,16 @@ export function Pile({
           target.setPointerCapture(pointerId)
         }
 
-        let { screenX, screenY } = e
+        let { clientX, clientY } = e
         let translateX = col * 50
         let translateY = row * 50
 
         const pointermove = (ev: PointerEvent) => {
-          translateX += ev.screenX - screenX
-          translateY += ev.screenY - screenY
+          translateX += (ev.clientX - clientX) / scale$.current
+          translateY += (ev.clientY - clientY) / scale$.current
 
-          screenX = ev.screenX
-          screenY = ev.screenY
+          clientX = ev.clientX
+          clientY = ev.clientY
 
           target.style.transform = `translate(${translateX}px, ${translateY}px)`
         }
