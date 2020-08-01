@@ -1,7 +1,9 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React, {
   CSSProperties,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "https://cdn.skypack.dev/react"
 import type { Card } from "./reducer"
@@ -37,6 +39,12 @@ export function Pile({
   style?: CSSProperties
 }) {
   const [dragging, setDragging] = useState(false)
+
+  const screen$ = useRef({ x: -1, y: -1 })
+  const translate$ = useRef({ x: col * 50, y: row * 50 })
+  useEffect(() => {
+    translate$.current = { x: col * 50, y: row * 50 }
+  })
 
   const cardElements = useMemo(() => {
     return cards.map(({ id, text, src, state }, i, { length }) => {
@@ -78,51 +86,67 @@ export function Pile({
 
   return (
     <div
-      draggable
-      onDragStart={e => {
+      onPointerDown={e => {
         setDragging(true)
 
-        // ドラッグで掴んでいる位置と、Pile がドロップで配置される位置をなるべく近づける
-        const cardOnTop = e.currentTarget.lastElementChild
-        if (cardOnTop instanceof HTMLElement) {
-          const left = parseFloat(cardOnTop.style.left) || 0
-          const top = parseFloat(cardOnTop.style.top) || 0
+        screen$.current.x = e.screenX
+        screen$.current.y = e.screenY
 
-          e.dataTransfer?.setDragImage(e.currentTarget, -left + 25, -top + 25)
+        if (e.pointerType === "mouse") {
+          e.currentTarget.setPointerCapture(e.pointerId)
         }
 
         onDragStart?.()
       }}
-      onDragEnd={() => {
+      onPointerMove={e => {
+        if (!dragging) return
+
+        if (screen$.current.x === -1) {
+          screen$.current.x = e.screenX
+        }
+        if (screen$.current.y === -1) {
+          screen$.current.y = e.screenY
+        }
+
+        const movementX = e.screenX - screen$.current.x
+        const movementY = e.screenY - screen$.current.y
+
+        translate$.current.x += movementX
+        translate$.current.y += movementY
+
+        screen$.current.x = e.screenX
+        screen$.current.y = e.screenY
+
+        e.currentTarget.style.transform = `translate(${translate$.current.x}px, ${translate$.current.y}px)`
+      }}
+      onPointerUp={e => {
         setDragging(false)
 
-        onDragEnd?.()
-      }}
-      onDragOver={e => {
-        e.preventDefault()
-      }}
-      onDragEnter={e => {
-        if (!e.shiftKey) return
+        translate$.current = { x: col * 50, y: row * 50 }
+        e.currentTarget.style.transform = `translate(${translate$.current.x}px, ${translate$.current.y}px)`
 
-        onDragEnter?.()
-      }}
-      onDrop={() => {
-        onDrop?.()
+        if (e.pointerType === "mouse") {
+          e.currentTarget.releasePointerCapture(e.pointerId)
+        }
+
+        onDragEnd?.()
       }}
       className={cx(
         css`
           position: absolute;
           left: 0;
           top: 0;
+          cursor: grab;
         `,
         dragging &&
           css`
-            opacity: 0.5;
+            z-index: 100;
+            cursor: grabbing;
           `,
         className,
       )}
       style={{
-        transform: `translate(${col * 50}px, ${row * 50}px)`,
+        transform: `translate(${translate$.current.x}px, ${translate$.current.y}px)`,
         ...style,
       }}
       {...props}
@@ -148,21 +172,16 @@ function CardComp({
     <div
       className={cx(
         css`
-          border: solid 1px gray;
           width: 50px;
-          height: 76px;
+          height: 76.5px;
+          border-radius: 4px;
           box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
-          background-color: white;
-          cursor: grab;
-
-          :active {
-            cursor: grabbing;
-          }
         `,
         src &&
           css`
-            background-image: url(${src});
+            background-image: url("${src}");
             background-size: cover;
+            background-repeat: no-repeat;
           `,
         className,
       )}
