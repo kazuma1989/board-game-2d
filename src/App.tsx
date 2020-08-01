@@ -3,7 +3,9 @@ import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
 import { createStore } from "https://cdn.skypack.dev/redux"
 import { Board } from "./Board.js"
 import { firestore } from "./firebase.js"
+import { FirestoreMockPiles } from "./FirestoreMockPiles.js"
 import { FirestorePiles } from "./FirestorePiles.js"
+import { data } from "./mode.js"
 import { Provider as PilesProvider } from "./piles.js"
 import { reducer } from "./reducer.js"
 
@@ -22,7 +24,7 @@ export function App() {
   return (
     <PilesProvider value={collection}>
       <ReduxProvider store={store}>
-        <FirestorePiles />
+        {data === "mock" ? <FirestoreMockPiles /> : <FirestorePiles />}
 
         <Board />
       </ReduxProvider>
