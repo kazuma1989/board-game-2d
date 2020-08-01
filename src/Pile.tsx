@@ -65,6 +65,9 @@ export function Pile({
           key={id}
           text={text}
           src={src[state]}
+          className={css`
+            position: absolute;
+          `}
           style={{
             transform: `translate(${left}px, ${top}px)`,
           }}
