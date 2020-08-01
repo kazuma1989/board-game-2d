@@ -87,6 +87,8 @@ export function Pile({
   return (
     <div
       onPointerDown={e => {
+        if (!e.isPrimary) return
+
         setDragging(true)
 
         screen$.current.x = e.screenX
@@ -99,6 +101,7 @@ export function Pile({
         onDragStart?.()
       }}
       onPointerMove={e => {
+        if (!e.isPrimary) return
         if (!dragging) return
 
         if (screen$.current.x === -1) {
@@ -120,6 +123,8 @@ export function Pile({
         e.currentTarget.style.transform = `translate(${translate$.current.x}px, ${translate$.current.y}px)`
       }}
       onPointerUp={e => {
+        if (!e.isPrimary) return
+
         setDragging(false)
 
         translate$.current = { x: col * 50, y: row * 50 }
