@@ -11,7 +11,6 @@ import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
 import { useCollection } from "./piles.js"
 import { Provider } from "./useScale.js"
-import { ms } from "./util.js"
 
 export function Board() {
   const scale$ = useRef(1)
@@ -82,29 +81,6 @@ export function Board() {
         `}
       >
         <Grid
-          // TODO イベントハンドラー内に大きなロジック書きたくないよね
-          onDrop={async dest => {
-            const state = store.getState()
-            const draggingPile = state.piles.find(
-              p => p.dragging === state.user.id,
-            )
-            if (!draggingPile) return
-
-            const pileRef = pilesRef.doc(draggingPile.id)
-
-            await pileRef.firestore.runTransaction(async t => {
-              const pile$ = await t.get(pileRef)
-
-              const state = store.getState()
-              if (pile$.data()?.dragging !== state.user.id) return
-
-              t.update(pileRef, {
-                dragging: firestore.FieldValue.delete(),
-                col: dest.col,
-                row: dest.row,
-              })
-            })
-          }}
           className={css`
             color: rgba(0, 255, 0, 0.4);
           `}
@@ -136,10 +112,7 @@ export function Board() {
                   .catch(console.warn)
               }}
               // TODO イベントハンドラー内に大きなロジック書きたくないよね
-              onDragEnd={async () => {
-                // onDrop と同時にトランザクションを開始するのを避ける
-                await ms(400)
-
+              onDragEnd={async dest => {
                 const pileRef = pilesRef.doc(pile.id)
 
                 await pileRef.firestore.runTransaction(async t => {
@@ -150,6 +123,8 @@ export function Board() {
 
                   t.update(pileRef, {
                     dragging: firestore.FieldValue.delete(),
+                    col: dest.col,
+                    row: dest.row,
                   })
                 })
               }}

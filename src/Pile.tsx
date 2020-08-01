@@ -31,7 +31,7 @@ export function Pile({
   col: number
   row: number
   onDragStart?(): void
-  onDragEnd?(): void
+  onDragEnd?(dest: { col: number; row: number; x: number; y: number }): void
   onDragEnter?(): void
   onDrop?(): void
   className?: string
@@ -121,7 +121,16 @@ export function Pile({
               target.releasePointerCapture(pointerId)
             }
 
-            onDragEnd?.()
+            const centerX = translateX + 25
+            const centerY = translateY + 25
+            const col = (centerX - (centerX % 50)) / 50
+            const row = (centerY - (centerY % 50)) / 50
+            onDragEnd?.({
+              col,
+              row,
+              x: translateX,
+              y: translateY,
+            })
           },
           { once: true, passive: true },
         )
