@@ -18,7 +18,7 @@ export function Board() {
     const container = container$.current
     if (!container) return
 
-    const p = Panzoom(container, {
+    const panzoom = Panzoom(container, {
       maxZoom: 10,
       minZoom: 0.2,
       smoothScroll: true,
@@ -27,23 +27,27 @@ export function Board() {
       zoomDoubleClickSpeed: 1,
     })
 
+    const zoom = 1.1
+    const ratio = zoom / (zoom - 1)
+    panzoom.zoomAbs(500 * ratio, 500 * ratio, zoom)
+
     const pause = (e: PointerEvent) => {
       if (!(e.target instanceof HTMLElement)) return
 
       if (e.target.closest("[data-no-pannable]")) {
-        p.pause()
+        panzoom.pause()
       }
     }
 
     const resume = (e: PointerEvent) => {
-      p.resume()
+      panzoom.resume()
     }
 
     container.addEventListener("pointerdown", pause, { passive: true })
     container.addEventListener("pointerup", resume, { passive: true })
 
     return () => {
-      p.dispose()
+      panzoom.dispose()
 
       container.removeEventListener("pointerdown", pause)
       container.removeEventListener("pointerup", resume)
@@ -60,10 +64,10 @@ export function Board() {
     <div
       ref={container$}
       className={css`
-        width: 1000px;
-        height: 1000px;
+        width: 2000px;
+        height: 2000px;
         background: url(/bg.svg) no-repeat;
-        background-size: cover;
+        background-size: 1500px 1500px;
         background-position: center;
       `}
     >

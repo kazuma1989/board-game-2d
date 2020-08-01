@@ -112,8 +112,8 @@ export function Pile({
       className={cx(
         css`
           position: absolute;
-          left: -50%;
-          top: -50%;
+          left: 0;
+          top: 0;
         `,
         dragging &&
           css`

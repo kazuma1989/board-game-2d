@@ -56,10 +56,10 @@ export function Grid({
       className={cx(
         css`
           position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
         `,
         mode === "debug" &&
           css`
