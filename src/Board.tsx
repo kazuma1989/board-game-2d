@@ -113,6 +113,15 @@ export function Board() {
               }}
               // TODO イベントハンドラー内に大きなロジック書きたくないよね
               onDragEnd={async dest => {
+                dispatch({
+                  type: "Pile.DragEnd",
+                  payload: {
+                    pileId: pile.id,
+                    col: dest.col,
+                    row: dest.row,
+                  },
+                })
+
                 const pileRef = pilesRef.doc(pile.id)
 
                 await pileRef.firestore.runTransaction(async t => {

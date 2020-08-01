@@ -147,6 +147,10 @@ export function Pile({
           top: 0;
           cursor: grab;
         `,
+        !dragging &&
+          css`
+            transition: transform 400ms;
+          `,
         dragging &&
           css`
             z-index: 100;

@@ -37,6 +37,14 @@ const initialState: State = {
 
 export type Action =
   | {
+      type: "Pile.DragEnd"
+      payload: {
+        pileId: Pile["id"]
+        col: number
+        row: number
+      }
+    }
+  | {
       type: "Pile.DragEnter"
       payload: {
         pileId: Pile["id"]
@@ -65,6 +73,18 @@ export type Action =
 
 export const reducer = produce((draft: State, action: Action) => {
   switch (action.type) {
+    case "Pile.DragEnd": {
+      const { pileId, col, row } = action.payload
+
+      const target = draft.piles.find(p => p.id === pileId)
+      if (!target) return
+
+      target.col = col
+      target.row = row
+
+      return
+    }
+
     case "Pile.DragEnter": {
       const draggingPile = draft.piles.find(p => p.dragging === draft.user.id)
       if (!draggingPile) return
