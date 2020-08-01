@@ -1,9 +1,7 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React, {
   CSSProperties,
-  useEffect,
   useMemo,
-  useRef,
   useState,
 } from "https://cdn.skypack.dev/react"
 import type { Card } from "./reducer"
@@ -40,12 +38,7 @@ export function Pile({
 }) {
   const [dragging, setDragging] = useState(false)
 
-  const screen$ = useRef({ x: -1, y: -1 })
-  const translate$ = useRef({ x: col * 50, y: row * 50 })
-  useEffect(() => {
-    translate$.current = { x: col * 50, y: row * 50 }
-  })
-
+  // cards に変化ないのに位置計算を毎回するのは無駄と考えて memoize した
   const cardElements = useMemo(() => {
     return cards.map(({ id, text, src, state }, i, { length }) => {
       const m = length - (length % 5)
@@ -91,52 +84,52 @@ export function Pile({
 
         setDragging(true)
 
-        screen$.current.x = e.screenX
-        screen$.current.y = e.screenY
+        const { currentTarget: target, pointerType, pointerId } = e
 
-        if (e.pointerType === "mouse") {
-          e.currentTarget.setPointerCapture(e.pointerId)
+        if (pointerType === "mouse") {
+          target.setPointerCapture(pointerId)
         }
+
+        let { screenX, screenY } = e
+        let translateX = col * 50
+        let translateY = row * 50
+
+        const pointermove = (ev: PointerEvent) => {
+          translateX += ev.screenX - screenX
+          translateY += ev.screenY - screenY
+
+          screenX = ev.screenX
+          screenY = ev.screenY
+
+          target.style.transform = `translate(${translateX}px, ${translateY}px)`
+        }
+
+        target.addEventListener("pointermove", pointermove, { passive: true })
+
+        target.addEventListener(
+          "pointerup",
+          () => {
+            target.removeEventListener("pointermove", pointermove)
+
+            setDragging(false)
+
+            target.style.transform = ""
+
+            if (pointerType === "mouse") {
+              target.releasePointerCapture(pointerId)
+            }
+
+            onDragEnd?.()
+          },
+          { once: true, passive: true },
+        )
 
         onDragStart?.()
       }}
-      onPointerMove={e => {
-        if (!e.isPrimary) return
-        if (!dragging) return
-
-        if (screen$.current.x === -1) {
-          screen$.current.x = e.screenX
-        }
-        if (screen$.current.y === -1) {
-          screen$.current.y = e.screenY
-        }
-
-        const movementX = e.screenX - screen$.current.x
-        const movementY = e.screenY - screen$.current.y
-
-        translate$.current.x += movementX
-        translate$.current.y += movementY
-
-        screen$.current.x = e.screenX
-        screen$.current.y = e.screenY
-
-        e.currentTarget.style.transform = `translate(${translate$.current.x}px, ${translate$.current.y}px)`
-      }}
-      onPointerUp={e => {
-        if (!e.isPrimary) return
-
-        setDragging(false)
-
-        translate$.current = { x: col * 50, y: row * 50 }
-        e.currentTarget.style.transform = `translate(${translate$.current.x}px, ${translate$.current.y}px)`
-
-        if (e.pointerType === "mouse") {
-          e.currentTarget.releasePointerCapture(e.pointerId)
-        }
-
-        onDragEnd?.()
-      }}
       className={cx(
+        css`
+          transform: translate(${col * 50}px, ${row * 50}px);
+        `,
         css`
           position: absolute;
           left: 0;
@@ -150,10 +143,7 @@ export function Pile({
           `,
         className,
       )}
-      style={{
-        transform: `translate(${translate$.current.x}px, ${translate$.current.y}px)`,
-        ...style,
-      }}
+      style={style}
       {...props}
     >
       {cardElements}
