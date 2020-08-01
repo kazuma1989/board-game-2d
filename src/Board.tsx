@@ -21,24 +21,32 @@ export function Board() {
     const p = Panzoom(container, {
       maxZoom: 10,
       minZoom: 0.2,
-      smoothScroll: false,
+      smoothScroll: true,
 
       // disable double click zoom
       zoomDoubleClickSpeed: 1,
-
-      /** @returns should ignore */
-      beforeMouseDown(e: MouseEvent): boolean | undefined {
-        if (
-          e.target instanceof HTMLElement &&
-          e.target.closest("[data-no-pannable]")
-        ) {
-          return true
-        }
-      },
     })
+
+    const pause = (e: PointerEvent) => {
+      if (!(e.target instanceof HTMLElement)) return
+
+      if (e.target.closest("[data-no-pannable]")) {
+        p.pause()
+      }
+    }
+
+    const resume = (e: PointerEvent) => {
+      p.resume()
+    }
+
+    container.addEventListener("pointerdown", pause, { passive: true })
+    container.addEventListener("pointerup", resume, { passive: true })
 
     return () => {
       p.dispose()
+
+      container.removeEventListener("pointerdown", pause)
+      container.removeEventListener("pointerup", resume)
     }
   }, [container$])
 
