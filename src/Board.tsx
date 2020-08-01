@@ -27,9 +27,10 @@ export function Board() {
       zoomDoubleClickSpeed: 1,
     })
 
-    const zoom = 1.1
-    const ratio = zoom / (zoom - 1)
-    panzoom.zoomAbs(500 * ratio, 500 * ratio, zoom)
+    panzoom.moveTo(
+      -(1000 - document.body.clientWidth / 2),
+      -(1000 - document.body.clientHeight / 2),
+    )
 
     const pause = (e: PointerEvent) => {
       if (!(e.target instanceof HTMLElement)) return
