@@ -34,6 +34,7 @@ export function Board() {
 
     const pause = (e: PointerEvent) => {
       if (!(e.target instanceof HTMLElement)) return
+      if (!e.isPrimary) return
 
       if (e.target.closest("[data-no-pannable]")) {
         panzoom.pause()
