@@ -58,6 +58,17 @@ export function byCR(
 byCR.not = negate(byCR)
 
 /**
+ * card を持っている pile を見つける
+ */
+export function hasCard<T>(
+  validator: (t: T) => boolean,
+): (t: { cards: T[] }) => boolean {
+  return t => t.cards.some(validator)
+}
+
+hasCard.not = negate(hasCard)
+
+/**
  * 指定のミリ秒待つ
  */
 export async function ms(duration: number) {
