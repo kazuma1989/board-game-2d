@@ -37,8 +37,8 @@ export function View({
             type="button"
             onClick={async () => {
               const _allCards = [...allCards]
-              const cols = [...Array(20).keys()].map(v => v + 9)
-              const rows = [...Array(20).keys()].map(v => v + 9)
+              const cols = [...Array(20).keys()].map(v => v + 10)
+              const rows = [...Array(20).keys()].map(v => v + 10)
               const setPileWith = (batch: firebase.firestore.WriteBatch) => (
                 ref: firebase.firestore.DocumentReference<
                   firebase.firestore.DocumentData

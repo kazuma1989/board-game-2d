@@ -194,8 +194,10 @@ export const reducer = produce((draft: State, action: Action) => {
       const { id, pile } = action.payload
       if (!isPileData(pile)) return
 
-      const targetIndex = draft.piles.findIndex(byId(id))
-      draft.piles[targetIndex] = {
+      const target = draft.piles.find(byId(id))
+      if (!target) return
+
+      draft.piles[draft.piles.indexOf(target)] = {
         ...pile,
         id: id as Pile["id"],
       }
@@ -206,8 +208,10 @@ export const reducer = produce((draft: State, action: Action) => {
     case "Firestore.Delete.Pile": {
       const { id } = action.payload
 
-      const targetIndex = draft.piles.findIndex(byId(id))
-      draft.piles.splice(targetIndex, 1)
+      const target = draft.piles.find(byId(id))
+      if (!target) return
+
+      draft.piles.splice(draft.piles.indexOf(target), 1)
 
       return
     }
