@@ -11,6 +11,7 @@ export function Pile({
   cards,
   col,
   row,
+  locked,
   onDragStart,
   onDragEnd,
   onDragEnter,
@@ -30,6 +31,7 @@ export function Pile({
   }[]
   col: number
   row: number
+  locked?: boolean
   onDragStart?(): void
   onDragEnd?(dest: { col: number; row: number; x: number; y: number }): void
   onDragEnter?(): void
@@ -83,6 +85,7 @@ export function Pile({
     <div
       onPointerDown={e => {
         if (!e.isPrimary) return
+        if (locked) return
 
         setDragging(true)
 
@@ -145,8 +148,15 @@ export function Pile({
           position: absolute;
           left: 0;
           top: 0;
-          cursor: grab;
         `,
+        !locked &&
+          css`
+            cursor: grab;
+          `,
+        locked &&
+          css`
+            cursor: not-allowed;
+          `,
         !dragging &&
           css`
             transition: transform 400ms;

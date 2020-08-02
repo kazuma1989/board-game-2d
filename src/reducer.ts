@@ -37,6 +37,24 @@ const initialState: State = {
 
 export type Action =
   | {
+      type: "Pile.DragStart"
+      payload: {
+        pileId: Pile["id"]
+      }
+    }
+  | {
+      type: "Pile.DragStart.Success"
+      payload: {
+        pileId: Pile["id"]
+      }
+    }
+  | {
+      type: "Pile.DragStart.Failed"
+      payload: {
+        pileId: Pile["id"]
+      }
+    }
+  | {
       type: "Pile.DragEnd"
       payload: {
         pileId: Pile["id"]
@@ -73,6 +91,33 @@ export type Action =
 
 export const reducer = produce((draft: State, action: Action) => {
   switch (action.type) {
+    case "Pile.DragStart": {
+      const { pileId } = action.payload
+
+      const target = draft.piles.find(p => p.id === pileId)
+      if (!target) return
+
+      return
+    }
+
+    case "Pile.DragStart.Success": {
+      const { pileId } = action.payload
+
+      const target = draft.piles.find(p => p.id === pileId)
+      if (!target) return
+
+      return
+    }
+
+    case "Pile.DragStart.Failed": {
+      const { pileId } = action.payload
+
+      const target = draft.piles.find(p => p.id === pileId)
+      if (!target) return
+
+      return
+    }
+
     case "Pile.DragEnd": {
       const { pileId, col, row } = action.payload
 

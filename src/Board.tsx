@@ -64,6 +64,7 @@ export function Board() {
 
   const dispatch = useDispatch()
   const piles = useSelector(state => state.piles)
+  const userId = useSelector(state => state.user.id)
 
   const store = useStore()
   const pilesRef = useCollection()
@@ -86,18 +87,26 @@ export function Board() {
           `}
         />
 
-        {piles.map(({ col, row, ...pile }) => {
+        {piles.map(({ id: pileId, cards, col, row, dragging }) => {
           return (
             <Pile
-              key={pile.id}
-              cards={pile.cards}
+              key={pileId}
+              cards={cards}
               col={col}
               row={row}
+              locked={dragging && dragging !== userId}
               // TODO イベントハンドラー内に大きなロジック書きたくないよね
               onDragStart={async () => {
-                const pileRef = pilesRef.doc(pile.id)
+                dispatch({
+                  type: "Pile.DragStart",
+                  payload: {
+                    pileId,
+                  },
+                })
 
-                await pileRef.firestore
+                const pileRef = pilesRef.doc(pileId)
+
+                const failed = await pileRef.firestore
                   .runTransaction(async t => {
                     const pile$ = await t.get(pileRef)
                     if (pile$.data()?.dragging) {
@@ -109,20 +118,36 @@ export function Board() {
                       dragging: state.user.id,
                     })
                   })
-                  .catch(console.warn)
+                  .catch(() => true)
+
+                if (!failed) {
+                  dispatch({
+                    type: "Pile.DragStart.Success",
+                    payload: {
+                      pileId,
+                    },
+                  })
+                } else {
+                  dispatch({
+                    type: "Pile.DragStart.Failed",
+                    payload: {
+                      pileId,
+                    },
+                  })
+                }
               }}
               // TODO イベントハンドラー内に大きなロジック書きたくないよね
               onDragEnd={async dest => {
                 dispatch({
                   type: "Pile.DragEnd",
                   payload: {
-                    pileId: pile.id,
+                    pileId,
                     col: dest.col,
                     row: dest.row,
                   },
                 })
 
-                const pileRef = pilesRef.doc(pile.id)
+                const pileRef = pilesRef.doc(pileId)
 
                 await pileRef.firestore.runTransaction(async t => {
                   const pile$ = await t.get(pileRef)
@@ -141,7 +166,7 @@ export function Board() {
                 dispatch({
                   type: "Pile.DragEnter",
                   payload: {
-                    pileId: pile.id,
+                    pileId,
                   },
                 })
               }}
@@ -149,7 +174,7 @@ export function Board() {
                 dispatch({
                   type: "Pile.Drop",
                   payload: {
-                    pileId: pile.id,
+                    pileId,
                   },
                 })
               }}
