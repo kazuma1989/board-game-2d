@@ -140,7 +140,6 @@ export function Board() {
               // TODO イベントハンドラー内に大きなロジック書きたくないよね
               onDragEnd={async dest => {
                 const state = store.getState()
-                const target = state.piles.find(byCR(dest.col, dest.row))
 
                 dispatch({
                   type: "Pile.DragEnd",
@@ -151,6 +150,7 @@ export function Board() {
                   },
                 })
 
+                const target = state.piles.find(byCR(dest.col, dest.row))
                 if (target) {
                   const pileRef = pilesRef.doc(pileId)
                   const targetRef = pilesRef.doc(target.id)

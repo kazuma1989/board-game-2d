@@ -33,14 +33,17 @@ export function FirestoreMockPiles() {
       return piles
     }, [] as State["piles"])
 
-    piles.forEach(pile => {
-      dispatch({
-        type: "Firestore.Set.Pile",
-        payload: {
-          id: pile.id,
-          pile,
-        },
-      })
+    dispatch({
+      type: "Firestore.ChangePiles",
+      payload: {
+        changes: piles.map(({ id, ...data }) => {
+          return {
+            type: "added",
+            id: id,
+            data,
+          }
+        }),
+      },
     })
   }, [dispatch])
 

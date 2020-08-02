@@ -30,7 +30,7 @@ export function View({
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            background-color: hsla(1, 0%, 50%, 0.5);
+            background-color: hsla(0, 0%, 50%, 0.5);
           `}
         >
           <button

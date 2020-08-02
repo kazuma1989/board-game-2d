@@ -75,22 +75,19 @@ export type Action =
       }
     }
   | {
-      type: "Firestore.Set.Pile"
+      type: "Firestore.ChangePiles"
       payload: {
-        id: string
-        pile: unknown
-      }
-      meta?: {
-        changeType: "added" | "modified"
-      }
-    }
-  | {
-      type: "Firestore.Delete.Pile"
-      payload: {
-        id: string
-      }
-      meta?: {
-        changeType: "removed"
+        changes: (
+          | {
+              type: "added" | "modified"
+              id: string
+              data: unknown
+            }
+          | {
+              type: "removed"
+              id: string
+            }
+        )[]
       }
     }
 
@@ -177,32 +174,43 @@ export const reducer = produce((draft: State, action: Action) => {
       return
     }
 
-    case "Firestore.Set.Pile": {
-      const { id, pile: data } = action.payload
-      if (!isPileData(data)) return
+    case "Firestore.ChangePiles": {
+      const { changes } = action.payload
 
-      const pile = {
-        ...data,
-        id: id as Pile["id"],
-      }
+      changes.forEach(change => {
+        switch (change.type) {
+          case "added":
+          case "modified": {
+            const { id, data } = change
+            if (!isPileData(data)) return
 
-      const target = draft.piles.find(byId(id))
-      if (target) {
-        draft.piles[draft.piles.indexOf(target)] = pile
-      } else {
-        draft.piles.push(pile)
-      }
+            const pile = {
+              ...data,
+              id: id as Pile["id"],
+            }
 
-      return
-    }
+            const target = draft.piles.find(byId(id))
+            if (target) {
+              draft.piles[draft.piles.indexOf(target)] = pile
+            } else {
+              draft.piles.push(pile)
+            }
 
-    case "Firestore.Delete.Pile": {
-      const { id } = action.payload
+            return
+          }
 
-      const target = draft.piles.find(byId(id))
-      if (!target) return
+          case "removed": {
+            const { id } = change
 
-      draft.piles.splice(draft.piles.indexOf(target), 1)
+            const target = draft.piles.find(byId(id))
+            if (!target) return
+
+            draft.piles.splice(draft.piles.indexOf(target), 1)
+
+            return
+          }
+        }
+      })
 
       return
     }
