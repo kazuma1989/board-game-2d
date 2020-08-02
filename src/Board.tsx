@@ -11,7 +11,7 @@ import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
 import { useCollection } from "./piles.js"
 import { Provider } from "./useScale.js"
-import { byCR } from "./util.js"
+import { byCR, byId } from "./util.js"
 
 export function Board() {
   const scale$ = useRef(1)
@@ -147,56 +147,91 @@ export function Board() {
                     const state = store.getState()
 
                     dispatch({
-                      type: "Pile.DragEnd",
+                      type: "Card.MoveEnd",
                       payload: {
-                        pileId,
+                        cardId,
                         col: dest.col,
                         row: dest.row,
                       },
                     })
 
-                    const target = state.piles.find(byCR(dest.col, dest.row))
-                    if (target && target.id !== pileId) {
-                      const pileRef = pilesRef.doc(pileId)
-                      const targetRef = pilesRef.doc(target.id)
+                    const fromPile = state.piles.find(p =>
+                      p.cards.some(c => c.id === cardId),
+                    )
+                    if (!fromPile) return
 
-                      await pileRef.firestore.runTransaction(async t => {
-                        const [pile$, target$] = await Promise.all([
-                          t.get(pileRef),
-                          t.get(targetRef),
-                        ])
+                    const toPile = state.piles.find(byCR(dest.col, dest.row))
+                    if (toPile) {
+                      if (toPile.id === fromPile.id) {
+                        // pile から card を取り上げたが同じ pile に戻した
 
-                        const state = store.getState()
+                        const pileRef = pilesRef.doc(fromPile.id)
 
-                        const { dragging, cards } = pile$.data() ?? {}
-                        if (dragging !== state.user.id) return
-                        if (!cards) return
+                        await pileRef.firestore.runTransaction(async t => {
+                          const pile$ = await t.get(pileRef)
 
-                        const { col, row, cards: targetCards } =
-                          target$.data() ?? {}
-                        if (col !== target.col || row !== target.row) return
-                        if (!targetCards) return
+                          const userId = store.getState().user.id
+                          const pile = pile$.data() ?? {}
+                          if (pile.dragging !== userId) return
 
-                        t.delete(pileRef)
-                        t.update(targetRef, {
-                          cards: [...targetCards, ...cards],
+                          t.update(pileRef, {
+                            dragging: firestore.FieldValue.delete(),
+                          })
                         })
-                      })
+                      } else {
+                        // pile 内の card を別の pile に移した
+
+                        const fromRef = pilesRef.doc(fromPile.id)
+                        const toRef = pilesRef.doc(toPile.id)
+
+                        await fromRef.firestore.runTransaction(async t => {
+                          const [from$, to$] = await Promise.all([
+                            t.get(fromRef),
+                            t.get(toRef),
+                          ])
+
+                          const userId = store.getState().user.id
+                          const from = from$.data() ?? {}
+                          if (from.dragging !== userId) return
+
+                          const to = to$.data() ?? {}
+                          if (to.dragging && to.dragging !== userId) return
+
+                          const card = from.cards?.find(byId(cardId))
+                          if (!card) return
+
+                          const fromCards = from.cards?.filter(byId.not(cardId))
+                          if (fromCards?.length) {
+                            t.update(fromRef, {
+                              cards: fromCards,
+                              dragging: firestore.FieldValue.delete(),
+                            })
+                          } else {
+                            t.delete(fromRef)
+                          }
+
+                          t.update(toRef, {
+                            cards: [...to.cards, card],
+                            dragging: firestore.FieldValue.delete(),
+                          })
+                        })
+                      }
                     } else {
-                      const pileRef = pilesRef.doc(pileId)
+                      // pile から card を取り上げ、別の pile のない空間に置いた
 
-                      await pileRef.firestore.runTransaction(async t => {
-                        const pile$ = await t.get(pileRef)
+                      const fromRef = pilesRef.doc(fromPile.id)
+                      const toRef = pilesRef
+                        .where("col", "==", dest.col)
+                        .where("row", "==", dest.row)
 
-                        const state = store.getState()
-                        if (pile$.data()?.dragging !== state.user.id) return
+                      // TODO spaces collection に予約 doc を作ってロックをとる設計にする
 
-                        t.update(pileRef, {
-                          dragging: firestore.FieldValue.delete(),
-                          col: dest.col,
-                          row: dest.row,
-                        })
-                      })
+                      // await fromRef.firestore.runTransaction(async t => {
+                      //   const [from$, to$] = await Promise.all([
+                      //     t.get(fromRef),
+                      //     t.get(toRef),
+                      //   ])
+                      // })
                     }
                   }}
                 />

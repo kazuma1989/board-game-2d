@@ -75,6 +75,14 @@ export type Action =
       }
     }
   | {
+      type: "Card.MoveEnd"
+      payload: {
+        cardId: Card["id"]
+        col: number
+        row: number
+      }
+    }
+  | {
       type: "Firestore.ChangePiles"
       payload: {
         changes: (
@@ -170,6 +178,39 @@ export const reducer = produce((draft: State, action: Action) => {
       draft.piles.splice(draft.piles.indexOf(draggingPile), 1)
 
       target.cards.push(...draggingPile.cards)
+
+      return
+    }
+
+    case "Card.MoveEnd": {
+      const { cardId, col, row } = action.payload
+
+      const fromPile = draft.piles.find(p => p.cards.some(c => c.id === cardId))
+      if (!fromPile) return
+
+      const toPile = draft.piles.find(byCR(col, row))
+      if (toPile) {
+        if (toPile.id === fromPile.id) {
+          // pile から card を取り上げたが同じ pile に戻した
+        } else {
+          // pile 内の card を別の pile に移した
+
+          const card = fromPile.cards.find(byId(cardId))
+          if (!card) return
+
+          const fromCards = fromPile.cards.filter(byId.not(cardId))
+          if (fromCards.length) {
+            fromPile.cards = fromCards
+          } else {
+            draft.piles.splice(draft.piles.indexOf(fromPile), 1)
+          }
+
+          toPile.cards.push(card)
+        }
+      } else {
+        // fromPile.col = col
+        // fromPile.row = row
+      }
 
       return
     }
