@@ -11,7 +11,7 @@ import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
 import { useCollection } from "./piles.js"
 import { Provider } from "./useScale.js"
-import { byCR, byId, randomID } from "./util.js"
+import { byCR, byId, hasCard } from "./util.js"
 
 export function Board() {
   const scale$ = useRef(1)
@@ -69,6 +69,7 @@ export function Board() {
 
   const store = useStore()
   const pilesRef = useCollection()
+  const db = pilesRef.firestore
 
   return (
     <Provider value={scale$}>
@@ -89,7 +90,7 @@ export function Board() {
         />
 
         {piles
-          .flatMap(({ id: pileId, cards, col, row, dragging }) => {
+          .flatMap(({ cards, col, row, dragging }) => {
             return cards.map(({ id: cardId, text, src, state }, index) => {
               return (
                 <Card
@@ -103,180 +104,74 @@ export function Board() {
                   src={src[state]}
                   // TODO イベントハンドラー内に大きなロジック書きたくないよね
                   onMoveStart={async () => {
-                    dispatch({
-                      type: "Pile.DragStart",
-                      payload: {
-                        pileId,
-                      },
-                    })
+                    const state = store.getState()
 
-                    const pileRef = pilesRef.doc(pileId)
+                    const fromPile = state.piles.find(hasCard(byId(cardId)))
+                    if (!fromPile) return
 
-                    const failed = await pileRef.firestore
+                    await db
                       .runTransaction(async t => {
-                        const pile$ = await t.get(pileRef)
-                        if (pile$.data()?.dragging) {
-                          throw `pile is locked: id=${pile$.id}`
+                        const fromRef = pilesRef.doc(fromPile.id)
+                        const from = await t.get(fromRef).then(d => d.data())
+
+                        if (from?.dragging && from.dragging !== state.user.id) {
+                          throw `pile is locked: id=${fromRef.id}`
                         }
 
-                        t.update(pileRef, {
-                          dragging: userId,
+                        t.update(fromRef, {
+                          dragging: state.user.id,
                         })
                       })
-                      .catch(() => true)
-
-                    if (!failed) {
-                      dispatch({
-                        type: "Pile.DragStart.Success",
-                        payload: {
-                          pileId,
-                        },
-                      })
-                    } else {
-                      dispatch({
-                        type: "Pile.DragStart.Failed",
-                        payload: {
-                          pileId,
-                        },
-                      })
-                    }
+                      .catch(console.log)
                   }}
                   // TODO イベントハンドラー内に大きなロジック書きたくないよね
                   onMoveEnd={async dest => {
                     const state = store.getState()
 
-                    dispatch({
-                      type: "Card.MoveEnd",
-                      payload: {
-                        cardId,
-                        col: dest.col,
-                        row: dest.row,
-                      },
-                    })
-
-                    const fromPile = state.piles.find(p =>
-                      p.cards.some(c => c.id === cardId),
-                    )
+                    const fromPile = state.piles.find(hasCard(byId(cardId)))
                     if (!fromPile) return
 
                     const toPile = state.piles.find(byCR(dest.col, dest.row))
-                    if (toPile) {
-                      if (toPile.id === fromPile.id) {
-                        // pile から card を取り上げたが同じ pile に戻した
 
-                        const pileRef = pilesRef.doc(fromPile.id)
+                    await db.runTransaction(async t => {
+                      const fromRef = pilesRef.doc(fromPile.id)
+                      const toRef = pilesRef.doc(
+                        toPile?.id || [dest.col, dest.row].join(","),
+                      )
+                      const [from, to] = await Promise.all([
+                        t.get(fromRef).then(d => d.data()),
+                        t.get(toRef).then(d => d.data()),
+                      ])
 
-                        await pileRef.firestore.runTransaction(async t => {
-                          const pile$ = await t.get(pileRef)
+                      if (from?.dragging !== state.user.id) return
 
-                          const pile = pile$.data() ?? {}
-                          if (pile.dragging !== userId) return
+                      t.update(fromRef, {
+                        dragging: firestore.FieldValue.delete(),
+                      })
 
-                          t.update(pileRef, {
-                            dragging: firestore.FieldValue.delete(),
-                          })
+                      // card を取り上げたものの同じ pile に戻した
+                      if (fromRef.isEqual(toRef)) return
+
+                      if (to?.dragging && to.dragging !== state.user.id) return
+
+                      const card = from.cards?.find(byId(cardId))
+                      if (!card) return
+
+                      const fromCards = from.cards?.filter(byId.not(cardId))
+                      if (fromCards?.length) {
+                        t.update(fromRef, {
+                          cards: fromCards,
                         })
                       } else {
-                        // pile 内の card を別の pile に移した
-
-                        const fromRef = pilesRef.doc(fromPile.id)
-                        const toRef = pilesRef.doc(toPile.id)
-
-                        await fromRef.firestore.runTransaction(async t => {
-                          const [from$, to$] = await Promise.all([
-                            t.get(fromRef),
-                            t.get(toRef),
-                          ])
-
-                          const from = from$.data() ?? {}
-                          if (from.dragging !== userId) return
-
-                          const to = to$.data() ?? {}
-                          if (to.dragging && to.dragging !== userId) return
-
-                          const card = from.cards?.find(byId(cardId))
-                          if (!card) return
-
-                          const fromCards = from.cards?.filter(byId.not(cardId))
-                          if (fromCards?.length) {
-                            t.update(fromRef, {
-                              cards: fromCards,
-                              dragging: firestore.FieldValue.delete(),
-                            })
-                          } else {
-                            t.delete(fromRef)
-                          }
-
-                          t.update(toRef, {
-                            cards: [...to.cards, card],
-                            dragging: firestore.FieldValue.delete(),
-                          })
-                        })
+                        t.delete(fromRef)
                       }
-                    } else {
-                      // pile から card を取り上げ、別の pile のない空間に置いた
 
-                      // まず移動先の空間をロック
-                      const spaceRef = pilesRef.firestore
-                        // TODO game id を変動可能にする
-                        .collection("/games/1xNV05bl2ISPqgCjSQTq/spaces")
-                        .doc(`col_${dest.col}_row_${dest.row}`)
-
-                      await spaceRef.firestore.runTransaction(async t => {
-                        const to$ = await t.get(spaceRef)
-
-                        // スペースが予約されていたのであきらめる
-                        const to = to$.data() ?? {}
-                        if (to.dragging && to.dragging !== userId) {
-                          throw `space is locked`
-                        }
-
-                        t.set(spaceRef, {
-                          dragging: userId,
-                        })
+                      t.set(toRef, {
+                        cards: [...(to?.cards ?? []), card],
+                        col: dest.col,
+                        row: dest.row,
                       })
-
-                      // ロックが取れたら移動
-                      const fromRef = pilesRef.doc(fromPile.id)
-                      const toRef = pilesRef.doc(randomID())
-
-                      await fromRef.firestore.runTransaction(async t => {
-                        const [from$, space$] = await Promise.all([
-                          t.get(fromRef),
-                          t.get(spaceRef),
-                        ])
-
-                        // 自分のロックが取れていない
-                        const from = from$.data() ?? {}
-                        if (from.dragging !== userId) return
-
-                        // スペースが予約されていたのであきらめる
-                        const space = space$.data() ?? {}
-                        if (space.dragging && space.dragging !== userId) {
-                          throw `space is locked`
-                        }
-
-                        const card = from.cards?.find(byId(cardId))
-                        if (!card) return
-
-                        const fromCards = from.cards?.filter(byId.not(cardId))
-                        if (fromCards?.length) {
-                          t.update(fromRef, {
-                            cards: fromCards,
-                            dragging: firestore.FieldValue.delete(),
-                          })
-                        } else {
-                          t.delete(fromRef)
-                        }
-
-                        t.set(toRef, {
-                          cards: [card],
-                          col: dest.col,
-                          row: dest.row,
-                        })
-                        t.delete(spaceRef)
-                      })
-                    }
+                    })
                   }}
                 />
               )

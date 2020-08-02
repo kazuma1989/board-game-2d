@@ -44,16 +44,12 @@ export function View({
                   firebase.firestore.DocumentData
                 >,
               ) => {
+                const [colStr, rowStr] = ref.id.split(",")
+                const col = parseInt(colStr)
+                const row = parseInt(rowStr)
+
                 const [card] = _allCards.splice(
                   Math.floor(Math.random() * _allCards.length),
-                  1,
-                )
-                const [col] = cols.splice(
-                  Math.floor(Math.random() * cols.length),
-                  1,
-                )
-                const [row] = rows.splice(
-                  Math.floor(Math.random() * rows.length),
                   1,
                 )
 
@@ -78,9 +74,16 @@ export function View({
               const setPile = setPileWith(b)
 
               for (let i = 3 - piles$.size; i > 0; i--) {
-                await pilesRef.add({ cards: [] }).then(ref => {
-                  setPile(ref)
-                })
+                const [col] = cols.splice(
+                  Math.floor(Math.random() * cols.length),
+                  1,
+                )
+                const [row] = rows.splice(
+                  Math.floor(Math.random() * rows.length),
+                  1,
+                )
+
+                setPile(pilesRef.doc([col, row].join(",")))
               }
 
               piles$.docs.forEach(({ ref }) => {
