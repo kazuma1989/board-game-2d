@@ -127,7 +127,7 @@ export const reducer = produce((draft: State, action: Action) => {
       if (!pile) return
 
       const target = draft.piles.find(byCR(col, row))
-      if (target) {
+      if (target && target.id !== pileId) {
         draft.piles.splice(draft.piles.indexOf(pile), 1)
 
         target.cards.push(...pile.cards)

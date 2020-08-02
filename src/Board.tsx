@@ -156,7 +156,7 @@ export function Board() {
                     })
 
                     const target = state.piles.find(byCR(dest.col, dest.row))
-                    if (target) {
+                    if (target && target.id !== pileId) {
                       const pileRef = pilesRef.doc(pileId)
                       const targetRef = pilesRef.doc(target.id)
 
