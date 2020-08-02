@@ -35,7 +35,7 @@ export function FirestoreMockPiles() {
 
     piles.forEach(pile => {
       dispatch({
-        type: "Firestore.Insert.Pile",
+        type: "Firestore.Set.Pile",
         payload: {
           id: pile.id,
           pile,

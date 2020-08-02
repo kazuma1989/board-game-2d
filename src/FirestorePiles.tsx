@@ -10,28 +10,18 @@ export function FirestorePiles() {
     return pilesRef.onSnapshot(pilesSnapshot => {
       pilesSnapshot.docChanges().forEach(change => {
         switch (change.type) {
-          case "added": {
-            const pile$ = change.doc
-
-            dispatch({
-              type: "Firestore.Insert.Pile",
-              payload: {
-                id: pile$.id,
-                pile: pile$.data(),
-              },
-            })
-
-            return
-          }
-
+          case "added":
           case "modified": {
             const pile$ = change.doc
 
             dispatch({
-              type: "Firestore.Update.Pile",
+              type: "Firestore.Set.Pile",
               payload: {
                 id: pile$.id,
                 pile: pile$.data(),
+              },
+              meta: {
+                changeType: change.type,
               },
             })
 
@@ -45,6 +35,9 @@ export function FirestorePiles() {
               type: "Firestore.Delete.Pile",
               payload: {
                 id: pile$.id,
+              },
+              meta: {
+                changeType: change.type,
               },
             })
 

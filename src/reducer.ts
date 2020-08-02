@@ -75,23 +75,22 @@ export type Action =
       }
     }
   | {
-      type: "Firestore.Insert.Pile"
+      type: "Firestore.Set.Pile"
       payload: {
         id: string
         pile: unknown
       }
-    }
-  | {
-      type: "Firestore.Update.Pile"
-      payload: {
-        id: string
-        pile: unknown
+      meta?: {
+        changeType: "added" | "modified"
       }
     }
   | {
       type: "Firestore.Delete.Pile"
       payload: {
         id: string
+      }
+      meta?: {
+        changeType: "removed"
       }
     }
 
@@ -178,28 +177,20 @@ export const reducer = produce((draft: State, action: Action) => {
       return
     }
 
-    case "Firestore.Insert.Pile": {
-      const { id, pile } = action.payload
-      if (!isPileData(pile)) return
+    case "Firestore.Set.Pile": {
+      const { id, pile: data } = action.payload
+      if (!isPileData(data)) return
 
-      draft.piles.push({
-        ...pile,
+      const pile = {
+        ...data,
         id: id as Pile["id"],
-      })
-
-      return
-    }
-
-    case "Firestore.Update.Pile": {
-      const { id, pile } = action.payload
-      if (!isPileData(pile)) return
+      }
 
       const target = draft.piles.find(byId(id))
-      if (!target) return
-
-      draft.piles[draft.piles.indexOf(target)] = {
-        ...pile,
-        id: id as Pile["id"],
+      if (target) {
+        draft.piles[draft.piles.indexOf(target)] = pile
+      } else {
+        draft.piles.push(pile)
       }
 
       return
