@@ -1,5 +1,5 @@
 import produce from "https://cdn.skypack.dev/immer"
-import { randomID } from "./util.js"
+import { byCR, byId, randomID } from "./util.js"
 
 export type State = {
   user: User
@@ -88,13 +88,19 @@ export type Action =
         pile: unknown
       }
     }
+  | {
+      type: "Firestore.Delete.Pile"
+      payload: {
+        id: string
+      }
+    }
 
 export const reducer = produce((draft: State, action: Action) => {
   switch (action.type) {
     case "Pile.DragStart": {
       const { pileId } = action.payload
 
-      const target = draft.piles.find(p => p.id === pileId)
+      const target = draft.piles.find(byId(pileId))
       if (!target) return
 
       return
@@ -103,7 +109,7 @@ export const reducer = produce((draft: State, action: Action) => {
     case "Pile.DragStart.Success": {
       const { pileId } = action.payload
 
-      const target = draft.piles.find(p => p.id === pileId)
+      const target = draft.piles.find(byId(pileId))
       if (!target) return
 
       return
@@ -112,7 +118,7 @@ export const reducer = produce((draft: State, action: Action) => {
     case "Pile.DragStart.Failed": {
       const { pileId } = action.payload
 
-      const target = draft.piles.find(p => p.id === pileId)
+      const target = draft.piles.find(byId(pileId))
       if (!target) return
 
       return
@@ -121,11 +127,18 @@ export const reducer = produce((draft: State, action: Action) => {
     case "Pile.DragEnd": {
       const { pileId, col, row } = action.payload
 
-      const target = draft.piles.find(p => p.id === pileId)
-      if (!target) return
+      const pile = draft.piles.find(byId(pileId))
+      if (!pile) return
 
-      target.col = col
-      target.row = row
+      const target = draft.piles.find(byCR(col, row))
+      if (target) {
+        draft.piles.splice(draft.piles.indexOf(pile), 1)
+
+        target.cards.push(...pile.cards)
+      } else {
+        pile.col = col
+        pile.row = row
+      }
 
       return
     }
@@ -181,11 +194,20 @@ export const reducer = produce((draft: State, action: Action) => {
       const { id, pile } = action.payload
       if (!isPileData(pile)) return
 
-      const targetIndex = draft.piles.findIndex(p => p.id === id)
+      const targetIndex = draft.piles.findIndex(byId(id))
       draft.piles[targetIndex] = {
         ...pile,
         id: id as Pile["id"],
       }
+
+      return
+    }
+
+    case "Firestore.Delete.Pile": {
+      const { id } = action.payload
+
+      const targetIndex = draft.piles.findIndex(byId(id))
+      draft.piles.splice(targetIndex, 1)
 
       return
     }

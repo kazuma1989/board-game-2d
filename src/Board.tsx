@@ -11,6 +11,7 @@ import { Grid } from "./Grid.js"
 import { Pile } from "./Pile.js"
 import { useCollection } from "./piles.js"
 import { Provider } from "./useScale.js"
+import { byCR } from "./util.js"
 
 export function Board() {
   const scale$ = useRef(1)
@@ -138,6 +139,9 @@ export function Board() {
               }}
               // TODO イベントハンドラー内に大きなロジック書きたくないよね
               onDragEnd={async dest => {
+                const state = store.getState()
+                const target = state.piles.find(byCR(dest.col, dest.row))
+
                 dispatch({
                   type: "Pile.DragEnd",
                   payload: {
@@ -147,20 +151,48 @@ export function Board() {
                   },
                 })
 
-                const pileRef = pilesRef.doc(pileId)
+                if (target) {
+                  const pileRef = pilesRef.doc(pileId)
+                  const targetRef = pilesRef.doc(target.id)
 
-                await pileRef.firestore.runTransaction(async t => {
-                  const pile$ = await t.get(pileRef)
+                  await pileRef.firestore.runTransaction(async t => {
+                    const [pile$, target$] = await Promise.all([
+                      t.get(pileRef),
+                      t.get(targetRef),
+                    ])
 
-                  const state = store.getState()
-                  if (pile$.data()?.dragging !== state.user.id) return
+                    const state = store.getState()
 
-                  t.update(pileRef, {
-                    dragging: firestore.FieldValue.delete(),
-                    col: dest.col,
-                    row: dest.row,
+                    const { dragging, cards } = pile$.data() ?? {}
+                    if (dragging !== state.user.id) return
+                    if (!cards) return
+
+                    const { col, row, cards: targetCards } =
+                      target$.data() ?? {}
+                    if (col !== target.col || row !== target.row) return
+                    if (!targetCards) return
+
+                    t.delete(pileRef)
+                    t.update(targetRef, {
+                      cards: [...targetCards, ...cards],
+                    })
                   })
-                })
+                } else {
+                  const pileRef = pilesRef.doc(pileId)
+
+                  await pileRef.firestore.runTransaction(async t => {
+                    const pile$ = await t.get(pileRef)
+
+                    const state = store.getState()
+                    if (pile$.data()?.dragging !== state.user.id) return
+
+                    t.update(pileRef, {
+                      dragging: firestore.FieldValue.delete(),
+                      col: dest.col,
+                      row: dest.row,
+                    })
+                  })
+                }
               }}
               onDragEnter={() => {
                 dispatch({

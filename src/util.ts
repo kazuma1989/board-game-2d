@@ -21,6 +21,16 @@ export function byId(id: string): (t: { id: string }) => boolean {
 }
 
 /**
+ * 座標で find する
+ */
+export function byCR(
+  col: number,
+  row: number,
+): (t: { col: number; row: number }) => boolean {
+  return t => t.col === col && t.row === row
+}
+
+/**
  * 指定のミリ秒待つ
  */
 export async function ms(duration: number) {

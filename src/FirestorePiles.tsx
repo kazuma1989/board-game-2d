@@ -39,7 +39,14 @@ export function FirestorePiles() {
           }
 
           case "removed": {
-            console.debug(change.type)
+            const pile$ = change.doc
+
+            dispatch({
+              type: "Firestore.Delete.Pile",
+              payload: {
+                id: pile$.id,
+              },
+            })
 
             return
           }
