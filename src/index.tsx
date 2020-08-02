@@ -1,9 +1,13 @@
-import React, { render } from "https://cdn.skypack.dev/preact/compat"
-import { App } from "./App.js"
-import { mode } from "./mode.js"
+import React, { Suspense } from "https://cdn.skypack.dev/react"
+import { render } from "https://cdn.skypack.dev/react-dom"
 
-if (mode === "debug") {
-  import("https://cdn.skypack.dev/preact/debug")
-}
+const App = React.lazy(() =>
+  import("./App.js").then(({ App }) => ({ default: App })),
+)
 
-render(<App />, document.body)
+render(
+  <Suspense fallback={<div>Loading...</div>}>
+    <App />
+  </Suspense>,
+  document.body,
+)

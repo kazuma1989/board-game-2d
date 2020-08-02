@@ -1,19 +1,27 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { useMemo, useState } from "https://cdn.skypack.dev/preact/compat"
+import React, {
+  CSSProperties,
+  useMemo,
+  useState,
+} from "https://cdn.skypack.dev/react"
+import type { Card } from "./reducer"
+import { useScale } from "./useScale.js"
 
 export function Pile({
   cards,
-  x,
-  y,
-  className,
-  style,
+  col,
+  row,
+  locked,
   onDragStart,
   onDragEnd,
   onDragEnter,
   onDrop,
+  className,
+  style,
   ...props
 }: {
   cards: {
+    id: Card["id"]
     text: string
     src: {
       face: string
@@ -21,46 +29,53 @@ export function Pile({
     }
     state: "face" | "back"
   }[]
-  x: number
-  y: number
+  col: number
+  row: number
+  locked?: boolean
   onDragStart?(): void
-  onDragEnd?(): void
+  onDragEnd?(dest: { col: number; row: number; x: number; y: number }): void
   onDragEnter?(): void
   onDrop?(): void
   className?: string
-  style?: any
+  style?: CSSProperties
 }) {
   const [dragging, setDragging] = useState(false)
+  const scale$ = useScale()
 
+  // cards に変化ないのに位置計算を毎回するのは無駄と考えて memoize した
   const cardElements = useMemo(() => {
-    return cards.map(({ text, src, state }, i, { length }) => {
+    return cards.map(({ id, text, src, state }, i, { length }) => {
       const m = length - (length % 5)
       const n = i - m
 
+      // 読みづらいがいったんうまくいってるのでノータッチ
+      const { left, top } =
+        n >= 0
+          ? m === 0
+            ? {
+                left: -3 * n,
+                top: -2 * n,
+              }
+            : {
+                left: -3 * (n + 1) - 1 * m,
+                top: -2 * (n + 1) - 0.5 * m,
+              }
+          : {
+              left: -1 * i,
+              top: -0.5 * i,
+            }
+
       return (
-        <Card
-          key={i}
+        <CardComp
+          key={id}
           text={text}
           src={src[state]}
           className={css`
             position: absolute;
           `}
-          style={
-            n >= 0
-              ? m === 0
-                ? {
-                    left: -3 * n,
-                    top: -2 * n,
-                  }
-                : {
-                    left: -3 * (n + 1) - 1 * m,
-                    top: -2 * (n + 1) - 0.5 * m,
-                  }
-              : {
-                  left: -1 * i,
-                  top: -0.5 * i,
-                }
-          }
+          style={{
+            transform: `translate(${left}px, ${top}px)`,
+          }}
         />
       )
     })
@@ -68,52 +83,92 @@ export function Pile({
 
   return (
     <div
-      draggable
-      onDragStart={e => {
+      onPointerDown={e => {
+        if (!e.isPrimary) return
+        if (locked) return
+
         setDragging(true)
 
-        // ドラッグで掴んでいる位置と、Pile がドロップで配置される位置をなるべく近づける
-        const cardOnTop = e.currentTarget.lastElementChild
-        if (cardOnTop instanceof HTMLElement) {
-          const left = parseFloat(cardOnTop.style.left) || 0
-          const top = parseFloat(cardOnTop.style.top) || 0
+        const { currentTarget: target, pointerType, pointerId } = e
 
-          e.dataTransfer?.setDragImage(e.currentTarget, -left + 25, -top + 25)
+        if (pointerType === "mouse") {
+          target.setPointerCapture(pointerId)
         }
+
+        let { clientX, clientY } = e
+        let translateX = col * 50
+        let translateY = row * 50
+
+        const pointermove = (ev: PointerEvent) => {
+          translateX += (ev.clientX - clientX) / scale$.current
+          translateY += (ev.clientY - clientY) / scale$.current
+
+          clientX = ev.clientX
+          clientY = ev.clientY
+
+          target.style.transform = `translate(${translateX}px, ${translateY}px)`
+        }
+
+        target.addEventListener("pointermove", pointermove, { passive: true })
+
+        target.addEventListener(
+          "pointerup",
+          () => {
+            target.removeEventListener("pointermove", pointermove)
+
+            setDragging(false)
+
+            target.style.transform = ""
+
+            if (pointerType === "mouse") {
+              target.releasePointerCapture(pointerId)
+            }
+
+            const centerX = translateX + 25
+            const centerY = translateY + 25
+            const col = (centerX - (centerX % 50)) / 50
+            const row = (centerY - (centerY % 50)) / 50
+            onDragEnd?.({
+              col,
+              row,
+              x: translateX,
+              y: translateY,
+            })
+          },
+          { once: true, passive: true },
+        )
 
         onDragStart?.()
       }}
-      onDragEnd={() => {
-        setDragging(false)
-
-        onDragEnd?.()
-      }}
-      onDragOver={e => {
-        e.preventDefault()
-      }}
-      onDragEnter={e => {
-        if (!e.shiftKey) return
-
-        onDragEnter?.()
-      }}
-      onDrop={() => {
-        onDrop?.()
-      }}
       className={cx(
         css`
-          position: absolute;
+          transform: translate(${col * 50}px, ${row * 50}px);
         `,
+        css`
+          position: absolute;
+          left: 0;
+          top: 0;
+        `,
+        !locked &&
+          css`
+            cursor: grab;
+          `,
+        locked &&
+          css`
+            cursor: not-allowed;
+          `,
+        !dragging &&
+          css`
+            transition: transform 400ms;
+          `,
         dragging &&
           css`
-            opacity: 0.5;
+            z-index: 100;
+            cursor: grabbing;
           `,
         className,
       )}
-      style={{
-        left: x,
-        top: y,
-        ...style,
-      }}
+      style={style}
       {...props}
     >
       {cardElements}
@@ -121,7 +176,7 @@ export function Pile({
   )
 }
 
-function Card({
+function CardComp({
   text,
   src,
   className,
@@ -137,21 +192,16 @@ function Card({
     <div
       className={cx(
         css`
-          border: solid 1px gray;
           width: 50px;
-          height: 76px;
+          height: 76.5px;
+          border-radius: 4px;
           box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
-          background-color: white;
-          cursor: grab;
-
-          :active {
-            cursor: grabbing;
-          }
         `,
         src &&
           css`
-            background-image: url(${src});
+            background-image: url("${src}");
             background-size: cover;
+            background-repeat: no-repeat;
           `,
         className,
       )}

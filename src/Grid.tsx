@@ -1,5 +1,5 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { useRef } from "https://cdn.skypack.dev/preact/compat"
+import React, { CSSProperties, useRef } from "https://cdn.skypack.dev/react"
 import { mode } from "./mode.js"
 
 export function Grid({
@@ -10,9 +10,9 @@ export function Grid({
 }: {
   onDrop?(dest: { col: number; row: number; x: number; y: number }): void
   className?: string
-  style?: any
+  style?: CSSProperties
 }) {
-  const indicator$ = useRef<HTMLDivElement>()
+  const indicator$ = useRef<HTMLDivElement>(null)
   const updateHighlight = (x: number, y: number) => {
     const indicator = indicator$.current
     if (!indicator) return
@@ -35,7 +35,7 @@ export function Grid({
       onDragOver={e => {
         e.preventDefault()
 
-        const { offsetX: x, offsetY: y } = e
+        const { offsetX: x, offsetY: y } = e.nativeEvent
         draggingPosition$.current.x = x
         draggingPosition$.current.y = y
 
@@ -55,24 +55,14 @@ export function Grid({
       }}
       className={cx(
         css`
-          position: relative;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
         `,
-        className,
-      )}
-      style={style}
-      {...props}
-    >
-      {mode === "debug" && (
-        <div
-          className={css`
-            width: 100%;
-            height: 100%;
-            position: absolute;
-
+        mode === "debug" &&
+          css`
             background-position: top left;
             background-image: repeating-linear-gradient(
                 90deg,
@@ -92,16 +82,17 @@ export function Grid({
                 currentColor 49.5px,
                 currentColor 50px
               );
-          `}
-        ></div>
+          `,
+        className,
       )}
-
+      style={style}
+      {...props}
+    >
       <div
         ref={indicator$}
         className={css`
           width: 100%;
           height: 100%;
-          position: absolute;
         `}
       ></div>
     </div>

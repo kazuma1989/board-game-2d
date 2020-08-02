@@ -5,13 +5,19 @@
   "license": "MIT",
   "main": "dist/index.html",
   "scripts": {
+    "serve": "npx live-server ./public",
+    "serve:hosting": "firebase serve --only hosting",
     "tsc": "tsc --incremental --outDir ./public/dist/",
     "format": "prettier --write \"./src/**/*.{ts,tsx}\""
   },
   "devDependencies": {
+    "@types/react": "^16.9.43",
+    "@types/react-redux": "^7.1.9",
+    "firebase": "^7.17.1",
+    "firebase-tools": "^8.6.0",
     "immer": "^7.0.7",
-    "preact": "^10.4.6",
     "prettier": "^2.0.5",
+    "redux": "^4.0.5",
     "typescript": "^3.9.7"
   }
 }
