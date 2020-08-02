@@ -101,6 +101,7 @@ export function Card({
       }}
       className={cx(
         css`
+          z-index: ${index};
           transform: translate(${col * 50 + left}px, ${row * 50 + top}px);
         `,
         css`

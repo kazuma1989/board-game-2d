@@ -88,120 +88,125 @@ export function Board() {
           `}
         />
 
-        {piles.flatMap(({ id: pileId, cards, col, row, dragging }) => {
-          return cards.map(({ id: cardId, text, src, state }, index) => {
-            return (
-              <Card
-                data-no-pannable
-                key={cardId}
-                col={col}
-                row={row}
-                index={index}
-                locked={dragging && dragging !== userId}
-                text={text}
-                src={src[state]}
-                // TODO イベントハンドラー内に大きなロジック書きたくないよね
-                onMoveStart={async () => {
-                  dispatch({
-                    type: "Pile.DragStart",
-                    payload: {
-                      pileId,
-                    },
-                  })
-
-                  const pileRef = pilesRef.doc(pileId)
-
-                  const failed = await pileRef.firestore
-                    .runTransaction(async t => {
-                      const pile$ = await t.get(pileRef)
-                      if (pile$.data()?.dragging) {
-                        throw `pile is locked: id=${pile$.id}`
-                      }
-
-                      const state = store.getState()
-                      t.update(pileRef, {
-                        dragging: state.user.id,
-                      })
-                    })
-                    .catch(() => true)
-
-                  if (!failed) {
+        {piles
+          .flatMap(({ id: pileId, cards, col, row, dragging }) => {
+            return cards.map(({ id: cardId, text, src, state }, index) => {
+              return (
+                <Card
+                  data-no-pannable
+                  key={cardId}
+                  col={col}
+                  row={row}
+                  index={index}
+                  locked={dragging && dragging !== userId}
+                  text={text}
+                  src={src[state]}
+                  // TODO イベントハンドラー内に大きなロジック書きたくないよね
+                  onMoveStart={async () => {
                     dispatch({
-                      type: "Pile.DragStart.Success",
+                      type: "Pile.DragStart",
                       payload: {
                         pileId,
                       },
                     })
-                  } else {
+
+                    const pileRef = pilesRef.doc(pileId)
+
+                    const failed = await pileRef.firestore
+                      .runTransaction(async t => {
+                        const pile$ = await t.get(pileRef)
+                        if (pile$.data()?.dragging) {
+                          throw `pile is locked: id=${pile$.id}`
+                        }
+
+                        const state = store.getState()
+                        t.update(pileRef, {
+                          dragging: state.user.id,
+                        })
+                      })
+                      .catch(() => true)
+
+                    if (!failed) {
+                      dispatch({
+                        type: "Pile.DragStart.Success",
+                        payload: {
+                          pileId,
+                        },
+                      })
+                    } else {
+                      dispatch({
+                        type: "Pile.DragStart.Failed",
+                        payload: {
+                          pileId,
+                        },
+                      })
+                    }
+                  }}
+                  // TODO イベントハンドラー内に大きなロジック書きたくないよね
+                  onMoveEnd={async dest => {
+                    const state = store.getState()
+
                     dispatch({
-                      type: "Pile.DragStart.Failed",
+                      type: "Pile.DragEnd",
                       payload: {
                         pileId,
-                      },
-                    })
-                  }
-                }}
-                // TODO イベントハンドラー内に大きなロジック書きたくないよね
-                onMoveEnd={async dest => {
-                  const state = store.getState()
-
-                  dispatch({
-                    type: "Pile.DragEnd",
-                    payload: {
-                      pileId,
-                      col: dest.col,
-                      row: dest.row,
-                    },
-                  })
-
-                  const target = state.piles.find(byCR(dest.col, dest.row))
-                  if (target) {
-                    const pileRef = pilesRef.doc(pileId)
-                    const targetRef = pilesRef.doc(target.id)
-
-                    await pileRef.firestore.runTransaction(async t => {
-                      const [pile$, target$] = await Promise.all([
-                        t.get(pileRef),
-                        t.get(targetRef),
-                      ])
-
-                      const state = store.getState()
-
-                      const { dragging, cards } = pile$.data() ?? {}
-                      if (dragging !== state.user.id) return
-                      if (!cards) return
-
-                      const { col, row, cards: targetCards } =
-                        target$.data() ?? {}
-                      if (col !== target.col || row !== target.row) return
-                      if (!targetCards) return
-
-                      t.delete(pileRef)
-                      t.update(targetRef, {
-                        cards: [...targetCards, ...cards],
-                      })
-                    })
-                  } else {
-                    const pileRef = pilesRef.doc(pileId)
-
-                    await pileRef.firestore.runTransaction(async t => {
-                      const pile$ = await t.get(pileRef)
-
-                      const state = store.getState()
-                      if (pile$.data()?.dragging !== state.user.id) return
-
-                      t.update(pileRef, {
-                        dragging: firestore.FieldValue.delete(),
                         col: dest.col,
                         row: dest.row,
-                      })
+                      },
                     })
-                  }
-                }}
-              />
-            )
+
+                    const target = state.piles.find(byCR(dest.col, dest.row))
+                    if (target) {
+                      const pileRef = pilesRef.doc(pileId)
+                      const targetRef = pilesRef.doc(target.id)
+
+                      await pileRef.firestore.runTransaction(async t => {
+                        const [pile$, target$] = await Promise.all([
+                          t.get(pileRef),
+                          t.get(targetRef),
+                        ])
+
+                        const state = store.getState()
+
+                        const { dragging, cards } = pile$.data() ?? {}
+                        if (dragging !== state.user.id) return
+                        if (!cards) return
+
+                        const { col, row, cards: targetCards } =
+                          target$.data() ?? {}
+                        if (col !== target.col || row !== target.row) return
+                        if (!targetCards) return
+
+                        t.delete(pileRef)
+                        t.update(targetRef, {
+                          cards: [...targetCards, ...cards],
+                        })
+                      })
+                    } else {
+                      const pileRef = pilesRef.doc(pileId)
+
+                      await pileRef.firestore.runTransaction(async t => {
+                        const pile$ = await t.get(pileRef)
+
+                        const state = store.getState()
+                        if (pile$.data()?.dragging !== state.user.id) return
+
+                        t.update(pileRef, {
+                          dragging: firestore.FieldValue.delete(),
+                          col: dest.col,
+                          row: dest.row,
+                        })
+                      })
+                    }
+                  }}
+                />
+              )
+            })
           })
-        })}
+          .sort(
+            (e1, e2) =>
+              e1.key?.toString().localeCompare(e2.key?.toString() ?? "") ?? 0,
+          )}
       </div>
     </Provider>
   )
