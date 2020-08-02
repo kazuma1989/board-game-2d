@@ -1,13 +1,13 @@
 import React, { useMemo } from "https://cdn.skypack.dev/react"
 import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
 import { createStore } from "https://cdn.skypack.dev/redux"
-import { Board } from "./Board.js"
 import { firestore } from "./firebase.js"
 import { FirestoreMockPiles } from "./FirestoreMockPiles.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { data } from "./mode.js"
 import { Provider as PilesProvider } from "./piles.js"
 import { reducer } from "./reducer.js"
+import { View } from "./View.js"
 
 export function App() {
   const collection = useMemo(
@@ -26,7 +26,7 @@ export function App() {
       <ReduxProvider store={store}>
         {data === "mock" ? <FirestoreMockPiles /> : <FirestorePiles />}
 
-        <Board />
+        <View />
       </ReduxProvider>
     </PilesProvider>
   )
