@@ -92,114 +92,123 @@ export function Board() {
 
         {piles
           .flatMap(({ cards, col, row, dragging }) => {
-            return cards.map(({ id: cardId, text, src, state }, index) => {
-              const temp = tempCardPosition[cardId]
+            return cards.map(
+              ({ id: cardId, text, src, state }, index, { length }) => {
+                const temp = tempCardPosition[cardId]
 
-              return (
-                <Card
-                  data-no-pannable
-                  key={cardId}
-                  col={temp?.col ?? col}
-                  row={temp?.row ?? row}
-                  index={index}
-                  locked={dragging && dragging !== userId}
-                  text={text}
-                  src={src[state]}
-                  // TODO イベントハンドラー内に大きなロジック書きたくないよね
-                  onMoveStart={async () => {
-                    const state = store.getState()
+                const left =
+                  (-10 * (2 * index)) / (length + 2) / (length + 2 - index)
+                const top = left / 2
 
-                    const fromPile = state.piles.find(hasCard(byId(cardId)))
-                    if (!fromPile) return
+                return (
+                  <Card
+                    data-no-pannable
+                    key={cardId}
+                    col={temp?.col ?? col}
+                    row={temp?.row ?? row}
+                    index={temp ? 100 : index}
+                    innerStyle={{
+                      transform: `translate(${left}px, ${top}px)`,
+                    }}
+                    locked={dragging && dragging !== userId}
+                    text={text}
+                    src={src[state]}
+                    // TODO イベントハンドラー内に大きなロジック書きたくないよね
+                    onMoveStart={async () => {
+                      const state = store.getState()
 
-                    await db
-                      .runTransaction(async t => {
-                        const fromRef = pilesRef.doc(fromPile.id)
-                        const from = await t.get(fromRef).then(d => d.data())
+                      const fromPile = state.piles.find(hasCard(byId(cardId)))
+                      if (!fromPile) return
 
-                        if (from?.dragging && from.dragging !== state.user.id)
-                          return
+                      await db
+                        .runTransaction(async t => {
+                          const fromRef = pilesRef.doc(fromPile.id)
+                          const from = await t.get(fromRef).then(d => d.data())
 
-                        t.update(fromRef, {
-                          dragging: state.user.id,
-                        })
-                      })
-                      .catch(console.warn)
-                  }}
-                  // TODO イベントハンドラー内に大きなロジック書きたくないよね
-                  onMoveEnd={async dest => {
-                    dispatch({
-                      type: "Card.MoveEnd",
-                      payload: {
-                        cardId,
-                        col: dest.col,
-                        row: dest.row,
-                      },
-                    })
+                          if (from?.dragging && from.dragging !== state.user.id)
+                            return
 
-                    const state = store.getState()
-
-                    const fromPile = state.piles.find(hasCard(byId(cardId)))
-                    if (!fromPile) return
-
-                    const toPile = state.piles.find(byCR(dest.col, dest.row))
-
-                    await db
-                      .runTransaction(async t => {
-                        const fromRef = pilesRef.doc(fromPile.id)
-                        const toRef = pilesRef.doc(
-                          toPile?.id || [dest.col, dest.row].join(","),
-                        )
-                        const [from, to] = await Promise.all([
-                          t.get(fromRef).then(d => d.data()),
-                          t.get(toRef).then(d => d.data()),
-                        ])
-
-                        if (from?.dragging !== state.user.id) return
-
-                        t.update(fromRef, {
-                          dragging: firestore.FieldValue.delete(),
-                        })
-
-                        // card を取り上げたものの同じ pile に戻した
-                        if (fromRef.isEqual(toRef)) return
-
-                        if (to?.dragging && to.dragging !== state.user.id)
-                          return
-
-                        const card = from.cards?.find(byId(cardId))
-                        if (!card) return
-
-                        const fromCards = from.cards?.filter(byId.not(cardId))
-                        if (fromCards?.length) {
                           t.update(fromRef, {
-                            cards: fromCards,
+                            dragging: state.user.id,
                           })
-                        } else {
-                          t.delete(fromRef)
-                        }
-
-                        t.set(toRef, {
-                          cards: [...(to?.cards ?? []), card],
+                        })
+                        .catch(console.warn)
+                    }}
+                    // TODO イベントハンドラー内に大きなロジック書きたくないよね
+                    onMoveEnd={async dest => {
+                      dispatch({
+                        type: "Card.MoveEnd",
+                        payload: {
+                          cardId,
                           col: dest.col,
                           row: dest.row,
-                        })
+                        },
                       })
-                      .catch(console.warn)
 
-                    // Transaction の結果が onSnapshot リスナーに伝わるまである程度待つ
-                    await ms(400)
+                      const state = store.getState()
 
-                    dispatch({
-                      type: "Card.MoveEnd.Finished",
-                      payload: {
-                        cardId,
-                      },
-                    })
-                  }}
-                />
-              )
-            })
+                      const fromPile = state.piles.find(hasCard(byId(cardId)))
+                      if (!fromPile) return
+
+                      const toPile = state.piles.find(byCR(dest.col, dest.row))
+
+                      await db
+                        .runTransaction(async t => {
+                          const fromRef = pilesRef.doc(fromPile.id)
+                          const toRef = pilesRef.doc(
+                            toPile?.id || [dest.col, dest.row].join(","),
+                          )
+                          const [from, to] = await Promise.all([
+                            t.get(fromRef).then(d => d.data()),
+                            t.get(toRef).then(d => d.data()),
+                          ])
+
+                          if (from?.dragging !== state.user.id) return
+
+                          t.update(fromRef, {
+                            dragging: firestore.FieldValue.delete(),
+                          })
+
+                          // card を取り上げたものの同じ pile に戻した
+                          if (fromRef.isEqual(toRef)) return
+
+                          if (to?.dragging && to.dragging !== state.user.id)
+                            return
+
+                          const card = from.cards?.find(byId(cardId))
+                          if (!card) return
+
+                          const fromCards = from.cards?.filter(byId.not(cardId))
+                          if (fromCards?.length) {
+                            t.update(fromRef, {
+                              cards: fromCards,
+                            })
+                          } else {
+                            t.delete(fromRef)
+                          }
+
+                          t.set(toRef, {
+                            cards: [...(to?.cards ?? []), card],
+                            col: dest.col,
+                            row: dest.row,
+                          })
+                        })
+                        .catch(console.warn)
+
+                      // Transaction の結果が onSnapshot リスナーに伝わるまである程度待つ
+                      await ms(400)
+
+                      dispatch({
+                        type: "Card.MoveEnd.Finished",
+                        payload: {
+                          cardId,
+                        },
+                      })
+                    }}
+                  />
+                )
+              },
+            )
           })
           .sort(
             (e1, e2) =>

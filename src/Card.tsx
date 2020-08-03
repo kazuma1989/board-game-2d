@@ -4,6 +4,7 @@ import React, {
   useRef,
   useState,
 } from "https://cdn.skypack.dev/react"
+import type { CSSProperties } from "react"
 import { useScale } from "./useScale.js"
 
 export function Card({
@@ -17,6 +18,8 @@ export function Card({
   onMoveEnd,
   className,
   style,
+  innerClassName,
+  innerStyle,
   ...props
 }: {
   col: number
@@ -34,7 +37,9 @@ export function Card({
   onMoveEnd?(dest: { col: number; row: number; x: number; y: number }): void
 
   className?: string
-  style?: any
+  style?: CSSProperties
+  innerClassName?: string
+  innerStyle?: CSSProperties
 }) {
   const scale$ = useScale()
 
@@ -43,11 +48,6 @@ export function Card({
   useEffect(() => {
     locked$.current = locked
   })
-
-  const { left, top } = {
-    left: -3 * index,
-    top: -2 * index,
-  }
 
   return (
     <div
@@ -143,7 +143,6 @@ export function Card({
         className={cx(
           css`
             transition: transform 400ms;
-            transform: translate(${left}px, ${top}px);
             width: 50px;
             height: 76.5px;
             border-radius: 4px;
@@ -155,7 +154,9 @@ export function Card({
             background-size: cover;
             background-repeat: no-repeat;
           `,
+          innerClassName,
         )}
+        style={innerStyle}
       >
         {text}
       </div>
