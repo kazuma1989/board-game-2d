@@ -143,6 +143,7 @@ export function Card({
         className={cx(
           css`
             transition: transform 200ms;
+            position: absolute;
             width: 50px;
             height: 76.5px;
             border-radius: 4px;
