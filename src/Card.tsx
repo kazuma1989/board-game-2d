@@ -116,12 +116,8 @@ export function Card({
       className={cx(
         css`
           z-index: ${index};
-          transform: translate(${col * 50 + left}px, ${row * 50 + top}px);
-        `,
-        css`
+          transform: translate(${col * 50}px, ${row * 50}px);
           position: absolute;
-          left: 0;
-          top: 0;
         `,
         locked
           ? css`
@@ -138,24 +134,31 @@ export function Card({
           : css`
               transition: transform 400ms;
             `,
-        css`
-          width: 50px;
-          height: 76.5px;
-          border-radius: 4px;
-          box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
-        `,
-        src &&
-          css`
-            background-image: url("${src}");
-            background-size: cover;
-            background-repeat: no-repeat;
-          `,
         className,
       )}
       style={style}
       {...props}
     >
-      {text}
+      <div
+        className={cx(
+          css`
+            transition: transform 400ms;
+            transform: translate(${left}px, ${top}px);
+            width: 50px;
+            height: 76.5px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
+          `,
+          src &&
+            css`
+            background-image: url("${src}");
+            background-size: cover;
+            background-repeat: no-repeat;
+          `,
+        )}
+      >
+        {text}
+      </div>
     </div>
   )
 }
