@@ -5,8 +5,8 @@ export type State = {
   user: User
 
   piles: Pile[]
-  tempPilePosition: {
-    [pileId: string]:
+  tempCardPosition: {
+    [cardId: string]:
       | {
           col: number
           row: number
@@ -42,7 +42,7 @@ const initialState: State = {
     id: randomID() as User["id"],
   },
   piles: [],
-  tempPilePosition: {},
+  tempCardPosition: {},
 }
 
 export type Action =
@@ -65,7 +65,7 @@ export type Action =
   | {
       type: "Card.MoveEnd"
       payload: {
-        pileId: Pile["id"]
+        cardId: Card["id"]
         col: number
         row: number
       }
@@ -73,7 +73,7 @@ export type Action =
   | {
       type: "Card.MoveEnd.Finished"
       payload: {
-        pileId: Pile["id"]
+        cardId: Card["id"]
       }
     }
 
@@ -84,7 +84,7 @@ export const reducer = produce((draft: State, action: Action) => {
 
       changes.forEach(change => {
         const { id: pileId } = change
-        draft.tempPilePosition[pileId] = undefined
+        delete draft.tempCardPosition[pileId]
 
         switch (change.type) {
           case "added":
@@ -124,17 +124,17 @@ export const reducer = produce((draft: State, action: Action) => {
     }
 
     case "Card.MoveEnd": {
-      const { pileId, col, row } = action.payload
+      const { cardId, col, row } = action.payload
 
-      draft.tempPilePosition[pileId] = { col, row }
+      draft.tempCardPosition[cardId] = { col, row }
 
       return
     }
 
     case "Card.MoveEnd.Finished": {
-      const { pileId } = action.payload
+      const { cardId } = action.payload
 
-      draft.tempPilePosition[pileId] = undefined
+      delete draft.tempCardPosition[cardId]
 
       return
     }

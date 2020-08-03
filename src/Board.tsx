@@ -65,7 +65,7 @@ export function Board() {
 
   const dispatch = useDispatch()
   const piles = useSelector(state => state.piles)
-  const tempPilePosition = useSelector(state => state.tempPilePosition)
+  const tempCardPosition = useSelector(state => state.tempCardPosition)
   const userId = useSelector(state => state.user.id)
 
   const store = useStore()
@@ -91,17 +91,16 @@ export function Board() {
         />
 
         {piles
-          .flatMap(({ id: pileId, cards, col, row, dragging }) => {
-            const { col: tempCol, row: tempRow } =
-              tempPilePosition[pileId] ?? {}
-
+          .flatMap(({ cards, col, row, dragging }) => {
             return cards.map(({ id: cardId, text, src, state }, index) => {
+              const temp = tempCardPosition[cardId]
+
               return (
                 <Card
                   data-no-pannable
                   key={cardId}
-                  col={tempCol ?? col}
-                  row={tempRow ?? row}
+                  col={temp?.col ?? col}
+                  row={temp?.row ?? row}
                   index={index}
                   locked={dragging && dragging !== userId}
                   text={text}
@@ -132,7 +131,7 @@ export function Board() {
                     dispatch({
                       type: "Card.MoveEnd",
                       payload: {
-                        pileId,
+                        cardId,
                         col: dest.col,
                         row: dest.row,
                       },
@@ -194,7 +193,7 @@ export function Board() {
                     dispatch({
                       type: "Card.MoveEnd.Finished",
                       payload: {
-                        pileId,
+                        cardId,
                       },
                     })
                   }}
