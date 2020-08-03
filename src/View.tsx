@@ -1,5 +1,6 @@
 import { css } from "https://cdn.skypack.dev/emotion"
-import React, { CSSProperties } from "https://cdn.skypack.dev/react"
+import React from "https://cdn.skypack.dev/react"
+import type { CSSProperties } from "react"
 import { allCards } from "./allCards.js"
 import { Board } from "./Board.js"
 import { mode } from "./mode.js"

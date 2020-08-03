@@ -1,7 +1,7 @@
 import { useEffect } from "https://cdn.skypack.dev/react"
 import { useDispatch } from "https://cdn.skypack.dev/react-redux"
 import { allCards } from "./allCards.js"
-import { Card, Pile, State } from "./reducer.js"
+import type { Card, Pile, State } from "./reducer.js"
 import { randomID } from "./util.js"
 
 export function FirestoreMockPiles() {
