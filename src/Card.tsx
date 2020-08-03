@@ -142,7 +142,7 @@ export function Card({
       <div
         className={cx(
           css`
-            transition: transform 400ms;
+            transition: transform 200ms;
             width: 50px;
             height: 76.5px;
             border-radius: 4px;

@@ -97,7 +97,7 @@ export function Board() {
                 const temp = tempCardPosition[cardId]
 
                 const left =
-                  (-10 * (2 * index)) / (length + 2) / (length + 2 - index)
+                  length === 0 ? 0 : -6 / (length / index - 1) / length
                 const top = left / 2
 
                 return (
