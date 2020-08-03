@@ -1,5 +1,9 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { useState } from "https://cdn.skypack.dev/react"
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "https://cdn.skypack.dev/react"
 import { useScale } from "./useScale.js"
 
 export function Card({
@@ -32,21 +36,27 @@ export function Card({
   className?: string
   style?: any
 }) {
+  const scale$ = useScale()
+
+  const [grabbing, setGrabbing] = useState(false)
+  const locked$ = useRef(locked)
+  useEffect(() => {
+    locked$.current = locked
+  })
+
   const { left, top } = {
     left: -3 * index,
     top: -2 * index,
   }
 
-  const [dragging, setDragging] = useState(false)
-  const scale$ = useScale()
-
   return (
     <div
       onPointerDown={e => {
         if (!e.isPrimary) return
-        if (locked) return
+        if (locked || locked$.current) return
+        if (grabbing) return
 
-        setDragging(true)
+        setGrabbing(true)
 
         const { currentTarget: target, pointerType, pointerId } = e
 
@@ -58,26 +68,32 @@ export function Card({
         let translateX = col * 50
         let translateY = row * 50
 
-        const pointermove = (ev: PointerEvent) => {
-          translateX += (ev.clientX - clientX) / scale$.current
-          translateY += (ev.clientY - clientY) / scale$.current
+        let pointermove: (e: PointerEvent) => void
+        target.addEventListener(
+          "pointermove",
+          (pointermove = e => {
+            translateX += (e.clientX - clientX) / scale$.current
+            translateY += (e.clientY - clientY) / scale$.current
 
-          clientX = ev.clientX
-          clientY = ev.clientY
+            clientX = e.clientX
+            clientY = e.clientY
 
-          target.style.transform = `translate(${translateX}px, ${translateY}px)`
-        }
-
-        target.addEventListener("pointermove", pointermove, { passive: true })
+            if (locked$.current) {
+              target.style.transform = ""
+            } else {
+              target.style.transform = `translate(${translateX}px, ${translateY}px)`
+            }
+          }),
+          { passive: true },
+        )
 
         target.addEventListener(
           "pointerup",
           () => {
+            target.style.transform = ""
             target.removeEventListener("pointermove", pointermove)
 
-            setDragging(false)
-
-            target.style.transform = ""
+            setGrabbing(false)
 
             if (pointerType === "mouse") {
               target.releasePointerCapture(pointerId)
@@ -85,11 +101,9 @@ export function Card({
 
             const centerX = translateX + 25
             const centerY = translateY + 25
-            const col = (centerX - (centerX % 50)) / 50
-            const row = (centerY - (centerY % 50)) / 50
             onMoveEnd?.({
-              col,
-              row,
+              col: (centerX - (centerX % 50)) / 50,
+              row: (centerY - (centerY % 50)) / 50,
               x: translateX,
               y: translateY,
             })
@@ -109,23 +123,21 @@ export function Card({
           left: 0;
           top: 0;
         `,
-        !locked &&
-          css`
-            cursor: grab;
-          `,
-        locked &&
-          css`
-            cursor: not-allowed;
-          `,
-        !dragging &&
-          css`
-            transition: transform 400ms;
-          `,
-        dragging &&
-          css`
-            z-index: 100;
-            cursor: grabbing;
-          `,
+        locked
+          ? css`
+              cursor: not-allowed;
+            `
+          : css`
+              cursor: grab;
+            `,
+        grabbing && !locked
+          ? css`
+              z-index: 100;
+              cursor: grabbing;
+            `
+          : css`
+              transition: transform 400ms;
+            `,
         css`
           width: 50px;
           height: 76.5px;
