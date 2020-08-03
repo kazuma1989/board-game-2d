@@ -3,7 +3,16 @@ import { byId, randomID } from "./util.js"
 
 export type State = {
   user: User
+
   piles: Pile[]
+  tempPilePosition: {
+    [pileId: string]:
+      | {
+          col: number
+          row: number
+        }
+      | undefined
+  }
 }
 
 export type User = {
@@ -33,24 +42,40 @@ const initialState: State = {
     id: randomID() as User["id"],
   },
   piles: [],
+  tempPilePosition: {},
 }
 
-export type Action = {
-  type: "Firestore.ChangePiles"
-  payload: {
-    changes: (
-      | {
-          type: "added" | "modified"
-          id: string
-          data: unknown
-        }
-      | {
-          type: "removed"
-          id: string
-        }
-    )[]
-  }
-}
+export type Action =
+  | {
+      type: "Firestore.ChangePiles"
+      payload: {
+        changes: (
+          | {
+              type: "added" | "modified"
+              id: string
+              data: unknown
+            }
+          | {
+              type: "removed"
+              id: string
+            }
+        )[]
+      }
+    }
+  | {
+      type: "Card.MoveEnd"
+      payload: {
+        pileId: Pile["id"]
+        col: number
+        row: number
+      }
+    }
+  | {
+      type: "Card.MoveEnd.Finished"
+      payload: {
+        pileId: Pile["id"]
+      }
+    }
 
 export const reducer = produce((draft: State, action: Action) => {
   switch (action.type) {
@@ -58,18 +83,21 @@ export const reducer = produce((draft: State, action: Action) => {
       const { changes } = action.payload
 
       changes.forEach(change => {
+        const { id: pileId } = change
+        draft.tempPilePosition[pileId] = undefined
+
         switch (change.type) {
           case "added":
           case "modified": {
-            const { id, data } = change
+            const { id: pileId, data } = change
             if (!isPileData(data)) return
 
             const pile = {
               ...data,
-              id: id as Pile["id"],
+              id: pileId as Pile["id"],
             }
 
-            const target = draft.piles.find(byId(id))
+            const target = draft.piles.find(byId(pileId))
             if (target) {
               draft.piles[draft.piles.indexOf(target)] = pile
             } else {
@@ -80,9 +108,9 @@ export const reducer = produce((draft: State, action: Action) => {
           }
 
           case "removed": {
-            const { id } = change
+            const { id: pileId } = change
 
-            const target = draft.piles.find(byId(id))
+            const target = draft.piles.find(byId(pileId))
             if (!target) return
 
             draft.piles.splice(draft.piles.indexOf(target), 1)
@@ -95,9 +123,25 @@ export const reducer = produce((draft: State, action: Action) => {
       return
     }
 
-    // default: {
-    //   const _: never = action
-    // }
+    case "Card.MoveEnd": {
+      const { pileId, col, row } = action.payload
+
+      draft.tempPilePosition[pileId] = { col, row }
+
+      return
+    }
+
+    case "Card.MoveEnd.Finished": {
+      const { pileId } = action.payload
+
+      draft.tempPilePosition[pileId] = undefined
+
+      return
+    }
+
+    default: {
+      const _: never = action
+    }
   }
 }, initialState)
 

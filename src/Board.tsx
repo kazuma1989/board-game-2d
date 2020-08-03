@@ -11,7 +11,7 @@ import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
 import { useCollection } from "./piles.js"
 import { Provider } from "./useScale.js"
-import { byCR, byId, hasCard } from "./util.js"
+import { byCR, byId, hasCard, ms } from "./util.js"
 
 export function Board() {
   const scale$ = useRef(1)
@@ -65,6 +65,7 @@ export function Board() {
 
   const dispatch = useDispatch()
   const piles = useSelector(state => state.piles)
+  const tempPilePosition = useSelector(state => state.tempPilePosition)
   const userId = useSelector(state => state.user.id)
 
   const store = useStore()
@@ -90,14 +91,17 @@ export function Board() {
         />
 
         {piles
-          .flatMap(({ cards, col, row, dragging }) => {
+          .flatMap(({ id: pileId, cards, col, row, dragging }) => {
+            const { col: tempCol, row: tempRow } =
+              tempPilePosition[pileId] ?? {}
+
             return cards.map(({ id: cardId, text, src, state }, index) => {
               return (
                 <Card
                   data-no-pannable
                   key={cardId}
-                  col={col}
-                  row={row}
+                  col={tempCol ?? col}
+                  row={tempRow ?? row}
                   index={index}
                   locked={dragging && dragging !== userId}
                   text={text}
@@ -114,18 +118,26 @@ export function Board() {
                         const fromRef = pilesRef.doc(fromPile.id)
                         const from = await t.get(fromRef).then(d => d.data())
 
-                        if (from?.dragging && from.dragging !== state.user.id) {
-                          throw `pile is locked: id=${fromRef.id}`
-                        }
+                        if (from?.dragging && from.dragging !== state.user.id)
+                          return
 
                         t.update(fromRef, {
                           dragging: state.user.id,
                         })
                       })
-                      .catch(console.log)
+                      .catch(console.warn)
                   }}
                   // TODO イベントハンドラー内に大きなロジック書きたくないよね
                   onMoveEnd={async dest => {
+                    dispatch({
+                      type: "Card.MoveEnd",
+                      payload: {
+                        pileId,
+                        col: dest.col,
+                        row: dest.row,
+                      },
+                    })
+
                     const state = store.getState()
 
                     const fromPile = state.piles.find(hasCard(byId(cardId)))
@@ -133,44 +145,57 @@ export function Board() {
 
                     const toPile = state.piles.find(byCR(dest.col, dest.row))
 
-                    await db.runTransaction(async t => {
-                      const fromRef = pilesRef.doc(fromPile.id)
-                      const toRef = pilesRef.doc(
-                        toPile?.id || [dest.col, dest.row].join(","),
-                      )
-                      const [from, to] = await Promise.all([
-                        t.get(fromRef).then(d => d.data()),
-                        t.get(toRef).then(d => d.data()),
-                      ])
+                    await db
+                      .runTransaction(async t => {
+                        const fromRef = pilesRef.doc(fromPile.id)
+                        const toRef = pilesRef.doc(
+                          toPile?.id || [dest.col, dest.row].join(","),
+                        )
+                        const [from, to] = await Promise.all([
+                          t.get(fromRef).then(d => d.data()),
+                          t.get(toRef).then(d => d.data()),
+                        ])
 
-                      if (from?.dragging !== state.user.id) return
+                        if (from?.dragging !== state.user.id) return
 
-                      t.update(fromRef, {
-                        dragging: firestore.FieldValue.delete(),
-                      })
-
-                      // card を取り上げたものの同じ pile に戻した
-                      if (fromRef.isEqual(toRef)) return
-
-                      if (to?.dragging && to.dragging !== state.user.id) return
-
-                      const card = from.cards?.find(byId(cardId))
-                      if (!card) return
-
-                      const fromCards = from.cards?.filter(byId.not(cardId))
-                      if (fromCards?.length) {
                         t.update(fromRef, {
-                          cards: fromCards,
+                          dragging: firestore.FieldValue.delete(),
                         })
-                      } else {
-                        t.delete(fromRef)
-                      }
 
-                      t.set(toRef, {
-                        cards: [...(to?.cards ?? []), card],
-                        col: dest.col,
-                        row: dest.row,
+                        // card を取り上げたものの同じ pile に戻した
+                        if (fromRef.isEqual(toRef)) return
+
+                        if (to?.dragging && to.dragging !== state.user.id)
+                          return
+
+                        const card = from.cards?.find(byId(cardId))
+                        if (!card) return
+
+                        const fromCards = from.cards?.filter(byId.not(cardId))
+                        if (fromCards?.length) {
+                          t.update(fromRef, {
+                            cards: fromCards,
+                          })
+                        } else {
+                          t.delete(fromRef)
+                        }
+
+                        t.set(toRef, {
+                          cards: [...(to?.cards ?? []), card],
+                          col: dest.col,
+                          row: dest.row,
+                        })
                       })
+                      .catch(console.warn)
+
+                    // Transaction の結果が onSnapshot リスナーに伝わるまである程度待つ
+                    await ms(400)
+
+                    dispatch({
+                      type: "Card.MoveEnd.Finished",
+                      payload: {
+                        pileId,
+                      },
                     })
                   }}
                 />
