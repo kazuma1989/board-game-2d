@@ -8,42 +8,35 @@ export function FirestorePiles() {
 
   useEffect(() => {
     return pilesRef.onSnapshot(pilesSnapshot => {
-      pilesSnapshot.docChanges().forEach(change => {
+      const changes = pilesSnapshot.docChanges().map(change => {
         switch (change.type) {
-          case "added": {
-            const pile$ = change.doc
-
-            dispatch({
-              type: "Firestore.Insert.Pile",
-              payload: {
-                id: pile$.id,
-                pile: pile$.data(),
-              },
-            })
-
-            return
-          }
-
+          case "added":
           case "modified": {
             const pile$ = change.doc
 
-            dispatch({
-              type: "Firestore.Update.Pile",
-              payload: {
-                id: pile$.id,
-                pile: pile$.data(),
-              },
-            })
-
-            return
+            return {
+              type: change.type,
+              id: pile$.id,
+              data: pile$.data(),
+            }
           }
 
           case "removed": {
-            console.debug(change.type)
+            const pile$ = change.doc
 
-            return
+            return {
+              type: change.type,
+              id: pile$.id,
+            }
           }
         }
+      })
+
+      dispatch({
+        type: "Firestore.ChangePiles",
+        payload: {
+          changes,
+        },
       })
     })
   }, [dispatch, pilesRef])

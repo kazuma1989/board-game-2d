@@ -1,7 +1,7 @@
 import { useEffect } from "https://cdn.skypack.dev/react"
 import { useDispatch } from "https://cdn.skypack.dev/react-redux"
 import { allCards } from "./allCards.js"
-import { Card, Pile, State } from "./reducer.js"
+import type { Card, Pile, State } from "./reducer.js"
 import { randomID } from "./util.js"
 
 export function FirestoreMockPiles() {
@@ -33,14 +33,17 @@ export function FirestoreMockPiles() {
       return piles
     }, [] as State["piles"])
 
-    piles.forEach(pile => {
-      dispatch({
-        type: "Firestore.Insert.Pile",
-        payload: {
-          id: pile.id,
-          pile,
-        },
-      })
+    dispatch({
+      type: "Firestore.ChangePiles",
+      payload: {
+        changes: piles.map(({ id, ...data }) => {
+          return {
+            type: "added",
+            id: id,
+            data,
+          }
+        }),
+      },
     })
   }, [dispatch])
 

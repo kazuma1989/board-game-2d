@@ -6,11 +6,12 @@ import {
   useSelector,
   useStore,
 } from "https://cdn.skypack.dev/react-redux"
+import { Card } from "./Card.js"
 import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
-import { Pile } from "./Pile.js"
 import { useCollection } from "./piles.js"
 import { Provider } from "./useScale.js"
+import { byCR, byId, hasCard, ms } from "./util.js"
 
 export function Board() {
   const scale$ = useRef(1)
@@ -64,10 +65,12 @@ export function Board() {
 
   const dispatch = useDispatch()
   const piles = useSelector(state => state.piles)
+  const tempCardPosition = useSelector(state => state.tempCardPosition)
   const userId = useSelector(state => state.user.id)
 
   const store = useStore()
   const pilesRef = useCollection()
+  const db = pilesRef.firestore
 
   return (
     <Provider value={scale$}>
@@ -87,101 +90,130 @@ export function Board() {
           `}
         />
 
-        {piles.map(({ id: pileId, cards, col, row, dragging }) => {
-          return (
-            <Pile
-              key={pileId}
-              cards={cards}
-              col={col}
-              row={row}
-              locked={dragging && dragging !== userId}
-              // TODO イベントハンドラー内に大きなロジック書きたくないよね
-              onDragStart={async () => {
-                dispatch({
-                  type: "Pile.DragStart",
-                  payload: {
-                    pileId,
-                  },
-                })
+        {piles
+          .flatMap(({ cards, col, row, dragging }) => {
+            return cards.map(
+              ({ id: cardId, text, src, state }, index, { length }) => {
+                const temp = tempCardPosition[cardId]
 
-                const pileRef = pilesRef.doc(pileId)
+                const left =
+                  length === 0 ? 0 : -6 / (length / index - 1) / length
+                const top = left / 2
 
-                const failed = await pileRef.firestore
-                  .runTransaction(async t => {
-                    const pile$ = await t.get(pileRef)
-                    if (pile$.data()?.dragging) {
-                      throw `pile is locked: id=${pile$.id}`
-                    }
+                return (
+                  <Card
+                    data-no-pannable
+                    key={cardId}
+                    col={temp?.col ?? col}
+                    row={temp?.row ?? row}
+                    index={temp ? 100 : index}
+                    innerStyle={{
+                      transform: `translate(${left}px, ${top}px)`,
+                    }}
+                    locked={dragging && dragging !== userId}
+                    text={text}
+                    src={src[state]}
+                    // TODO イベントハンドラー内に大きなロジック書きたくないよね
+                    onMoveStart={async () => {
+                      const state = store.getState()
 
-                    const state = store.getState()
-                    t.update(pileRef, {
-                      dragging: state.user.id,
-                    })
-                  })
-                  .catch(() => true)
+                      const fromPile = state.piles.find(hasCard(byId(cardId)))
+                      if (!fromPile) return
 
-                if (!failed) {
-                  dispatch({
-                    type: "Pile.DragStart.Success",
-                    payload: {
-                      pileId,
-                    },
-                  })
-                } else {
-                  dispatch({
-                    type: "Pile.DragStart.Failed",
-                    payload: {
-                      pileId,
-                    },
-                  })
-                }
-              }}
-              // TODO イベントハンドラー内に大きなロジック書きたくないよね
-              onDragEnd={async dest => {
-                dispatch({
-                  type: "Pile.DragEnd",
-                  payload: {
-                    pileId,
-                    col: dest.col,
-                    row: dest.row,
-                  },
-                })
+                      await db
+                        .runTransaction(async t => {
+                          const fromRef = pilesRef.doc(fromPile.id)
+                          const from = await t.get(fromRef).then(d => d.data())
 
-                const pileRef = pilesRef.doc(pileId)
+                          if (from?.dragging && from.dragging !== state.user.id)
+                            return
 
-                await pileRef.firestore.runTransaction(async t => {
-                  const pile$ = await t.get(pileRef)
+                          t.update(fromRef, {
+                            dragging: state.user.id,
+                          })
+                        })
+                        .catch(console.warn)
+                    }}
+                    // TODO イベントハンドラー内に大きなロジック書きたくないよね
+                    onMoveEnd={async dest => {
+                      dispatch({
+                        type: "Card.MoveEnd",
+                        payload: {
+                          cardId,
+                          col: dest.col,
+                          row: dest.row,
+                        },
+                      })
 
-                  const state = store.getState()
-                  if (pile$.data()?.dragging !== state.user.id) return
+                      const state = store.getState()
 
-                  t.update(pileRef, {
-                    dragging: firestore.FieldValue.delete(),
-                    col: dest.col,
-                    row: dest.row,
-                  })
-                })
-              }}
-              onDragEnter={() => {
-                dispatch({
-                  type: "Pile.DragEnter",
-                  payload: {
-                    pileId,
-                  },
-                })
-              }}
-              onDrop={() => {
-                dispatch({
-                  type: "Pile.Drop",
-                  payload: {
-                    pileId,
-                  },
-                })
-              }}
-              data-no-pannable
-            />
-          )
-        })}
+                      const fromPile = state.piles.find(hasCard(byId(cardId)))
+                      if (!fromPile) return
+
+                      const toPile = state.piles.find(byCR(dest.col, dest.row))
+
+                      await db
+                        .runTransaction(async t => {
+                          const fromRef = pilesRef.doc(fromPile.id)
+                          const toRef = pilesRef.doc(
+                            toPile?.id || [dest.col, dest.row].join(","),
+                          )
+                          const [from, to] = await Promise.all([
+                            t.get(fromRef).then(d => d.data()),
+                            t.get(toRef).then(d => d.data()),
+                          ])
+
+                          if (from?.dragging !== state.user.id) return
+
+                          t.update(fromRef, {
+                            dragging: firestore.FieldValue.delete(),
+                          })
+
+                          // card を取り上げたものの同じ pile に戻した
+                          if (fromRef.isEqual(toRef)) return
+
+                          if (to?.dragging && to.dragging !== state.user.id)
+                            return
+
+                          const card = from.cards?.find(byId(cardId))
+                          if (!card) return
+
+                          const fromCards = from.cards?.filter(byId.not(cardId))
+                          if (fromCards?.length) {
+                            t.update(fromRef, {
+                              cards: fromCards,
+                            })
+                          } else {
+                            t.delete(fromRef)
+                          }
+
+                          t.set(toRef, {
+                            cards: [...(to?.cards ?? []), card],
+                            col: dest.col,
+                            row: dest.row,
+                          })
+                        })
+                        .catch(console.warn)
+
+                      // Transaction の結果が onSnapshot リスナーに伝わるまである程度待つ
+                      await ms(400)
+
+                      dispatch({
+                        type: "Card.MoveEnd.Finished",
+                        payload: {
+                          cardId,
+                        },
+                      })
+                    }}
+                  />
+                )
+              },
+            )
+          })
+          .sort(
+            (e1, e2) =>
+              e1.key?.toString().localeCompare(e2.key?.toString() ?? "") ?? 0,
+          )}
       </div>
     </Provider>
   )

@@ -14,11 +14,59 @@ export function randomID(): string {
 }
 
 /**
+ * @example
+ * byId("foo")({ id: "foo" }) === true
+ * not(byId("foo"))({ id: "foo" }) === false
+ */
+export function not<T>(fn: (t: T) => boolean): (t: T) => boolean {
+  return t => !fn(t)
+}
+
+/**
+ * @example
+ * byId.not = negate(byId)
+ * byId.not("foo")({ id: "foo" }) === false
+ */
+function negate<A extends any[], T>(
+  fn: (...args: A) => (t: T) => boolean,
+): (...args: A) => (t: T) => boolean {
+  return (...args) => {
+    const validator = fn(...args)
+    return t => !validator(t)
+  }
+}
+
+/**
  * id で find する
  */
 export function byId(id: string): (t: { id: string }) => boolean {
   return t => t.id === id
 }
+
+byId.not = negate(byId)
+
+/**
+ * 座標で find する
+ */
+export function byCR(
+  col: number,
+  row: number,
+): (t: { col: number; row: number }) => boolean {
+  return t => t.col === col && t.row === row
+}
+
+byCR.not = negate(byCR)
+
+/**
+ * card を持っている pile を見つける
+ */
+export function hasCard<T>(
+  validator: (t: T) => boolean,
+): (t: { cards: T[] }) => boolean {
+  return t => t.cards.some(validator)
+}
+
+hasCard.not = negate(hasCard)
 
 /**
  * 指定のミリ秒待つ

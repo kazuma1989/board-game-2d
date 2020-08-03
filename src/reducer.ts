@@ -1,9 +1,18 @@
 import produce from "https://cdn.skypack.dev/immer"
-import { randomID } from "./util.js"
+import { byId, randomID } from "./util.js"
 
 export type State = {
   user: User
+
   piles: Pile[]
+  tempCardPosition: {
+    [cardId: string]:
+      | {
+          col: number
+          row: number
+        }
+      | undefined
+  }
 }
 
 export type User = {
@@ -33,159 +42,99 @@ const initialState: State = {
     id: randomID() as User["id"],
   },
   piles: [],
+  tempCardPosition: {},
 }
 
 export type Action =
   | {
-      type: "Pile.DragStart"
+      type: "Firestore.ChangePiles"
       payload: {
-        pileId: Pile["id"]
+        changes: (
+          | {
+              type: "added" | "modified"
+              id: string
+              data: unknown
+            }
+          | {
+              type: "removed"
+              id: string
+            }
+        )[]
       }
     }
   | {
-      type: "Pile.DragStart.Success"
+      type: "Card.MoveEnd"
       payload: {
-        pileId: Pile["id"]
-      }
-    }
-  | {
-      type: "Pile.DragStart.Failed"
-      payload: {
-        pileId: Pile["id"]
-      }
-    }
-  | {
-      type: "Pile.DragEnd"
-      payload: {
-        pileId: Pile["id"]
+        cardId: Card["id"]
         col: number
         row: number
       }
     }
   | {
-      type: "Pile.DragEnter"
+      type: "Card.MoveEnd.Finished"
       payload: {
-        pileId: Pile["id"]
-      }
-    }
-  | {
-      type: "Pile.Drop"
-      payload: {
-        pileId: Pile["id"]
-      }
-    }
-  | {
-      type: "Firestore.Insert.Pile"
-      payload: {
-        id: string
-        pile: unknown
-      }
-    }
-  | {
-      type: "Firestore.Update.Pile"
-      payload: {
-        id: string
-        pile: unknown
+        cardId: Card["id"]
       }
     }
 
 export const reducer = produce((draft: State, action: Action) => {
   switch (action.type) {
-    case "Pile.DragStart": {
-      const { pileId } = action.payload
+    case "Firestore.ChangePiles": {
+      const { changes } = action.payload
 
-      const target = draft.piles.find(p => p.id === pileId)
-      if (!target) return
+      changes.forEach(change => {
+        const { id: pileId } = change
+        delete draft.tempCardPosition[pileId]
 
-      return
-    }
+        switch (change.type) {
+          case "added":
+          case "modified": {
+            const { id: pileId, data } = change
+            if (!isPileData(data)) return
 
-    case "Pile.DragStart.Success": {
-      const { pileId } = action.payload
+            const pile = {
+              ...data,
+              id: pileId as Pile["id"],
+            }
 
-      const target = draft.piles.find(p => p.id === pileId)
-      if (!target) return
+            const target = draft.piles.find(byId(pileId))
+            if (target) {
+              draft.piles[draft.piles.indexOf(target)] = pile
+            } else {
+              draft.piles.push(pile)
+            }
 
-      return
-    }
+            return
+          }
 
-    case "Pile.DragStart.Failed": {
-      const { pileId } = action.payload
+          case "removed": {
+            const { id: pileId } = change
 
-      const target = draft.piles.find(p => p.id === pileId)
-      if (!target) return
+            const target = draft.piles.find(byId(pileId))
+            if (!target) return
 
-      return
-    }
+            draft.piles.splice(draft.piles.indexOf(target), 1)
 
-    case "Pile.DragEnd": {
-      const { pileId, col, row } = action.payload
-
-      const target = draft.piles.find(p => p.id === pileId)
-      if (!target) return
-
-      target.col = col
-      target.row = row
-
-      return
-    }
-
-    case "Pile.DragEnter": {
-      const draggingPile = draft.piles.find(p => p.dragging === draft.user.id)
-      if (!draggingPile) return
-
-      // 掴みっぱなし
-      // draggingPile.dragging = undefined
-
-      const { pileId } = action.payload
-      const target = draft.piles.find(p => p.id === pileId)
-      if (!target) return
-
-      draft.piles.splice(draft.piles.indexOf(target), 1)
-
-      draggingPile.cards.unshift(...target.cards)
-
-      return
-    }
-
-    case "Pile.Drop": {
-      const draggingPile = draft.piles.find(p => p.dragging === draft.user.id)
-      if (!draggingPile) return
-
-      draggingPile.dragging = undefined
-
-      const { pileId } = action.payload
-      const target = draft.piles.find(p => p.id === pileId)
-      if (!target) return
-
-      draft.piles.splice(draft.piles.indexOf(draggingPile), 1)
-
-      target.cards.push(...draggingPile.cards)
-
-      return
-    }
-
-    case "Firestore.Insert.Pile": {
-      const { id, pile } = action.payload
-      if (!isPileData(pile)) return
-
-      draft.piles.push({
-        ...pile,
-        id: id as Pile["id"],
+            return
+          }
+        }
       })
 
       return
     }
 
-    case "Firestore.Update.Pile": {
-      const { id, pile } = action.payload
-      if (!isPileData(pile)) return
+    case "Card.MoveEnd": {
+      const { cardId, col, row } = action.payload
 
-      const targetIndex = draft.piles.findIndex(p => p.id === id)
-      draft.piles[targetIndex] = {
-        ...pile,
-        id: id as Pile["id"],
-      }
+      draft.tempCardPosition[cardId] = { col, row }
+
+      return
+    }
+
+    case "Card.MoveEnd.Finished": {
+      const { cardId } = action.payload
+
+      delete draft.tempCardPosition[cardId]
 
       return
     }
@@ -196,7 +145,11 @@ export const reducer = produce((draft: State, action: Action) => {
   }
 }, initialState)
 
-function isPileData(obj: unknown): obj is Omit<Pile, "id"> {
+function isPileData(obj: any): obj is Omit<Pile, "id"> {
+  if (!obj.cards) {
+    return false
+  }
+
   // TODO ちゃんとした実装
   return true
 }

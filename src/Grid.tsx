@@ -1,5 +1,6 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { CSSProperties, useRef } from "https://cdn.skypack.dev/react"
+import React, { useRef } from "https://cdn.skypack.dev/react"
+import type { CSSProperties } from "react"
 import { mode } from "./mode.js"
 
 export function Grid({
