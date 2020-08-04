@@ -68,10 +68,10 @@ export function Card({
         let translateX = col * 50
         let translateY = row * 50
 
-        let pointermove: (e: PointerEvent) => void
+        let pointermove
         target.addEventListener(
           "pointermove",
-          (pointermove = e => {
+          (pointermove = (e: PointerEvent) => {
             translateX += (e.clientX - clientX) / scale$.current
             translateY += (e.clientY - clientY) / scale$.current
 

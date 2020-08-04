@@ -39,27 +39,69 @@ export function Board() {
       scale$.current = e.getTransform().scale
     })
 
-    const pause = (e: PointerEvent) => {
-      if (!(e.target instanceof HTMLElement)) return
-      if (!e.isPrimary) return
+    let touchPaused = false
+    let touchstart
+    container.addEventListener(
+      "touchstart",
+      (touchstart = (e: TouchEvent) => {
+        if (!(e.target instanceof HTMLElement)) return
 
-      if (e.target.closest("[data-no-pannable]")) {
-        panzoom.pause()
-      }
-    }
+        if (e.target.closest("[data-no-pannable]")) {
+          touchPaused = true
+        }
 
-    const resume = () => {
-      panzoom.resume()
-    }
+        if (touchPaused) {
+          e.preventDefault()
+          e.stopPropagation()
 
-    container.addEventListener("pointerdown", pause, { passive: true })
-    container.addEventListener("pointerup", resume, { passive: true })
+          container.addEventListener(
+            "touchend",
+            () => {
+              touchPaused = false
+            },
+            { passive: true, once: true },
+          )
+          container.addEventListener(
+            "touchcancel",
+            () => {
+              touchPaused = false
+            },
+            { passive: true, once: true },
+          )
+        }
+      }),
+      { passive: false },
+    )
+
+    let mousedown
+    container.addEventListener(
+      "mousedown",
+      (mousedown = e => {
+        if (!(e.target instanceof HTMLElement)) return
+
+        if (e.target.closest("[data-no-pannable]")) {
+          e.preventDefault()
+          e.stopPropagation()
+        }
+      }),
+      { passive: false },
+    )
+
+    let dblclick
+    container.addEventListener(
+      "dblclick",
+      (dblclick = (e: MouseEvent) => {
+        e.stopPropagation()
+      }),
+      { passive: true },
+    )
 
     return () => {
       panzoom.dispose()
 
-      container.removeEventListener("pointerdown", pause)
-      container.removeEventListener("pointerup", resume)
+      container.removeEventListener("pointerdown", touchstart)
+      container.removeEventListener("mousedown", mousedown)
+      container.removeEventListener("dblclick", dblclick)
     }
   }, [])
 
