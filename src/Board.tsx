@@ -15,15 +15,22 @@ import { byCR, byId, hasCard, ms } from "./util.js"
 
 export function Board() {
   const scale$ = useRef(1)
+
   const container$ = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const container = container$.current
     if (!container) return
 
-    const panzoom = initPanzoom(container, {
-      maxZoom: 10,
-      minZoom: 0.2,
-    })
+    const panzoom = initPanzoom(
+      container,
+      {
+        maxZoom: 10,
+        minZoom: 0.2,
+      },
+      {
+        noPannableSelector: "[data-no-pannable]",
+      },
+    )
 
     panzoom.moveTo(
       -(1000 - document.body.clientWidth / 2),

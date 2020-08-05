@@ -51,6 +51,9 @@ export function Card({
 
   return (
     <div
+      onDoubleClick={e => {
+        console.debug(e.type, "in React")
+      }}
       onPointerDown={e => {
         if (!e.isPrimary) return
         if (locked || locked$.current) return

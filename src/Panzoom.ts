@@ -15,25 +15,36 @@ type Transform = {
   scale: number
 }
 
+type PanzoomOption = {
+  maxZoom?: number
+  minZoom?: number
+  smoothScroll?: boolean
+}
+
+type CustomOption = Parameters<typeof preventPanzoomListeners>[1]
+
 export function initPanzoom(
-  target: Element,
-  option?: {
-    maxZoom?: number
-    minZoom?: number
-    smoothScroll?: boolean
-  },
+  target: HTMLElement,
+  option?: PanzoomOption,
+  customOption?: CustomOption,
 ) {
-  const dispose = preventDefaultPanzoomAction(target)
+  const dispose = preventPanzoomListeners(target, customOption)
 
   const panzoom: Panzoom = Panzoom(target, {
     // disable double click zoom
     zoomDoubleClickSpeed: 1,
+
+    // Do not do preventDefault() or stopPropagation()
+    onDoubleClick(e: MouseEvent) {
+      return false
+    },
+
     ...option,
   })
 
   const _dispose = panzoom.dispose.bind(panzoom)
   panzoom.dispose = (...args) => {
-    dispose()
+    dispose?.()
 
     _dispose(...args)
   }
@@ -41,67 +52,79 @@ export function initPanzoom(
   return panzoom
 }
 
-function preventDefaultPanzoomAction(target: Element) {
-  let touchPaused = false
+/**
+ * Panzoom のタッチリスナー、マウスリスナーを条件に応じて無効化する。
+ * これにより、Panzoom 要素の子要素だが pan や zoom は発生させない要素というのを作れる。
+ */
+function preventPanzoomListeners(
+  target: HTMLElement,
+  {
+    noPannableSelector,
+  }: {
+    noPannableSelector?: string
+  } = {},
+) {
+  const owner = target.parentElement
+  if (!owner) return
+
+  // 複数の指のうちひとつが no pannable 要素に触れていたら、全部のタッチを prevent する
+  let touchPrevented = false
   let touchstart
-  target.addEventListener(
+  owner.addEventListener(
     "touchstart",
     (touchstart = (e: TouchEvent) => {
       if (!(e.target instanceof HTMLElement)) return
 
-      if (e.target.closest("[data-no-pannable]")) {
-        touchPaused = true
-      }
+      if (
+        !touchPrevented &&
+        noPannableSelector &&
+        e.target.closest(noPannableSelector)
+      ) {
+        touchPrevented = true
 
-      if (touchPaused) {
-        e.preventDefault()
-        e.stopPropagation()
-
-        target.addEventListener(
+        e.target.addEventListener(
           "touchend",
           () => {
-            touchPaused = false
+            touchPrevented = false
           },
           { passive: true, once: true },
         )
-        target.addEventListener(
-          "touchcancel",
-          () => {
-            touchPaused = false
-          },
-          { passive: true, once: true },
-        )
+      }
+
+      if (touchPrevented) {
+        e.preventDefault()
+        e.stopImmediatePropagation()
       }
     }),
     { passive: false },
   )
 
   let mousedown
-  target.addEventListener(
+  owner.addEventListener(
     "mousedown",
-    (mousedown = e => {
+    (mousedown = (e: MouseEvent) => {
       if (!(e.target instanceof HTMLElement)) return
 
-      if (e.target.closest("[data-no-pannable]")) {
+      // タッチ制御に似せた書き方にしたが、マウスは単数なので、複数のケースをハンドリングする必要はない
+      let mousePrevented = false
+      if (
+        !mousePrevented &&
+        noPannableSelector &&
+        e.target.closest(noPannableSelector)
+      ) {
+        mousePrevented = true
+      }
+
+      if (mousePrevented) {
         e.preventDefault()
-        e.stopPropagation()
+        e.stopImmediatePropagation()
       }
     }),
     { passive: false },
   )
 
-  let dblclick
-  target.addEventListener(
-    "dblclick",
-    (dblclick = (e: MouseEvent) => {
-      e.stopPropagation()
-    }),
-    { passive: true },
-  )
-
   return () => {
-    target.removeEventListener("touchstart", touchstart)
-    target.removeEventListener("mousedown", mousedown)
-    target.removeEventListener("dblclick", dblclick)
+    owner.removeEventListener("touchstart", touchstart)
+    owner.removeEventListener("mousedown", mousedown)
   }
 }
