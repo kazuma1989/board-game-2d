@@ -1,5 +1,4 @@
 import { css } from "https://cdn.skypack.dev/emotion"
-import Panzoom from "https://cdn.skypack.dev/panzoom"
 import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
 import {
   useDispatch,
@@ -9,26 +8,29 @@ import {
 import { Card } from "./Card.js"
 import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
+import { initPanzoom } from "./Panzoom.js"
 import { useCollection } from "./piles.js"
 import { Provider } from "./useScale.js"
 import { byCR, byId, hasCard, ms } from "./util.js"
 
 export function Board() {
   const scale$ = useRef(1)
-  const container$ = useRef<HTMLDivElement>(null)
 
+  const container$ = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const container = container$.current
     if (!container) return
 
-    const panzoom = Panzoom(container, {
-      maxZoom: 10,
-      minZoom: 0.2,
-      smoothScroll: true,
-
-      // disable double click zoom
-      zoomDoubleClickSpeed: 1,
-    })
+    const panzoom = initPanzoom(
+      container,
+      {
+        maxZoom: 10,
+        minZoom: 0.2,
+      },
+      {
+        noPannableSelector: "[data-no-pannable]",
+      },
+    )
 
     panzoom.moveTo(
       -(1000 - document.body.clientWidth / 2),
@@ -39,27 +41,8 @@ export function Board() {
       scale$.current = e.getTransform().scale
     })
 
-    const pause = (e: PointerEvent) => {
-      if (!(e.target instanceof HTMLElement)) return
-      if (!e.isPrimary) return
-
-      if (e.target.closest("[data-no-pannable]")) {
-        panzoom.pause()
-      }
-    }
-
-    const resume = () => {
-      panzoom.resume()
-    }
-
-    container.addEventListener("pointerdown", pause, { passive: true })
-    container.addEventListener("pointerup", resume, { passive: true })
-
     return () => {
       panzoom.dispose()
-
-      container.removeEventListener("pointerdown", pause)
-      container.removeEventListener("pointerup", resume)
     }
   }, [])
 
