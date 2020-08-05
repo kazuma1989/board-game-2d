@@ -139,71 +139,77 @@ export function Card({
 
         onMoveStart?.()
       }}
-      className={cx(
+      className={[
         css`
           z-index: ${index};
           transform: translate(${col * 50}px, ${row * 50}px)
             translate(${left}px, ${top}px);
-          position: absolute;
-          transform-style: preserve-3d;
-
-          ::after,
-          ::before {
-            transition: transform 200ms;
-            position: absolute;
-            width: 50px;
-            height: 76.5px;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
-            backface-visibility: hidden;
-            background-size: cover;
-            background-repeat: no-repeat;
-          }
 
           ::after {
             content: ${JSON.stringify(text)};
+            background-color: white;
             background-image: url(${JSON.stringify(src?.face)});
           }
 
           ::before {
             content: "";
+            background-color: silver;
             background-image: url(${JSON.stringify(src?.back)});
           }
         `,
-        state === "back"
-          ? css`
-              ::after {
-                transform: rotateY(180deg);
-              }
-              ::before {
-                transform: rotateY(0deg);
-              }
-            `
-          : css`
-              ::after {
-                transform: rotateY(0deg);
-              }
-              ::before {
-                transform: rotateY(180deg);
-              }
-            `,
-        locked
-          ? css`
-              cursor: not-allowed;
-            `
-          : css`
-              cursor: grab;
-            `,
-        grabbing && !locked
-          ? css`
-              z-index: 100;
-              cursor: grabbing;
-            `
-          : css`
-              transition: transform 400ms;
-            `,
-        className,
-      )}
+        cx(
+          css`
+            position: absolute;
+            transform-style: preserve-3d;
+
+            ::after,
+            ::before {
+              transition: transform 300ms;
+              position: absolute;
+              width: 50px;
+              height: 76.5px;
+              border-radius: 4px;
+              box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
+              backface-visibility: hidden;
+              background-size: cover;
+              background-repeat: no-repeat;
+            }
+          `,
+          state === "back"
+            ? css`
+                ::after {
+                  transform: rotateY(180deg);
+                }
+                ::before {
+                  transform: rotateY(0deg);
+                }
+              `
+            : css`
+                ::after {
+                  transform: rotateY(0deg);
+                }
+                ::before {
+                  transform: rotateY(180deg);
+                }
+              `,
+          locked
+            ? css`
+                cursor: not-allowed;
+              `
+            : css`
+                cursor: grab;
+              `,
+          grabbing && !locked
+            ? css`
+                z-index: 100;
+                cursor: grabbing;
+              `
+            : css`
+                transition: transform 400ms;
+              `,
+          className,
+        ),
+      ].join(" ")}
       style={style}
       {...props}
     ></div>
