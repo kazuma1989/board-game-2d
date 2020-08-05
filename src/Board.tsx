@@ -1,6 +1,5 @@
 import { css } from "https://cdn.skypack.dev/emotion"
-import Panzoom from "https://cdn.skypack.dev/panzoom"
-import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
+import React, { useRef, useState } from "https://cdn.skypack.dev/react"
 import {
   useDispatch,
   useSelector,
@@ -10,100 +9,18 @@ import { Card } from "./Card.js"
 import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
 import { useCollection } from "./piles.js"
+import { usePanzoom } from "./usePanzoom.js"
 import { Provider } from "./useScale.js"
 import { byCR, byId, hasCard, ms } from "./util.js"
 
 export function Board() {
   const scale$ = useRef(1)
-  const container$ = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const container = container$.current
-    if (!container) return
-
-    const panzoom = Panzoom(container, {
-      maxZoom: 10,
-      minZoom: 0.2,
-      smoothScroll: true,
-
-      // disable double click zoom
-      zoomDoubleClickSpeed: 1,
-    })
-
-    panzoom.moveTo(
-      -(1000 - document.body.clientWidth / 2),
-      -(1000 - document.body.clientHeight / 2),
-    )
-
-    panzoom.on("zoom", e => {
-      scale$.current = e.getTransform().scale
-    })
-
-    let touchPaused = false
-    let touchstart
-    container.addEventListener(
-      "touchstart",
-      (touchstart = (e: TouchEvent) => {
-        if (!(e.target instanceof HTMLElement)) return
-
-        if (e.target.closest("[data-no-pannable]")) {
-          touchPaused = true
-        }
-
-        if (touchPaused) {
-          e.preventDefault()
-          e.stopPropagation()
-
-          container.addEventListener(
-            "touchend",
-            () => {
-              touchPaused = false
-            },
-            { passive: true, once: true },
-          )
-          container.addEventListener(
-            "touchcancel",
-            () => {
-              touchPaused = false
-            },
-            { passive: true, once: true },
-          )
-        }
-      }),
-      { passive: false },
-    )
-
-    let mousedown
-    container.addEventListener(
-      "mousedown",
-      (mousedown = e => {
-        if (!(e.target instanceof HTMLElement)) return
-
-        if (e.target.closest("[data-no-pannable]")) {
-          e.preventDefault()
-          e.stopPropagation()
-        }
-      }),
-      { passive: false },
-    )
-
-    let dblclick
-    container.addEventListener(
-      "dblclick",
-      (dblclick = (e: MouseEvent) => {
-        e.stopPropagation()
-      }),
-      { passive: true },
-    )
-
-    return () => {
-      panzoom.dispose()
-
-      container.removeEventListener("pointerdown", touchstart)
-      container.removeEventListener("mousedown", mousedown)
-      container.removeEventListener("dblclick", dblclick)
-    }
-  }, [])
+  const [container, setContainer] = useState<Element>()
+  usePanzoom(container, {
+    onZoom({ scale }) {
+      scale$.current = scale
+    },
+  })
 
   const dispatch = useDispatch()
   const piles = useSelector(state => state.piles)
@@ -117,7 +34,10 @@ export function Board() {
   return (
     <Provider value={scale$}>
       <div
-        ref={container$}
+        ref={e => {
+          if (!e) return
+          setContainer(e)
+        }}
         className={css`
           width: 2000px;
           height: 2000px;
