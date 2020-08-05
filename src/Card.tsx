@@ -11,6 +11,7 @@ export function Card({
   col,
   row,
   index,
+  length,
   locked,
   text,
   src,
@@ -18,8 +19,6 @@ export function Card({
   onMoveEnd,
   className,
   style,
-  innerClassName,
-  innerStyle,
   ...props
 }: {
   col: number
@@ -28,6 +27,7 @@ export function Card({
    * Pile 内での 0 始まりの順序。大きいほど「上」に積み重なっている
    */
   index: number
+  length: number
   locked?: boolean
 
   text?: string
@@ -38,8 +38,6 @@ export function Card({
 
   className?: string
   style?: CSSProperties
-  innerClassName?: string
-  innerStyle?: CSSProperties
 }) {
   const scale$ = useScale()
 
@@ -48,6 +46,20 @@ export function Card({
   useEffect(() => {
     locked$.current = locked
   })
+
+  let ratio: number
+  if (length <= 0) {
+    ratio = 0
+  } else if (index <= 0) {
+    ratio = 0
+  } else if (index >= length) {
+    ratio = 0
+  } else {
+    ratio = 1 / (length / index - 1) / length
+  }
+
+  const left = -6 * ratio
+  const top = ratio / 2
 
   return (
     <div
@@ -121,6 +133,22 @@ export function Card({
           z-index: ${index};
           transform: translate(${col * 50}px, ${row * 50}px);
           position: absolute;
+
+          ::after {
+            content: "${text}";
+            background-image: url("${src}");
+            background-size: cover;
+            background-repeat: no-repeat;
+
+            transform: translate(${left}px, ${top}px);
+
+            transition: transform 200ms;
+            position: absolute;
+            width: 50px;
+            height: 76.5px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
+          }
         `,
         locked
           ? css`
@@ -141,29 +169,6 @@ export function Card({
       )}
       style={style}
       {...props}
-    >
-      <div
-        className={cx(
-          css`
-            transition: transform 200ms;
-            position: absolute;
-            width: 50px;
-            height: 76.5px;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
-          `,
-          src &&
-            css`
-            background-image: url("${src}");
-            background-size: cover;
-            background-repeat: no-repeat;
-          `,
-          innerClassName,
-        )}
-        style={innerStyle}
-      >
-        {text}
-      </div>
-    </div>
+    ></div>
   )
 }

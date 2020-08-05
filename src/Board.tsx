@@ -79,20 +79,14 @@ export function Board() {
               ({ id: cardId, text, src, state }, index, { length }) => {
                 const temp = tempCardPosition[cardId]
 
-                const left =
-                  length === 0 ? 0 : -6 / (length / index - 1) / length
-                const top = left / 2
-
                 return (
                   <Card
                     data-no-pannable
                     key={cardId}
                     col={temp?.col ?? col}
                     row={temp?.row ?? row}
-                    index={temp ? 100 : index}
-                    innerStyle={{
-                      transform: `translate(${left}px, ${top}px)`,
-                    }}
+                    index={temp ? length : index}
+                    length={length}
                     locked={dragging && dragging !== userId}
                     text={text}
                     src={src[state]}
