@@ -15,6 +15,7 @@ export function Card({
   locked,
   text,
   src,
+  surface,
   onMoveStart,
   onMoveEnd,
   className,
@@ -35,6 +36,7 @@ export function Card({
     face: string
     back: string
   }
+  surface?: "face" | "back"
 
   onMoveStart?(): void
   onMoveEnd?(dest: { col: number; row: number; x: number; y: number }): void
@@ -43,13 +45,6 @@ export function Card({
   style?: CSSProperties
 }) {
   const scale$ = useScale()
-
-  const [surface, setSurface] = useState<keyof Exclude<typeof src, undefined>>(
-    "back",
-  )
-  useEffect(() => {
-    setSurface(Math.random() >= 0.5 ? "face" : "back")
-  }, [])
 
   const [grabbing, setGrabbing] = useState(false)
   const locked$ = useRef(locked)
@@ -75,7 +70,6 @@ export function Card({
     <div
       onDoubleClick={e => {
         console.debug(e.type, "in React")
-        setSurface("face")
       }}
       onPointerDown={e => {
         if (!e.isPrimary) return

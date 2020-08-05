@@ -90,7 +90,7 @@ export function Board() {
                     locked={dragging && dragging !== userId}
                     text={text}
                     src={src}
-                    // surface={surface}
+                    surface={surface}
                     // TODO イベントハンドラー内に大きなロジック書きたくないよね
                     onMoveStart={async () => {
                       const state = store.getState()
