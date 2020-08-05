@@ -76,7 +76,7 @@ export function Board() {
         {piles
           .flatMap(({ cards, col, row, dragging }) => {
             return cards.map(
-              ({ id: cardId, text, src, state }, index, { length }) => {
+              ({ id: cardId, text, src, surface }, index, { length }) => {
                 const temp = tempCardPosition[cardId]
 
                 return (
@@ -90,6 +90,7 @@ export function Board() {
                     locked={dragging && dragging !== userId}
                     text={text}
                     src={src}
+                    // surface={surface}
                     // TODO イベントハンドラー内に大きなロジック書きたくないよね
                     onMoveStart={async () => {
                       const state = store.getState()

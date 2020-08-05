@@ -60,7 +60,7 @@ export function Header({
                 {
                   ...card,
                   id: randomID() as Card["id"],
-                  state: "face",
+                  surface: "face",
                 },
               ],
               col,

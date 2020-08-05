@@ -44,11 +44,11 @@ export function Card({
 }) {
   const scale$ = useScale()
 
-  const [state, setState] = useState<keyof Exclude<typeof src, undefined>>(
+  const [surface, setSurface] = useState<keyof Exclude<typeof src, undefined>>(
     "back",
   )
   useEffect(() => {
-    setState(Math.random() >= 0.5 ? "face" : "back")
+    setSurface(Math.random() >= 0.5 ? "face" : "back")
   }, [])
 
   const [grabbing, setGrabbing] = useState(false)
@@ -75,7 +75,7 @@ export function Card({
     <div
       onDoubleClick={e => {
         console.debug(e.type, "in React")
-        setState("face")
+        setSurface("face")
       }}
       onPointerDown={e => {
         if (!e.isPrimary) return
@@ -175,7 +175,7 @@ export function Card({
               background-repeat: no-repeat;
             }
           `,
-          state === "back"
+          surface === "back"
             ? css`
                 ::after {
                   transform: rotateY(180deg);

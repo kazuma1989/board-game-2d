@@ -12,7 +12,7 @@ export function FirestoreMockPiles() {
       const card: Card = {
         ...c,
         id: randomID() as Card["id"],
-        state: Math.random() >= 0.5 ? "face" : "back",
+        surface: Math.random() >= 0.5 ? "face" : "back",
       }
 
       const col = Math.floor(10 + 20 * Math.random())
