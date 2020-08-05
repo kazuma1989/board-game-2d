@@ -1,5 +1,5 @@
 import { css } from "https://cdn.skypack.dev/emotion"
-import React, { useRef, useState } from "https://cdn.skypack.dev/react"
+import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
 import {
   useDispatch,
   useSelector,
@@ -8,19 +8,36 @@ import {
 import { Card } from "./Card.js"
 import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
+import { initPanzoom } from "./Panzoom.js"
 import { useCollection } from "./piles.js"
-import { usePanzoom } from "./usePanzoom.js"
 import { Provider } from "./useScale.js"
 import { byCR, byId, hasCard, ms } from "./util.js"
 
 export function Board() {
   const scale$ = useRef(1)
-  const [container, setContainer] = useState<Element>()
-  usePanzoom(container, {
-    onZoom({ scale }) {
-      scale$.current = scale
-    },
-  })
+  const container$ = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const container = container$.current
+    if (!container) return
+
+    const panzoom = initPanzoom(container, {
+      maxZoom: 10,
+      minZoom: 0.2,
+    })
+
+    panzoom.moveTo(
+      -(1000 - document.body.clientWidth / 2),
+      -(1000 - document.body.clientHeight / 2),
+    )
+
+    panzoom.on("zoom", e => {
+      scale$.current = e.getTransform().scale
+    })
+
+    return () => {
+      panzoom.dispose()
+    }
+  }, [])
 
   const dispatch = useDispatch()
   const piles = useSelector(state => state.piles)
@@ -34,10 +51,7 @@ export function Board() {
   return (
     <Provider value={scale$}>
       <div
-        ref={e => {
-          if (!e) return
-          setContainer(e)
-        }}
+        ref={container$}
         className={css`
           width: 2000px;
           height: 2000px;
