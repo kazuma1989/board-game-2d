@@ -92,11 +92,10 @@ function preventPanzoomListeners(
       }
 
       if (touchPrevented) {
-        e.preventDefault()
         e.stopImmediatePropagation()
       }
     }),
-    { passive: false },
+    { passive: true },
   )
 
   let mousedown
@@ -116,11 +115,10 @@ function preventPanzoomListeners(
       }
 
       if (mousePrevented) {
-        e.preventDefault()
         e.stopImmediatePropagation()
       }
     }),
-    { passive: false },
+    { passive: true },
   )
 
   return () => {
