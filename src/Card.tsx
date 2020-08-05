@@ -31,7 +31,10 @@ export function Card({
   locked?: boolean
 
   text?: string
-  src?: string
+  src?: {
+    face: string
+    back: string
+  }
 
   onMoveStart?(): void
   onMoveEnd?(dest: { col: number; row: number; x: number; y: number }): void
@@ -40,6 +43,13 @@ export function Card({
   style?: CSSProperties
 }) {
   const scale$ = useScale()
+
+  const [state, setState] = useState<keyof Exclude<typeof src, undefined>>(
+    "back",
+  )
+  useEffect(() => {
+    setState(Math.random() >= 0.5 ? "face" : "back")
+  }, [])
 
   const [grabbing, setGrabbing] = useState(false)
   const locked$ = useRef(locked)
@@ -65,6 +75,7 @@ export function Card({
     <div
       onDoubleClick={e => {
         console.debug(e.type, "in React")
+        setState("face")
       }}
       onPointerDown={e => {
         if (!e.isPrimary) return
@@ -131,25 +142,51 @@ export function Card({
       className={cx(
         css`
           z-index: ${index};
-          transform: translate(${col * 50}px, ${row * 50}px);
+          transform: translate(${col * 50}px, ${row * 50}px)
+            translate(${left}px, ${top}px);
           position: absolute;
+          transform-style: preserve-3d;
 
-          ::after {
-            content: "${text}";
-            background-image: url("${src}");
-            background-size: cover;
-            background-repeat: no-repeat;
-
-            transform: translate(${left}px, ${top}px);
-
+          ::after,
+          ::before {
             transition: transform 200ms;
             position: absolute;
             width: 50px;
             height: 76.5px;
             border-radius: 4px;
             box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
+            backface-visibility: hidden;
+            background-size: cover;
+            background-repeat: no-repeat;
+          }
+
+          ::after {
+            content: ${JSON.stringify(text)};
+            background-image: url(${JSON.stringify(src?.face)});
+          }
+
+          ::before {
+            content: "";
+            background-image: url(${JSON.stringify(src?.back)});
           }
         `,
+        state === "back"
+          ? css`
+              ::after {
+                transform: rotateY(180deg);
+              }
+              ::before {
+                transform: rotateY(0deg);
+              }
+            `
+          : css`
+              ::after {
+                transform: rotateY(0deg);
+              }
+              ::before {
+                transform: rotateY(180deg);
+              }
+            `,
         locked
           ? css`
               cursor: not-allowed;
