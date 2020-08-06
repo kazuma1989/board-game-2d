@@ -162,14 +162,16 @@ export function Card({
         cx(
           css`
             position: absolute;
-            transform-style: preserve-3d;
+            width: 50px;
+            height: 76.5px;
+            perspective: 100px;
 
             ::after,
             ::before {
               transition: transform 300ms;
               position: absolute;
-              width: 50px;
-              height: 76.5px;
+              width: 100%;
+              height: 100%;
               border-radius: 4px;
               box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
               backface-visibility: hidden;
@@ -203,7 +205,7 @@ export function Card({
               `,
           grabbing && !locked
             ? css`
-                z-index: 100;
+                z-index: 1000;
                 cursor: grabbing;
               `
             : css`
