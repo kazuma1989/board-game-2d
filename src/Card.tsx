@@ -18,6 +18,7 @@ export function Card({
   surface,
   onMoveStart,
   onMoveEnd,
+  onDoubleTap,
   className,
   style,
   ...props
@@ -40,6 +41,7 @@ export function Card({
 
   onMoveStart?(): void
   onMoveEnd?(dest: { col: number; row: number; x: number; y: number }): void
+  onDoubleTap?(): void
 
   className?: string
   style?: CSSProperties
@@ -68,8 +70,8 @@ export function Card({
 
   return (
     <div
-      onDoubleClick={e => {
-        console.debug(e.type, "in React")
+      onDoubleClick={() => {
+        onDoubleTap?.()
       }}
       onPointerDown={e => {
         if (!e.isPrimary) return
