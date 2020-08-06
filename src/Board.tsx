@@ -10,6 +10,7 @@ import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
 import { initPanzoom } from "./Panzoom.js"
 import { useCollection } from "./piles.js"
+import type { Pile } from "./reducer.js"
 import { Provider } from "./useScale.js"
 import { byCR, byId, hasCard, ms } from "./util.js"
 
@@ -76,7 +77,7 @@ export function Board() {
         {piles
           .flatMap(({ cards, col, row, dragging }) => {
             return cards.map(
-              ({ id: cardId, text, src, state }, index, { length }) => {
+              ({ id: cardId, text, src, surface }, index, { length }) => {
                 const temp = tempCardPosition[cardId]
 
                 return (
@@ -89,7 +90,41 @@ export function Board() {
                     length={length}
                     locked={dragging && dragging !== userId}
                     text={text}
-                    src={src[state]}
+                    src={src}
+                    surface={surface}
+                    // TODO イベントハンドラー内に大きなロジック書きたくないよね
+                    onDoubleTap={async () => {
+                      const state = store.getState()
+
+                      const fromPile = state.piles.find(hasCard(byId(cardId)))
+                      if (!fromPile) return
+
+                      await db
+                        .runTransaction(async t => {
+                          const fromRef = pilesRef.doc(fromPile.id)
+                          const from = (await t
+                            .get(fromRef)
+                            .then(d => d.data())) as Pile | undefined
+
+                          if (!from) return
+                          if (from.dragging && from.dragging !== state.user.id)
+                            return
+
+                          t.update(fromRef, {
+                            cards: from.cards.map(c => {
+                              if (c.id !== cardId) {
+                                return c
+                              }
+
+                              return {
+                                ...c,
+                                surface: c.surface === "back" ? "face" : "back",
+                              }
+                            }),
+                          })
+                        })
+                        .catch(console.warn)
+                    }}
                     // TODO イベントハンドラー内に大きなロジック書きたくないよね
                     onMoveStart={async () => {
                       const state = store.getState()
@@ -102,7 +137,8 @@ export function Board() {
                           const fromRef = pilesRef.doc(fromPile.id)
                           const from = await t.get(fromRef).then(d => d.data())
 
-                          if (from?.dragging && from.dragging !== state.user.id)
+                          if (!from) return
+                          if (from.dragging && from.dragging !== state.user.id)
                             return
 
                           t.update(fromRef, {
@@ -140,7 +176,8 @@ export function Board() {
                             t.get(toRef).then(d => d.data()),
                           ])
 
-                          if (from?.dragging !== state.user.id) return
+                          if (!from) return
+                          if (from.dragging !== state.user.id) return
 
                           t.update(fromRef, {
                             dragging: firestore.FieldValue.delete(),

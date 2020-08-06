@@ -34,7 +34,7 @@ export type Card = {
     face: string
     back: string
   }
-  state: "face" | "back"
+  surface: "face" | "back"
 }
 
 const initialState: State = {

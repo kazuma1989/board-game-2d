@@ -15,8 +15,10 @@ export function Card({
   locked,
   text,
   src,
+  surface,
   onMoveStart,
   onMoveEnd,
+  onDoubleTap,
   className,
   style,
   ...props
@@ -31,10 +33,15 @@ export function Card({
   locked?: boolean
 
   text?: string
-  src?: string
+  src?: {
+    face: string
+    back: string
+  }
+  surface?: "face" | "back"
 
   onMoveStart?(): void
   onMoveEnd?(dest: { col: number; row: number; x: number; y: number }): void
+  onDoubleTap?(): void
 
   className?: string
   style?: CSSProperties
@@ -63,8 +70,8 @@ export function Card({
 
   return (
     <div
-      onDoubleClick={e => {
-        console.debug(e.type, "in React")
+      onDoubleClick={() => {
+        onDoubleTap?.()
       }}
       onPointerDown={e => {
         if (!e.isPrimary) return
@@ -102,9 +109,18 @@ export function Card({
           { passive: true },
         )
 
+        let _onMoveEnd: typeof onMoveEnd
+        const startTimer = setTimeout(() => {
+          onMoveStart?.()
+
+          _onMoveEnd = onMoveEnd
+        }, 300)
+
         target.addEventListener(
           "pointerup",
           () => {
+            clearTimeout(startTimer)
+
             target.style.transform = ""
             target.removeEventListener("pointermove", pointermove)
 
@@ -116,7 +132,7 @@ export function Card({
 
             const centerX = translateX + 25
             const centerY = translateY + 25
-            onMoveEnd?.({
+            _onMoveEnd?.({
               col: (centerX - (centerX % 50)) / 50,
               row: (centerY - (centerY % 50)) / 50,
               x: translateX,
@@ -125,48 +141,80 @@ export function Card({
           },
           { once: true, passive: true },
         )
-
-        onMoveStart?.()
       }}
-      className={cx(
+      className={[
         css`
-          z-index: ${index};
-          transform: translate(${col * 50}px, ${row * 50}px);
-          position: absolute;
+          transform: translate(${col * 50}px, ${row * 50}px)
+            translate(${left}px, ${top}px);
 
           ::after {
-            content: "${text}";
-            background-image: url("${src}");
-            background-size: cover;
-            background-repeat: no-repeat;
+            content: ${JSON.stringify(text)};
+            background-color: white;
+            background-image: url(${JSON.stringify(src?.face)});
+          }
 
-            transform: translate(${left}px, ${top}px);
-
-            transition: transform 200ms;
+          ::before {
+            content: "";
+            background-color: silver;
+            background-image: url(${JSON.stringify(src?.back)});
+          }
+        `,
+        cx(
+          css`
             position: absolute;
             width: 50px;
             height: 76.5px;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
-          }
-        `,
-        locked
-          ? css`
-              cursor: not-allowed;
-            `
-          : css`
-              cursor: grab;
-            `,
-        grabbing && !locked
-          ? css`
-              z-index: 100;
-              cursor: grabbing;
-            `
-          : css`
-              transition: transform 400ms;
-            `,
-        className,
-      )}
+            perspective: 100px;
+
+            ::after,
+            ::before {
+              transition: transform 300ms;
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              border-radius: 4px;
+              box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
+              backface-visibility: hidden;
+              background-size: cover;
+              background-repeat: no-repeat;
+            }
+          `,
+          surface === "back"
+            ? css`
+                ::after {
+                  transform: rotateY(180deg);
+                }
+                ::before {
+                  transform: rotateY(0deg);
+                }
+              `
+            : css`
+                ::after {
+                  transform: rotateY(0deg);
+                }
+                ::before {
+                  transform: rotateY(180deg);
+                }
+              `,
+          locked
+            ? css`
+                cursor: not-allowed;
+              `
+            : css`
+                cursor: grab;
+              `,
+          grabbing && !locked
+            ? css`
+                z-index: 1000;
+                cursor: grabbing;
+              `
+            : css`
+                z-index: ${index};
+                transition: transform 400ms;
+              `,
+          className,
+        ),
+      ].join(" ")}
       style={style}
       {...props}
     ></div>
