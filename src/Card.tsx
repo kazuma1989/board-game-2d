@@ -109,9 +109,18 @@ export function Card({
           { passive: true },
         )
 
+        let _onMoveEnd: typeof onMoveEnd
+        const startTimer = setTimeout(() => {
+          onMoveStart?.()
+
+          _onMoveEnd = onMoveEnd
+        }, 300)
+
         target.addEventListener(
           "pointerup",
           () => {
+            clearTimeout(startTimer)
+
             target.style.transform = ""
             target.removeEventListener("pointermove", pointermove)
 
@@ -123,7 +132,7 @@ export function Card({
 
             const centerX = translateX + 25
             const centerY = translateY + 25
-            onMoveEnd?.({
+            _onMoveEnd?.({
               col: (centerX - (centerX % 50)) / 50,
               row: (centerY - (centerY % 50)) / 50,
               x: translateX,
@@ -132,8 +141,6 @@ export function Card({
           },
           { once: true, passive: true },
         )
-
-        onMoveStart?.()
       }}
       className={[
         css`
