@@ -137,7 +137,6 @@ export function Card({
       }}
       className={[
         css`
-          z-index: ${index};
           transform: translate(${col * 50}px, ${row * 50}px)
             translate(${left}px, ${top}px);
 
@@ -201,6 +200,7 @@ export function Card({
                 cursor: grabbing;
               `
             : css`
+                z-index: ${index};
                 transition: transform 400ms;
               `,
           className,
