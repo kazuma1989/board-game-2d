@@ -27,7 +27,7 @@ export function App() {
       <ReduxProvider store={store}>
         {data === "mock" ? <FirestoreMockPiles /> : <FirestorePiles />}
 
-        {mode === "debug" && <Header />}
+        <Header />
 
         <Board />
       </ReduxProvider>

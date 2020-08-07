@@ -3,8 +3,8 @@ import React from "https://cdn.skypack.dev/react"
 import type { CSSProperties } from "react"
 import { allCards } from "./allCards.js"
 import { useCollection } from "./piles.js"
-import type { Card, Pile } from "./reducer.js"
-import { randomID } from "./util.js"
+import type { Card } from "./reducer.js"
+import { randomID, shuffle } from "./util.js"
 
 export function Header({
   className,
@@ -39,60 +39,29 @@ export function Header({
         type="button"
         onClick={async () => {
           const _allCards = [...allCards]
-          const cols = [...Array(20).keys()].map(v => v + 10)
-          const rows = [...Array(20).keys()].map(v => v + 10)
-          const setPileWith = (batch: firebase.firestore.WriteBatch) => (
-            ref: firebase.firestore.DocumentReference<
-              firebase.firestore.DocumentData
-            >,
-          ) => {
-            const [colStr, rowStr] = ref.id.split(",")
-            const col = parseInt(colStr)
-            const row = parseInt(rowStr)
+          shuffle(_allCards)
 
-            const [card] = _allCards.splice(
-              Math.floor(Math.random() * _allCards.length),
-              1,
-            )
+          const batch = pilesRef.firestore.batch()
 
-            const pile: Omit<Pile, "id"> = {
-              cards: [
-                {
-                  ...card,
-                  id: randomID() as Card["id"],
-                  surface: "face",
-                },
-              ],
-              col,
-              row,
+          for (let i = 0, col = 13; col - 13 < 13; col += 1) {
+            for (let row = 16; row - 16 < 8; row += 2, i++) {
+              const card = _allCards[i]
+
+              batch.set(pilesRef.doc([col, row].join(",")), {
+                cards: [
+                  {
+                    ...card,
+                    id: randomID() as Card["id"],
+                    surface: "back",
+                  },
+                ],
+                col,
+                row,
+              })
             }
-
-            batch.set(ref, pile)
           }
 
-          const piles$ = await pilesRef.get()
-
-          const b = pilesRef.firestore.batch()
-          const setPile = setPileWith(b)
-
-          for (let i = 3 - piles$.size; i > 0; i--) {
-            const [col] = cols.splice(
-              Math.floor(Math.random() * cols.length),
-              1,
-            )
-            const [row] = rows.splice(
-              Math.floor(Math.random() * rows.length),
-              1,
-            )
-
-            setPile(pilesRef.doc([col, row].join(",")))
-          }
-
-          piles$.docs.forEach(({ ref }) => {
-            setPile(ref)
-          })
-
-          await b.commit()
+          await batch.commit()
         }}
       >
         Firestore のデータを初期化
