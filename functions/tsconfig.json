@@ -1,15 +1,25 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "outDir": "lib",
+    // Target latest browsers
+    "target": "ES2017",
+    "lib": ["ES2017"],
+
+    // Required: Use module="ESNext" so that TS won't compile/disallow any ESM syntax.
+    "module": "CommonJS",
+
+    // Required for some packages.
+    "moduleResolution": "Node",
+
+    // `import React` instead of `import * as React`
+    "allowSyntheticDefaultImports": true,
+
+    // Enable sourcemaps
     "sourceMap": true,
-    "strict": true,
-    "target": "es2017"
+    "inlineSources": true,
+
+    // Useful type checks.
+    "strictNullChecks": true
   },
-  "compileOnSave": true,
-  "include": [
-    "src"
-  ]
+
+  "include": ["./src/**/*"]
 }
