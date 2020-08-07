@@ -1,8 +1,9 @@
 {
-  "name": "hello-panzoom",
+  "name": "board-game-2d",
   "version": "0.0.1",
-  "author": "kazuma1989 <kazuma.ebina@quipper.com>",
+  "author": "kazuma1989 <funifuni.1204@gmail.com>",
   "license": "MIT",
+  "homepage": "https://board-game-2d.web.app",
   "main": "dist/index.html",
   "scripts": {
     "serve": "npx live-server ./public",
