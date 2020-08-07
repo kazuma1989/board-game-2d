@@ -9,7 +9,9 @@
     "serve": "npx live-server ./public",
     "serve:hosting": "firebase serve --only hosting",
     "tsc": "tsc --incremental --outDir ./public/dist/",
-    "format": "prettier --write \"./src/**/*.{ts,tsx}\""
+    "format": "prettier --write \"./src/**/*.{ts,tsx}\"",
+    "build": "tsc --outDir ./public/dist/",
+    "deploy": "firebase deploy"
   },
   "devDependencies": {
     "@types/react": "^16.9.43",
