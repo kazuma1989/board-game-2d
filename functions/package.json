@@ -1,6 +1,9 @@
 {
   "name": "functions",
   "main": "lib/index.js",
+  "engines": {
+    "node": "12"
+  },
   "private": true,
   "scripts": {
     "build": "tsc --outDir ./lib/",
