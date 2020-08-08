@@ -37,6 +37,29 @@ export function Header({
         type="button"
         onClick={async () => {
           const { data } = await functions().httpsCallable("games")({
+            type: "speed",
+          })
+          if (data.error) {
+            console.error(data)
+            return
+          }
+
+          const [collection] = data.payload.collections
+          dispatch({
+            type: "Game.Created",
+            payload: {
+              collection,
+            },
+          })
+        }}
+      >
+        スピードを始める（データ初期化）
+      </button>
+
+      <button
+        type="button"
+        onClick={async () => {
+          const { data } = await functions().httpsCallable("games")({
             type: "shinkei-suijaku",
           })
           if (data.error) {
