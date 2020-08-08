@@ -2,7 +2,9 @@ import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React from "https://cdn.skypack.dev/react"
 import { useDispatch } from "https://cdn.skypack.dev/react-redux"
 import type { CSSProperties } from "react"
-import { functions } from "./firebase.js"
+import { app } from "./firebase.js"
+
+const functions = app().functions("asia-northeast1")
 
 export function Header({
   className,
@@ -36,7 +38,7 @@ export function Header({
       <button
         type="button"
         onClick={async () => {
-          const { data } = await functions().httpsCallable("games")({
+          const { data } = await functions.httpsCallable("games")({
             type: "speed",
           })
           if (data.error) {
@@ -59,7 +61,7 @@ export function Header({
       <button
         type="button"
         onClick={async () => {
-          const { data } = await functions().httpsCallable("games")({
+          const { data } = await functions.httpsCallable("games")({
             type: "shinkei-suijaku",
           })
           if (data.error) {
