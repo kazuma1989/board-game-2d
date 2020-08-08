@@ -30,8 +30,7 @@
       "port": 5000
     },
     "ui": {
-      "enabled": true,
-      "port": 5003
+      "enabled": true
     }
   }
 }
