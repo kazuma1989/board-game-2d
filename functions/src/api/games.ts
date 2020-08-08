@@ -7,7 +7,7 @@ const db = admin.app().firestore()
 const FAILED = Symbol("FAILED")
 
 type Body = {
-  type: string
+  type?: string
 }
 
 /**
@@ -20,38 +20,22 @@ type Body = {
  */
 export const games = functions
   .region(functions.config().functions?.region ?? "us-central1")
-  .https.onRequest(async (req, resp) => {
-    if (req.method !== "POST") {
-      resp
-        .header("Allow", ["POST"].join(", "))
-        .status(405)
-        .send({
-          error: true,
-          type: "method-not-allowed",
-          payload: {
-            message: "Method Not Allowed",
-          },
-        })
-
-      return
-    }
-
-    const body = req.body as Body
-    const genData = await import(`../data/${body.type}`)
+  .https.onCall(async (body: Body | undefined, context) => {
+    const genData = await import(`../data/${body?.type}`)
       .then(m => m.default)
       .catch(() => FAILED)
+
+    // TODO functions.https.HttpsError を使ってエラー報告
     if (genData === FAILED) {
-      resp.status(400).send({
+      return {
         error: true,
         type: "game-type-unknown",
         payload: {
           message: "The game type is unknown",
-          type: body.type ?? "",
+          type: body?.type ?? "",
           availableTypes: ["shinkei-suijaku"],
         },
-      })
-
-      return
+      }
     }
 
     const bulkWriter = (db as any).bulkWriter() as BulkWriter
@@ -63,21 +47,21 @@ export const games = functions
 
     await bulkWriter.flush()
 
+    // TODO functions.https.HttpsError を使ってエラー報告
     const created = await createGame$.catch(() => FAILED)
     if (created === FAILED) {
-      resp.status(409).send({
+      return {
         error: true,
         type: "resource-already-exists",
         payload: {
           message: "The resource already exists",
           collection: `games/${gameId}`,
         },
-      })
-
-      return
+      }
     }
 
     const data = genData()
+
     Object.entries(data).forEach(([subPath, docs]) => {
       Object.entries(docs as any).forEach(([key, data]) => {
         bulkWriter.create(gameRef.collection(subPath).doc(key), data)
@@ -86,7 +70,7 @@ export const games = functions
 
     await bulkWriter.close()
 
-    resp.status(201).send({
+    return {
       type: "game-created",
       payload: {
         message: "A game created",
@@ -94,7 +78,7 @@ export const games = functions
           return `games/${gameId}/${subPath}`
         }),
       },
-    })
+    }
   })
 
 /**
