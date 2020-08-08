@@ -1,4 +1,3 @@
-import * as data from "data/shinkei-suijaku.json"
 import * as admin from "firebase-admin"
 import * as functions from "firebase-functions"
 import { randomId } from "./util"
@@ -60,6 +59,8 @@ export const games = functions.https.onRequest(async (req, resp) => {
     return FAILED
   })
   if (created === FAILED) return
+
+  const data = await import("data/shinkei-suijaku.json")
 
   Object.entries(data).forEach(([subPath, docs]) => {
     Object.entries(docs).forEach(([key, data]) => {

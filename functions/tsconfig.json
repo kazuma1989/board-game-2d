@@ -13,9 +13,6 @@
     // Required to import JSON files.
     "resolveJsonModule": true,
 
-    // `import React` instead of `import * as React`
-    "allowSyntheticDefaultImports": true,
-
     // Enable sourcemaps
     "sourceMap": true,
     "inlineSources": true,
