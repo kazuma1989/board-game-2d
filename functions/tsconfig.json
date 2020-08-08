@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    // Target latest browsers
+    "target": "ES2019",
+    "lib": ["ES2019"],
+
+    // Required: Use module="ESNext" so that TS won't compile/disallow any ESM syntax.
+    "module": "CommonJS",
+
+    // Required for some packages.
+    "moduleResolution": "Node",
+
+    // Required to import JSON files.
+    "resolveJsonModule": true,
+
+    // Enable sourcemaps
+    "sourceMap": true,
+    "inlineSources": true,
+
+    // Useful type checks.
+    "strictNullChecks": true
+  },
+
+  "include": ["./src/**/*"]
+}
