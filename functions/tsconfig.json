@@ -10,6 +10,9 @@
     // Required for some packages.
     "moduleResolution": "Node",
 
+    // Required to import JSON files.
+    "resolveJsonModule": true,
+
     // `import React` instead of `import * as React`
     "allowSyntheticDefaultImports": true,
 

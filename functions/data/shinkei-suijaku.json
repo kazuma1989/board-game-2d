@@ -1,0 +1,23 @@
+{
+  "games": { "1xNV05bl2ISPqgCjSQTq": {} },
+  "games/1xNV05bl2ISPqgCjSQTq/piles": {
+    "10,22": {
+      "col": 10,
+      "row": 22,
+      "cards": [
+        {
+          "id": "47dkdytrgbDda",
+          "src": {
+            "back": "back.png",
+            "face": "face.png"
+          },
+          "surface": "face",
+          "text": ""
+        }
+      ]
+    }
+  },
+  "games/1xNV05bl2ISPqgCjSQTq/piles/10,22/metas": {
+    "xxxx": {}
+  }
+}

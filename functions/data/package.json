@@ -1,0 +1,5 @@
+{
+  "name": "data",
+  "main": "index.json",
+  "private": true
+}
