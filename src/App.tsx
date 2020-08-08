@@ -41,8 +41,16 @@ export function App() {
     })
   }, [store])
 
+  // FIXME 場当たり的な実装
+  // 画面遷移とセットで整理すること
+  useEffect(() => {
+    if (!collection) return
+
+    history.pushState(null, "", "/" + collection + location.search)
+  }, [collection])
+
   const pilesRef = useMemo(
-    () => firestore().collection(collection || "games/xxxx/piles"),
+    () => firestore().collection(collection || location.pathname),
     [collection],
   )
 
