@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: npm install
+      - run: npm --prefix ./functions/ install --production
       - run: npm run build
       - run: npm run deploy
         env:
