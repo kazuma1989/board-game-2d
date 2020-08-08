@@ -1,6 +1,5 @@
 {
-  "games": { "1xNV05bl2ISPqgCjSQTq": {} },
-  "games/1xNV05bl2ISPqgCjSQTq/piles": {
+  "piles": {
     "10,22": {
       "col": 10,
       "row": 22,
@@ -15,9 +14,24 @@
           "text": ""
         }
       ]
+    },
+    "22,10": {
+      "col": 22,
+      "row": 10,
+      "cards": [
+        {
+          "id": "47DKDYTRGBDDA",
+          "src": {
+            "back": "back.png",
+            "face": "face.png"
+          },
+          "surface": "back",
+          "text": ""
+        }
+      ]
     }
   },
-  "games/1xNV05bl2ISPqgCjSQTq/piles/10,22/metas": {
+  "piles/10,22/metas": {
     "xxxx": {}
   }
 }
