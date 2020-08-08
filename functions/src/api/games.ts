@@ -51,8 +51,10 @@ export const games = functions
     }
 
     const body = req.body as Body
-    const data = await import(`data/${body.type}.json`).catch(() => FAILED)
-    if (data === FAILED) {
+    const genData = await import(`../data/${body.type}`)
+      .then(m => m.default)
+      .catch(() => FAILED)
+    if (genData === FAILED) {
       resp.status(400).send({
         error: true,
         type: "game-type-unknown",
@@ -89,6 +91,7 @@ export const games = functions
       return
     }
 
+    const data = genData()
     Object.entries(data).forEach(([subPath, docs]) => {
       Object.entries(docs as any).forEach(([key, data]) => {
         bulkWriter.create(gameRef.collection(subPath).doc(key), data)
