@@ -2,20 +2,6 @@ import * as admin from "firebase-admin"
 import * as functions from "firebase-functions"
 import { randomId } from "../util"
 
-/**
- * @see https://googleapis.dev/nodejs/firestore/latest/BulkWriter.html
- */
-type BulkWriter = {
-  create(
-    ref: FirebaseFirestore.DocumentReference,
-    data: any,
-  ): Promise<admin.firestore.WriteResult>
-
-  flush(): Promise<void>
-
-  close(): Promise<void>
-}
-
 const db = admin.app().firestore()
 
 const FAILED = Symbol("FAILED")
@@ -110,3 +96,17 @@ export const games = functions
       },
     })
   })
+
+/**
+ * @see https://googleapis.dev/nodejs/firestore/latest/BulkWriter.html
+ */
+type BulkWriter = {
+  create(
+    ref: FirebaseFirestore.DocumentReference,
+    data: any,
+  ): Promise<admin.firestore.WriteResult>
+
+  flush(): Promise<void>
+
+  close(): Promise<void>
+}
