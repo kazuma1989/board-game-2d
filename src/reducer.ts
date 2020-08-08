@@ -4,6 +4,8 @@ import { byId, randomID } from "./util.js"
 export type State = {
   user: User
 
+  game: Game
+
   piles: Pile[]
   tempCardPosition: {
     [cardId: string]:
@@ -17,6 +19,10 @@ export type State = {
 
 export type User = {
   id: string & { readonly u: unique symbol }
+}
+
+export type Game = {
+  collection?: string
 }
 
 export type Pile = {
@@ -41,6 +47,7 @@ const initialState: State = {
   user: {
     id: randomID() as User["id"],
   },
+  game: {},
   piles: [],
   tempCardPosition: {},
 }
@@ -74,6 +81,12 @@ export type Action =
       type: "Card.MoveEnd.Finished"
       payload: {
         cardId: Card["id"]
+      }
+    }
+  | {
+      type: "Game.Created"
+      payload: {
+        collection: string
       }
     }
 
@@ -135,6 +148,19 @@ export const reducer = produce((draft: State, action: Action) => {
       const { cardId } = action.payload
 
       delete draft.tempCardPosition[cardId]
+
+      return
+    }
+
+    case "Game.Created": {
+      const { collection } = action.payload
+
+      draft.game = {
+        collection,
+      }
+
+      draft.piles = []
+      draft.tempCardPosition = {}
 
       return
     }

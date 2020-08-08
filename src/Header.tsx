@@ -1,10 +1,8 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React from "https://cdn.skypack.dev/react"
+import { useDispatch } from "https://cdn.skypack.dev/react-redux"
 import type { CSSProperties } from "react"
-import { allCards } from "./allCards.js"
-import { useCollection } from "./piles.js"
-import type { Card } from "./reducer.js"
-import { randomID, shuffle } from "./util.js"
+import { functions } from "./firebase.js"
 
 export function Header({
   className,
@@ -14,7 +12,7 @@ export function Header({
   className?: string
   style?: CSSProperties
 }) {
-  const pilesRef = useCollection()
+  const dispatch = useDispatch()
 
   return (
     <div
@@ -38,33 +36,24 @@ export function Header({
       <button
         type="button"
         onClick={async () => {
-          const _allCards = [...allCards]
-          shuffle(_allCards)
-
-          const batch = pilesRef.firestore.batch()
-
-          for (let i = 0, col = 13; col - 13 < 13; col += 1) {
-            for (let row = 16; row - 16 < 8; row += 2, i++) {
-              const card = _allCards[i]
-
-              batch.set(pilesRef.doc([col, row].join(",")), {
-                cards: [
-                  {
-                    ...card,
-                    id: randomID() as Card["id"],
-                    surface: "back",
-                  },
-                ],
-                col,
-                row,
-              })
-            }
+          const { data } = await functions().httpsCallable("games")({
+            type: "shinkei-suijaku",
+          })
+          if (data.error) {
+            console.error(data)
+            return
           }
 
-          await batch.commit()
+          const [collection] = data.payload.collections
+          dispatch({
+            type: "Game.Created",
+            payload: {
+              collection,
+            },
+          })
         }}
       >
-        Firestore のデータを初期化
+        神経衰弱を始める（データ初期化）
       </button>
     </div>
   )
