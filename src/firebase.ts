@@ -10,5 +10,4 @@ import "/__/firebase/init.js"
 export const app = self.firebase.app
 export const auth = self.firebase.auth
 export const firestore = self.firebase.firestore
-export const functions = self.firebase.functions
 export const storage = self.firebase.storage

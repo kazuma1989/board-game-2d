@@ -6,7 +6,7 @@ import React, {
 import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
 import { createStore } from "https://cdn.skypack.dev/redux"
 import { Board } from "./Board.js"
-import { firestore, functions } from "./firebase.js"
+import { app, firestore } from "./firebase.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { Header } from "./Header.js"
 import { data } from "./mode.js"
@@ -19,7 +19,9 @@ if (data === "mock") {
     ssl: false,
   })
 
-  functions().useFunctionsEmulator("http://localhost:5001")
+  app()
+    .functions("asia-northeast1")
+    .useFunctionsEmulator("http://localhost:5001")
 }
 
 export function App() {
