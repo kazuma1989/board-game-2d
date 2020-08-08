@@ -5,4 +5,5 @@ node_modules/
 /public/__/
 /public/dist/
 
+.envrc
 *.log
