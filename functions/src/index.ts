@@ -21,6 +21,18 @@ const db = app.firestore()
 
 const FAILED = Symbol("FAILED")
 
+type Body = {
+  type: string
+}
+
+/**
+  @example
+  POST https://region-project.cloudfunctions.net/games
+
+  {
+    "type": "shinkei-suijaku"
+  }
+ */
 export const games = functions.https.onRequest(async (req, resp) => {
   if (req.method !== "POST") {
     resp
@@ -37,6 +49,22 @@ export const games = functions.https.onRequest(async (req, resp) => {
     return
   }
 
+  const body = req.body as Body
+  const data = await import(`data/${body.type}.json`).catch(() => FAILED)
+  if (data === FAILED) {
+    resp.status(400).send({
+      error: true,
+      type: "game-type-unknown",
+      payload: {
+        message: "The game type is unknown",
+        type: body.type ?? "",
+        availableTypes: ["shinkei-suijaku"],
+      },
+    })
+
+    return
+  }
+
   const bulkWriter = (db as any).bulkWriter() as BulkWriter
 
   const gameId = randomId()
@@ -46,7 +74,8 @@ export const games = functions.https.onRequest(async (req, resp) => {
 
   await bulkWriter.flush()
 
-  const created = await createGame$.catch(err => {
+  const created = await createGame$.catch(() => FAILED)
+  if (created === FAILED) {
     resp.status(409).send({
       error: true,
       type: "resource-already-exists",
@@ -56,14 +85,11 @@ export const games = functions.https.onRequest(async (req, resp) => {
       },
     })
 
-    return FAILED
-  })
-  if (created === FAILED) return
-
-  const data = await import("data/shinkei-suijaku.json")
+    return
+  }
 
   Object.entries(data).forEach(([subPath, docs]) => {
-    Object.entries(docs).forEach(([key, data]) => {
+    Object.entries(docs as any).forEach(([key, data]) => {
       bulkWriter.create(gameRef.collection(subPath).doc(key), data)
     })
   })
