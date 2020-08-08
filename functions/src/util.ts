@@ -13,3 +13,20 @@ export function randomId(): string {
 
   return id
 }
+
+/**
+ * 配列を破壊的にシャッフルする
+ */
+export function shuffle(array: unknown[]): void {
+  let m = array.length
+  let e: unknown
+  let i: number
+  while (m) {
+    i = Math.floor(Math.random() * m)
+    m -= 1
+
+    e = array[m]
+    array[m] = array[i]
+    array[i] = e
+  }
+}

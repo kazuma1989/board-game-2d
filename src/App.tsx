@@ -1,32 +1,47 @@
-import React, { useMemo } from "https://cdn.skypack.dev/react"
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "https://cdn.skypack.dev/react"
 import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
 import { createStore } from "https://cdn.skypack.dev/redux"
 import { Board } from "./Board.js"
-import { firestore } from "./firebase.js"
+import { firestore, functions } from "./firebase.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { Header } from "./Header.js"
 import { data } from "./mode.js"
 import { Provider as PilesProvider } from "./piles.js"
 import { reducer } from "./reducer.js"
 
+if (data === "mock") {
+  firestore().settings({
+    host: "localhost:5002",
+    ssl: false,
+  })
+
+  functions().useFunctionsEmulator("http://localhost:5001")
+}
+
 export function App() {
-  const pilesRef = useMemo(() => {
-    const db = firestore()
-
-    if (data === "mock") {
-      db.settings({
-        host: "localhost:5002",
-        ssl: false,
-      })
-    }
-
-    return db.collection("/games/1xNV05bl2ISPqgCjSQTq/piles")
-  }, [])
-
   const store = useMemo(
     () =>
       createStore(reducer, undefined, self.__REDUX_DEVTOOLS_EXTENSION__?.()),
     [],
+  )
+
+  // TODO おそらく素直に ReduxProvider の配下に置いたほうがやりやすい
+  const [collection, setCollection] = useState("")
+  useEffect(() => {
+    return store.subscribe(() => {
+      const state: any = store.getState()
+
+      setCollection(state.game.collection)
+    })
+  }, [store])
+
+  const pilesRef = useMemo(
+    () => firestore().collection(collection || "games/xxxx/piles"),
+    [collection],
   )
 
   return (
