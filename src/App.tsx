@@ -6,21 +6,11 @@ import React, {
 import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
 import { createStore } from "https://cdn.skypack.dev/redux"
 import { Board } from "./Board.js"
-import { firestore, functions } from "./firebase.js"
+import { firestore } from "./firebase.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { Header } from "./Header.js"
-import { data } from "./mode.js"
 import { Provider as PilesProvider } from "./piles.js"
 import { reducer } from "./reducer.js"
-
-if (data === "mock") {
-  firestore().settings({
-    host: "localhost:5002",
-    ssl: false,
-  })
-
-  functions.useFunctionsEmulator("http://localhost:5001")
-}
 
 export function App() {
   const store = useMemo(

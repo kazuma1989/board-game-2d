@@ -2,7 +2,11 @@ import React, { Suspense } from "https://cdn.skypack.dev/react"
 import { render } from "https://cdn.skypack.dev/react-dom"
 
 const App = React.lazy(() =>
-  import("./App.js").then(({ App }) => ({ default: App })),
+  Promise.all([import("./App.js"), import("./init-app.js")]).then(
+    ([{ App }]) => ({
+      default: App,
+    }),
+  ),
 )
 
 render(
