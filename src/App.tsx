@@ -48,7 +48,10 @@ export function App() {
   }, [collection])
 
   const pilesRef = useMemo(
-    () => firestore().collection(collection || location.pathname),
+    () =>
+      firestore().collection(
+        collection || location.pathname.slice(1) || "games/xxx/piles",
+      ),
     [collection],
   )
 
