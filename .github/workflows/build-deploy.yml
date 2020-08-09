@@ -2,10 +2,11 @@ name: Build and deploy
 
 on:
   push:
-    branches: [master]
+    tags:
+      - v*
 
 jobs:
-  build:
+  build_deploy:
     runs-on: ubuntu-latest
 
     steps:
