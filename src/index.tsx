@@ -12,7 +12,13 @@ const App = React.lazy(() =>
 
 render(
   <ErrorBoundary>
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <article>
+          <h3>Loading...</h3>
+        </article>
+      }
+    >
       <App />
     </Suspense>
   </ErrorBoundary>,

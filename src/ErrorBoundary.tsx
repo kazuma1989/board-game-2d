@@ -27,13 +27,43 @@ export class ErrorBoundary extends Component {
     if (this.state.hasError) {
       // You can render any custom fallback UI
       return (
-        <div>
-          <h1>Something went wrong.</h1>
-          <p>{this.state.errorInfo}</p>
-        </div>
+        <article>
+          <h1>Oops! Errors happened</h1>
+
+          <ErrorCat />
+
+          <p>
+            <code>{this.state.errorInfo}</code>
+          </p>
+        </article>
       )
     }
 
     return this.props.children
   }
+}
+
+function ErrorCat() {
+  return (
+    <figure style={{ width: 320, marginLeft: "auto", marginRight: "auto" }}>
+      <img
+        src="https://live.staticflickr.com/7413/16403244918_bcfecb43d7_n.jpg"
+        width="320"
+        height="213"
+        alt="keyboard cat"
+      />
+
+      <figcaption>
+        <a
+          data-flickr-embed="true"
+          href="https://www.flickr.com/photos/128474566@N03/16403244918"
+          title="keyboard cat"
+          target="_blank"
+          rel="noopener"
+        >
+          Photo by Andre Glechikoff
+        </a>
+      </figcaption>
+    </figure>
+  )
 }

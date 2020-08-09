@@ -66,6 +66,11 @@ export function Board() {
           background: url("/bg.svg") no-repeat;
           background-size: 1500px 1500px;
           background-position: center;
+
+          touch-action: none;
+          -webkit-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
         `}
       >
         <Grid
