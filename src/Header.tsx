@@ -2,9 +2,7 @@ import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React from "https://cdn.skypack.dev/react"
 import { useDispatch } from "https://cdn.skypack.dev/react-redux"
 import type { CSSProperties } from "react"
-import { app } from "./firebase.js"
-
-const functions = app().functions("asia-northeast1")
+import { functions } from "./firebase.js"
 
 export function Header({
   className,
