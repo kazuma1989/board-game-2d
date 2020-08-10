@@ -36,20 +36,23 @@ export function Header({
       <button
         type="button"
         onClick={async () => {
-          const { data } = await functions.httpsCallable("games")({
-            type: "speed",
-          })
-          if (data.error) {
-            console.error(data)
+          let data
+          try {
+            const r = await functions.httpsCallable("games")({
+              type: "speed",
+            })
+
+            data = r.data
+          } catch (e) {
+            console.error(e)
             return
           }
 
-          const [collection] = data.payload.collections
-          // TODO functions を直したほうがいい
-          const [, gameId] = collection.match(/games\/([^/]+)/)
+          const { gameId } = data.details
           history.push({
             pathname: `/games/${gameId}`,
             search: location.search,
+            hash: location.hash,
           })
         }}
       >
@@ -59,20 +62,23 @@ export function Header({
       <button
         type="button"
         onClick={async () => {
-          const { data } = await functions.httpsCallable("games")({
-            type: "shinkei-suijaku",
-          })
-          if (data.error) {
-            console.error(data)
+          let data
+          try {
+            const r = await functions.httpsCallable("games")({
+              type: "shinkei-suijaku",
+            })
+
+            data = r.data
+          } catch (e) {
+            console.error(e)
             return
           }
 
-          const [collection] = data.payload.collections
-          // TODO functions を直したほうがいい
-          const [, gameId] = collection.match(/games\/([^/]+)/)
+          const { gameId } = data.details
           history.push({
             pathname: `/games/${gameId}`,
             search: location.search,
+            hash: location.hash,
           })
         }}
       >
