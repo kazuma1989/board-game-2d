@@ -12,6 +12,7 @@ export type State = {
       | {
           col: number
           row: number
+          timestamp: number
         }
       | undefined
   }
@@ -74,12 +75,14 @@ export type Action =
         cardId: Card["id"]
         col: number
         row: number
+        timestamp: number
       }
     }
   | {
       type: "Card.MoveEnd.Finished"
       payload: {
         cardId: Card["id"]
+        timestamp: number
       }
     }
   | {
@@ -139,17 +142,21 @@ export const reducer = produce((draft: State, action: Action) => {
     }
 
     case "Card.MoveEnd": {
-      const { cardId, col, row } = action.payload
+      const { cardId, col, row, timestamp } = action.payload
 
-      draft.tempCardPosition[cardId] = { col, row }
+      if (draft.tempCardPosition[cardId]?.timestamp ?? -1 <= timestamp) {
+        draft.tempCardPosition[cardId] = { col, row, timestamp }
+      }
 
       return
     }
 
     case "Card.MoveEnd.Finished": {
-      const { cardId } = action.payload
+      const { cardId, timestamp } = action.payload
 
-      delete draft.tempCardPosition[cardId]
+      if (draft.tempCardPosition[cardId]?.timestamp === timestamp) {
+        delete draft.tempCardPosition[cardId]
+      }
 
       return
     }
