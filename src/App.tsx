@@ -1,16 +1,15 @@
 import { css } from "https://cdn.skypack.dev/emotion"
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-} from "https://cdn.skypack.dev/react"
-import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
+import React, { useEffect, useMemo } from "https://cdn.skypack.dev/react"
+import {
+  Provider as ReduxProvider,
+  useSelector,
+} from "https://cdn.skypack.dev/react-redux"
 import { createStore } from "https://cdn.skypack.dev/redux"
 import { Board } from "./Board.js"
 import { firestore } from "./firebase.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { Header } from "./Header.js"
-import { Provider as PilesProvider } from "./piles.js"
+import { Provider as _PilesProvider } from "./piles.js"
 import { reducer } from "./reducer.js"
 
 export function App() {
@@ -20,23 +19,19 @@ export function App() {
     [],
   )
 
-  // TODO おそらく素直に ReduxProvider の配下に置いたほうがやりやすい
-  const [collection, setCollection] = useState("")
-  useEffect(() => {
-    return store.subscribe(() => {
-      const state: any = store.getState()
+  return (
+    <ReduxProvider store={store}>
+      <PilesProvider>
+        <FirestorePiles />
 
-      setCollection(state.game.collection)
-    })
-  }, [store])
+        <View />
+      </PilesProvider>
+    </ReduxProvider>
+  )
+}
 
-  // FIXME 場当たり的な実装
-  // 画面遷移とセットで整理すること
-  useEffect(() => {
-    if (!collection) return
-
-    history.pushState(null, "", "/" + collection + location.search)
-  }, [collection])
+function PilesProvider({ children }: { children?: React.ReactNode }) {
+  const collection = useSelector(state => state.game.collection)
 
   const pilesRef = useMemo(
     () =>
@@ -46,15 +41,15 @@ export function App() {
     [collection],
   )
 
-  return (
-    <PilesProvider value={pilesRef}>
-      <ReduxProvider store={store}>
-        <FirestorePiles />
+  // FIXME 場当たり的な実装
+  // 画面遷移とセットで整理すること
+  useEffect(() => {
+    if (!collection) return
 
-        <View />
-      </ReduxProvider>
-    </PilesProvider>
-  )
+    history.pushState(null, "", "/" + collection + location.search)
+  }, [collection])
+
+  return <_PilesProvider value={pilesRef}>{children}</_PilesProvider>
 }
 
 function View() {
