@@ -4,7 +4,7 @@ import { byId, randomID } from "./util.js"
 export type State = {
   user: User
 
-  game: Game
+  game?: Game
 
   piles: Pile[]
   tempCardPosition: {
@@ -22,7 +22,7 @@ export type User = {
 }
 
 export type Game = {
-  collection?: string
+  id: string & { readonly u: unique symbol }
 }
 
 export type Pile = {
@@ -47,7 +47,6 @@ const initialState: State = {
   user: {
     id: randomID() as User["id"],
   },
-  game: {},
   piles: [],
   tempCardPosition: {},
 }
@@ -84,10 +83,13 @@ export type Action =
       }
     }
   | {
-      type: "Game.Created"
+      type: "Game.IdSet"
       payload: {
-        collection: string
+        gameId: Game["id"]
       }
+    }
+  | {
+      type: "Game.IdUnset"
     }
 
 export const reducer = produce((draft: State, action: Action) => {
@@ -152,13 +154,18 @@ export const reducer = produce((draft: State, action: Action) => {
       return
     }
 
-    case "Game.Created": {
-      const { collection } = action.payload
+    case "Game.IdSet": {
+      const { gameId } = action.payload
 
       draft.game = {
-        collection,
+        id: gameId,
       }
 
+      return
+    }
+
+    case "Game.IdUnset": {
+      draft.game = undefined
       draft.piles = []
       draft.tempCardPosition = {}
 

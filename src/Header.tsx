@@ -1,6 +1,5 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React from "https://cdn.skypack.dev/react"
-import { useDispatch } from "https://cdn.skypack.dev/react-redux"
 import { useHistory } from "https://cdn.skypack.dev/react-router-dom"
 import type { CSSProperties } from "react"
 import { functions } from "./firebase.js"
@@ -13,7 +12,6 @@ export function Header({
   className?: string
   style?: CSSProperties
 }) {
-  const dispatch = useDispatch()
   const history = useHistory()
 
   return (
@@ -46,19 +44,11 @@ export function Header({
             return
           }
 
-          // FIXME 絶妙に collection の扱いがばらばらなのを整理する
           const [collection] = data.payload.collections
-          dispatch({
-            type: "Game.Created",
-            payload: {
-              collection,
-            },
-          })
-
           // TODO functions を直したほうがいい
-          const [, c] = collection.match(/games\/([^/]+)/)
+          const [, gameId] = collection.match(/games\/([^/]+)/)
           history.push({
-            pathname: `/games/${c}`,
+            pathname: `/games/${gameId}`,
             search: location.search,
           })
         }}
@@ -77,19 +67,11 @@ export function Header({
             return
           }
 
-          // FIXME 絶妙に collection の扱いがばらばらなのを整理する
           const [collection] = data.payload.collections
-          dispatch({
-            type: "Game.Created",
-            payload: {
-              collection,
-            },
-          })
-
           // TODO functions を直したほうがいい
-          const [, c] = collection.match(/games\/([^/]+)/)
+          const [, gameId] = collection.match(/games\/([^/]+)/)
           history.push({
-            pathname: `/games/${c}`,
+            pathname: `/games/${gameId}`,
             search: location.search,
           })
         }}
