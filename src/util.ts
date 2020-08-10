@@ -1,13 +1,14 @@
 /**
- * ランダムな ID `[0-9A-Za-z_-]{12}` を作成する
+ * ランダムな ID `[0-9A-Za-z_-]{20}` を作成する
  */
-export function randomID(): string {
-  const alphabet =
-    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz-"
+export function randomId(): string {
+  const length = 20
+  const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+  const range = chars.length
 
   let id = ""
-  for (let i = 12; i > 0; i--) {
-    id += alphabet[(Math.random() * 64) | 0]
+  for (let i = length; i > 0; i--) {
+    id += chars[(Math.random() * range) | 0]
   }
 
   return id

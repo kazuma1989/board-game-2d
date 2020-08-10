@@ -1,5 +1,5 @@
 import produce from "https://cdn.skypack.dev/immer"
-import { byId, randomID } from "./util.js"
+import { byId, randomId } from "./util.js"
 
 export type State = {
   user: User
@@ -45,7 +45,7 @@ export type Card = {
 
 const initialState: State = {
   user: {
-    id: randomID() as User["id"],
+    id: randomId() as User["id"],
   },
   piles: [],
   tempCardPosition: {},
