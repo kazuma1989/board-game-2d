@@ -114,7 +114,7 @@ export function Card({
           onMoveStart?.()
 
           _onMoveEnd = onMoveEnd
-        }, 300)
+        }, 200)
 
         target.addEventListener(
           "pointerup",
