@@ -22,5 +22,5 @@ render(
       <App />
     </Suspense>
   </ErrorBoundary>,
-  document.body,
+  document.getElementById("app"),
 )

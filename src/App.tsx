@@ -1,3 +1,4 @@
+import { css } from "https://cdn.skypack.dev/emotion"
 import React, {
   useEffect,
   useMemo,
@@ -50,10 +51,26 @@ export function App() {
       <ReduxProvider store={store}>
         <FirestorePiles />
 
-        <Header />
-
-        <Board />
+        <View />
       </ReduxProvider>
     </PilesProvider>
+  )
+}
+
+function View() {
+  return (
+    <div
+      className={css`
+        display: contents;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+      `}
+    >
+      <Header />
+
+      <Board />
+    </div>
   )
 }
