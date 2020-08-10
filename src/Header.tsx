@@ -1,9 +1,9 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React from "https://cdn.skypack.dev/react"
 import { useDispatch } from "https://cdn.skypack.dev/react-redux"
+import { useHistory } from "https://cdn.skypack.dev/react-router-dom"
 import type { CSSProperties } from "react"
 import { functions } from "./firebase.js"
-import { useNavigate } from "./react-router.js"
 
 export function Header({
   className,
@@ -14,7 +14,7 @@ export function Header({
   style?: CSSProperties
 }) {
   const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const history = useHistory()
 
   return (
     <div
@@ -46,6 +46,7 @@ export function Header({
             return
           }
 
+          // FIXME 絶妙に collection の扱いがばらばらなのを整理する
           const [collection] = data.payload.collections
           dispatch({
             type: "Game.Created",
@@ -56,7 +57,7 @@ export function Header({
 
           // TODO functions を直したほうがいい
           const [, c] = collection.match(/games\/([^/]+)/)
-          navigate({
+          history.push({
             pathname: `/games/${c}`,
             search: location.search,
           })
@@ -76,6 +77,7 @@ export function Header({
             return
           }
 
+          // FIXME 絶妙に collection の扱いがばらばらなのを整理する
           const [collection] = data.payload.collections
           dispatch({
             type: "Game.Created",
@@ -86,7 +88,7 @@ export function Header({
 
           // TODO functions を直したほうがいい
           const [, c] = collection.match(/games\/([^/]+)/)
-          navigate({
+          history.push({
             pathname: `/games/${c}`,
             search: location.search,
           })

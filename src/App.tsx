@@ -1,16 +1,22 @@
 import { css } from "https://cdn.skypack.dev/emotion"
-import React, { useMemo } from "https://cdn.skypack.dev/react"
+import React, { useEffect, useMemo } from "https://cdn.skypack.dev/react"
 import {
   Provider as ReduxProvider,
+  useDispatch,
   useSelector,
 } from "https://cdn.skypack.dev/react-redux"
+import {
+  BrowserRouter as Router,
+  Route,
+  Switch,
+  useLocation,
+} from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
 import { Board } from "./Board.js"
 import { firestore } from "./firebase.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { Header } from "./Header.js"
 import { Provider as _PilesProvider } from "./piles.js"
-import { Route, Router, Routes } from "./react-router.js"
 import { reducer } from "./reducer.js"
 
 export function App() {
@@ -21,29 +27,40 @@ export function App() {
   )
 
   return (
-    <ReduxProvider store={store}>
-      <PilesProvider>
-        <FirestorePiles />
+    <Router>
+      <ReduxProvider store={store}>
+        <PilesProvider>
+          <FirestorePiles />
 
-        <Router>
-          <Routes>
-            <Route path="/" render={() => <Header />} />
+          <Switch>
+            <Route exact path="/" render={() => <Header />} />
             <Route
               path="/games/:id"
               render={({ id }) => <View gameId={id} />}
             />
 
-            <Route path="*" render={() => <NotFound />} />
-          </Routes>
-        </Router>
-      </PilesProvider>
-    </ReduxProvider>
+            <Route render={() => <NotFound />} />
+          </Switch>
+        </PilesProvider>
+      </ReduxProvider>
+    </Router>
   )
 }
 
 function PilesProvider({ children }: { children?: React.ReactNode }) {
-  const collection = useSelector(state => state.game.collection)
+  const dispatch = useDispatch()
+  const location = useLocation()
+  useEffect(() => {
+    dispatch({
+      type: "Game.Created",
+      payload: {
+        // FIXME 絶妙に collection の扱いがばらばらなのを整理する
+        collection: `${location.pathname}/piles`,
+      },
+    })
+  }, [location])
 
+  const collection = useSelector(state => state.game.collection)
   const pilesRef = useMemo(
     () =>
       firestore().collection(
