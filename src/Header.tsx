@@ -36,17 +36,9 @@ export function Header({
       <button
         type="button"
         onClick={async () => {
-          let data
-          try {
-            const r = await functions.httpsCallable("games")({
-              type: "speed",
-            })
-
-            data = r.data
-          } catch (e) {
-            console.error(e)
-            return
-          }
+          const { data } = await functions.httpsCallable("games")({
+            type: "speed",
+          })
 
           const { gameId } = data.details
           history.push({
@@ -62,17 +54,9 @@ export function Header({
       <button
         type="button"
         onClick={async () => {
-          let data
-          try {
-            const r = await functions.httpsCallable("games")({
-              type: "shinkei-suijaku",
-            })
-
-            data = r.data
-          } catch (e) {
-            console.error(e)
-            return
-          }
+          const { data } = await functions.httpsCallable("games")({
+            type: "shinkei-suijaku",
+          })
 
           const { gameId } = data.details
           history.push({
