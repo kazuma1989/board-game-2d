@@ -71,6 +71,8 @@ export function Card({
   return (
     <div
       onDoubleClick={() => {
+        if (locked || locked$.current) return
+
         onDoubleTap?.()
       }}
       onPointerDown={e => {

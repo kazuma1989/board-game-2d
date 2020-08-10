@@ -16,6 +16,9 @@ export type State = {
         }
       | undefined
   }
+  tempCardSurface: {
+    [cardId: string]: "back" | "face" | undefined
+  }
 
   ui: {
     longTransactionRunning: boolean
@@ -54,6 +57,7 @@ const initialState: State = {
   },
   piles: [],
   tempCardPosition: {},
+  tempCardSurface: {},
   ui: {
     longTransactionRunning: false,
   },
@@ -74,6 +78,18 @@ export type Action =
               id: string
             }
         )[]
+      }
+    }
+  | {
+      type: "Card.DoubleTap"
+      payload: {
+        cardId: Card["id"]
+      }
+    }
+  | {
+      type: "Card.DoubleTap.Finished"
+      payload: {
+        cardId: Card["id"]
       }
     }
   | {
@@ -116,6 +132,7 @@ export const reducer = produce((draft: State, action: Action) => {
       changes.forEach(change => {
         const { id: pileId } = change
         delete draft.tempCardPosition[pileId]
+        delete draft.tempCardSurface[pileId]
 
         switch (change.type) {
           case "added":
@@ -150,6 +167,38 @@ export const reducer = produce((draft: State, action: Action) => {
           }
         }
       })
+
+      return
+    }
+
+    case "Card.DoubleTap": {
+      const { cardId } = action.payload
+
+      const card = draft.piles.flatMap(p => p.cards).find(byId(cardId))
+      if (!card) return
+
+      switch (card.surface) {
+        case "back": {
+          draft.tempCardSurface[cardId] = "face"
+          return
+        }
+
+        case "face": {
+          draft.tempCardSurface[cardId] = "back"
+          return
+        }
+
+        default: {
+          const _: never = card.surface
+          return
+        }
+      }
+    }
+
+    case "Card.DoubleTap.Finished": {
+      const { cardId } = action.payload
+
+      delete draft.tempCardSurface[cardId]
 
       return
     }

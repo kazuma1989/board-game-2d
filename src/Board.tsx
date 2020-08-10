@@ -50,6 +50,7 @@ export function Board() {
   const dispatch = useDispatch()
   const piles = useSelector(state => state.piles)
   const tempCardPosition = useSelector(state => state.tempCardPosition)
+  const tempCardSurface = useSelector(state => state.tempCardSurface)
   const userId = useSelector(state => state.user.id)
 
   const store = useStore()
@@ -79,6 +80,7 @@ export function Board() {
             return cards.map(
               ({ id: cardId, text, src, surface }, index, { length }) => {
                 const temp = tempCardPosition[cardId]
+                const tempSurface = tempCardSurface[cardId]
 
                 return (
                   <Card
@@ -91,39 +93,60 @@ export function Board() {
                     locked={dragging && dragging !== userId}
                     text={text}
                     src={src}
-                    surface={surface}
+                    surface={tempSurface ?? surface}
                     // TODO イベントハンドラー内に大きなロジック書きたくないよね
                     onDoubleTap={async () => {
+                      dispatch({
+                        type: "Card.DoubleTap",
+                        payload: {
+                          cardId,
+                        },
+                      })
+
                       const state = store.getState()
 
                       const fromPile = state.piles.find(hasCard(byId(cardId)))
-                      if (!fromPile) return
+                      if (fromPile) {
+                        await db
+                          .runTransaction(async t => {
+                            const fromRef = pilesRef.doc(fromPile.id)
+                            const from = (await t
+                              .get(fromRef)
+                              .then(d => d.data())) as Pile | undefined
 
-                      await db
-                        .runTransaction(async t => {
-                          const fromRef = pilesRef.doc(fromPile.id)
-                          const from = (await t
-                            .get(fromRef)
-                            .then(d => d.data())) as Pile | undefined
+                            if (!from) return
+                            if (
+                              from.dragging &&
+                              from.dragging !== state.user.id
+                            )
+                              return
 
-                          if (!from) return
-                          if (from.dragging && from.dragging !== state.user.id)
-                            return
+                            t.update(fromRef, {
+                              cards: from.cards.map(c => {
+                                if (c.id !== cardId) {
+                                  return c
+                                }
 
-                          t.update(fromRef, {
-                            cards: from.cards.map(c => {
-                              if (c.id !== cardId) {
-                                return c
-                              }
-
-                              return {
-                                ...c,
-                                surface: c.surface === "back" ? "face" : "back",
-                              }
-                            }),
+                                return {
+                                  ...c,
+                                  surface:
+                                    c.surface === "back" ? "face" : "back",
+                                }
+                              }),
+                            })
                           })
-                        })
-                        .catch(console.warn)
+                          .catch(console.warn)
+
+                        // Transaction の結果が onSnapshot リスナーに伝わるまである程度待つ
+                        await ms(400)
+                      }
+
+                      dispatch({
+                        type: "Card.DoubleTap.Finished",
+                        payload: {
+                          cardId,
+                        },
+                      })
                     }}
                     // TODO イベントハンドラー内に大きなロジック書きたくないよね
                     onMoveStart={async () => {
