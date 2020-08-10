@@ -1,10 +1,10 @@
 import produce from "https://cdn.skypack.dev/immer"
-import { byId, randomID } from "./util.js"
+import { byId, randomId } from "./util.js"
 
 export type State = {
   user: User
 
-  game: Game
+  game?: Game
 
   piles: Pile[]
   tempCardPosition: {
@@ -12,6 +12,7 @@ export type State = {
       | {
           col: number
           row: number
+          timestamp: number
         }
       | undefined
   }
@@ -22,7 +23,7 @@ export type User = {
 }
 
 export type Game = {
-  collection?: string
+  id: string & { readonly u: unique symbol }
 }
 
 export type Pile = {
@@ -45,9 +46,8 @@ export type Card = {
 
 const initialState: State = {
   user: {
-    id: randomID() as User["id"],
+    id: randomId() as User["id"],
   },
-  game: {},
   piles: [],
   tempCardPosition: {},
 }
@@ -75,19 +75,24 @@ export type Action =
         cardId: Card["id"]
         col: number
         row: number
+        timestamp: number
       }
     }
   | {
       type: "Card.MoveEnd.Finished"
       payload: {
         cardId: Card["id"]
+        timestamp: number
       }
     }
   | {
-      type: "Game.Created"
+      type: "Game.IdSet"
       payload: {
-        collection: string
+        gameId: Game["id"]
       }
+    }
+  | {
+      type: "Game.IdUnset"
     }
 
 export const reducer = produce((draft: State, action: Action) => {
@@ -137,28 +142,37 @@ export const reducer = produce((draft: State, action: Action) => {
     }
 
     case "Card.MoveEnd": {
-      const { cardId, col, row } = action.payload
+      const { cardId, col, row, timestamp } = action.payload
 
-      draft.tempCardPosition[cardId] = { col, row }
+      if (draft.tempCardPosition[cardId]?.timestamp ?? -1 <= timestamp) {
+        draft.tempCardPosition[cardId] = { col, row, timestamp }
+      }
 
       return
     }
 
     case "Card.MoveEnd.Finished": {
-      const { cardId } = action.payload
+      const { cardId, timestamp } = action.payload
 
-      delete draft.tempCardPosition[cardId]
+      if (draft.tempCardPosition[cardId]?.timestamp === timestamp) {
+        delete draft.tempCardPosition[cardId]
+      }
 
       return
     }
 
-    case "Game.Created": {
-      const { collection } = action.payload
+    case "Game.IdSet": {
+      const { gameId } = action.payload
 
       draft.game = {
-        collection,
+        id: gameId,
       }
 
+      return
+    }
+
+    case "Game.IdUnset": {
+      draft.game = undefined
       draft.piles = []
       draft.tempCardPosition = {}
 

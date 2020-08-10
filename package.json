@@ -6,7 +6,7 @@
   "homepage": "https://board-game-2d.web.app",
   "main": "dist/index.html",
   "scripts": {
-    "serve": "npx live-server ./public",
+    "serve": "npx servor ./public/ --reload",
     "serve:hosting": "firebase serve --only hosting",
     "tsc": "tsc --incremental --outDir ./public/dist/",
     "format": "prettier --write \"./src/**/*.{ts,tsx}\"",

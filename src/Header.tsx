@@ -1,10 +1,8 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React from "https://cdn.skypack.dev/react"
-import { useDispatch } from "https://cdn.skypack.dev/react-redux"
+import { useHistory } from "https://cdn.skypack.dev/react-router-dom"
 import type { CSSProperties } from "react"
-import { app } from "./firebase.js"
-
-const functions = app().functions("asia-northeast1")
+import { functions } from "./firebase.js"
 
 export function Header({
   className,
@@ -14,7 +12,7 @@ export function Header({
   className?: string
   style?: CSSProperties
 }) {
-  const dispatch = useDispatch()
+  const history = useHistory()
 
   return (
     <div
@@ -41,17 +39,12 @@ export function Header({
           const { data } = await functions.httpsCallable("games")({
             type: "speed",
           })
-          if (data.error) {
-            console.error(data)
-            return
-          }
 
-          const [collection] = data.payload.collections
-          dispatch({
-            type: "Game.Created",
-            payload: {
-              collection,
-            },
+          const { gameId } = data.details
+          history.push({
+            pathname: `/games/${gameId}`,
+            search: location.search,
+            hash: location.hash,
           })
         }}
       >
@@ -64,17 +57,12 @@ export function Header({
           const { data } = await functions.httpsCallable("games")({
             type: "shinkei-suijaku",
           })
-          if (data.error) {
-            console.error(data)
-            return
-          }
 
-          const [collection] = data.payload.collections
-          dispatch({
-            type: "Game.Created",
-            payload: {
-              collection,
-            },
+          const { gameId } = data.details
+          history.push({
+            pathname: `/games/${gameId}`,
+            search: location.search,
+            hash: location.hash,
           })
         }}
       >

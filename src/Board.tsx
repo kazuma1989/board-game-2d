@@ -149,12 +149,14 @@ export function Board() {
                     }}
                     // TODO イベントハンドラー内に大きなロジック書きたくないよね
                     onMoveEnd={async dest => {
+                      const timestamp = Date.now()
                       dispatch({
                         type: "Card.MoveEnd",
                         payload: {
                           cardId,
                           col: dest.col,
                           row: dest.row,
+                          timestamp,
                         },
                       })
 
@@ -216,6 +218,7 @@ export function Board() {
                         type: "Card.MoveEnd.Finished",
                         payload: {
                           cardId,
+                          timestamp,
                         },
                       })
                     }}

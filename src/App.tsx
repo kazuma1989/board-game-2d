@@ -1,28 +1,14 @@
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-} from "https://cdn.skypack.dev/react"
+import React, { useMemo } from "https://cdn.skypack.dev/react"
 import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
+import {
+  BrowserRouter as Router,
+  Route,
+  Switch,
+} from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
-import { Board } from "./Board.js"
-import { app, firestore } from "./firebase.js"
-import { FirestorePiles } from "./FirestorePiles.js"
+import { Game } from "./Game.js"
 import { Header } from "./Header.js"
-import { data } from "./mode.js"
-import { Provider as PilesProvider } from "./piles.js"
 import { reducer } from "./reducer.js"
-
-if (data === "mock") {
-  firestore().settings({
-    host: "localhost:5002",
-    ssl: false,
-  })
-
-  app()
-    .functions("asia-northeast1")
-    .useFunctionsEmulator("http://localhost:5001")
-}
 
 export function App() {
   const store = useMemo(
@@ -31,38 +17,44 @@ export function App() {
     [],
   )
 
-  // TODO おそらく素直に ReduxProvider の配下に置いたほうがやりやすい
-  const [collection, setCollection] = useState("")
-  useEffect(() => {
-    return store.subscribe(() => {
-      const state: any = store.getState()
-
-      setCollection(state.game.collection)
-    })
-  }, [store])
-
-  // FIXME 場当たり的な実装
-  // 画面遷移とセットで整理すること
-  useEffect(() => {
-    if (!collection) return
-
-    history.pushState(null, "", "/" + collection + location.search)
-  }, [collection])
-
-  const pilesRef = useMemo(
-    () => firestore().collection(collection || location.pathname),
-    [collection],
-  )
-
   return (
-    <PilesProvider value={pilesRef}>
-      <ReduxProvider store={store}>
-        <FirestorePiles />
+    <ReduxProvider store={store}>
+      <Router>
+        <Switch>
+          <Route
+            exact
+            path="/"
+            render={() => (
+              <div>
+                <Header />
 
-        <Header />
+                <article>
+                  <h1>Board Game 2D</h1>
+                </article>
+              </div>
+            )}
+          />
+          <Route
+            path="/games/:id"
+            render={({
+              match: {
+                params: { id },
+              },
+            }) => <Game id={id} />}
+          />
 
-        <Board />
-      </ReduxProvider>
-    </PilesProvider>
+          {/* fallback */}
+          <Route render={() => <NotFound />} />
+        </Switch>
+      </Router>
+    </ReduxProvider>
+  )
+}
+
+function NotFound() {
+  return (
+    <article>
+      <h2>404 Not Found</h2>
+    </article>
   )
 }
