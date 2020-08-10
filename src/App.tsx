@@ -1,5 +1,5 @@
 import { css } from "https://cdn.skypack.dev/emotion"
-import React, { useEffect, useMemo } from "https://cdn.skypack.dev/react"
+import React, { useMemo } from "https://cdn.skypack.dev/react"
 import {
   Provider as ReduxProvider,
   useSelector,
@@ -10,6 +10,7 @@ import { firestore } from "./firebase.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { Header } from "./Header.js"
 import { Provider as _PilesProvider } from "./piles.js"
+import { Route, Router, Routes } from "./react-router.js"
 import { reducer } from "./reducer.js"
 
 export function App() {
@@ -24,7 +25,17 @@ export function App() {
       <PilesProvider>
         <FirestorePiles />
 
-        <View />
+        <Router>
+          <Routes>
+            <Route path="/" render={() => <Header />} />
+            <Route
+              path="/games/:id"
+              render={({ id }) => <View gameId={id} />}
+            />
+
+            <Route path="*" render={() => <NotFound />} />
+          </Routes>
+        </Router>
       </PilesProvider>
     </ReduxProvider>
   )
@@ -36,23 +47,15 @@ function PilesProvider({ children }: { children?: React.ReactNode }) {
   const pilesRef = useMemo(
     () =>
       firestore().collection(
-        collection || location.pathname.slice(1) || "games/xxx/piles",
+        collection || location.pathname.slice(1) + "/piles",
       ),
     [collection],
   )
 
-  // FIXME 場当たり的な実装
-  // 画面遷移とセットで整理すること
-  useEffect(() => {
-    if (!collection) return
-
-    history.pushState(null, "", "/" + collection + location.search)
-  }, [collection])
-
   return <_PilesProvider value={pilesRef}>{children}</_PilesProvider>
 }
 
-function View() {
+function View({ gameId }: { gameId: string }) {
   return (
     <div
       className={css`
@@ -67,5 +70,13 @@ function View() {
 
       <Board />
     </div>
+  )
+}
+
+function NotFound() {
+  return (
+    <article>
+      <h2>404 Not Found</h2>
+    </article>
   )
 }

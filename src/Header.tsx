@@ -3,6 +3,7 @@ import React from "https://cdn.skypack.dev/react"
 import { useDispatch } from "https://cdn.skypack.dev/react-redux"
 import type { CSSProperties } from "react"
 import { functions } from "./firebase.js"
+import { useNavigate } from "./react-router.js"
 
 export function Header({
   className,
@@ -13,6 +14,7 @@ export function Header({
   style?: CSSProperties
 }) {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   return (
     <div
@@ -51,6 +53,13 @@ export function Header({
               collection,
             },
           })
+
+          // TODO functions を直したほうがいい
+          const [, c] = collection.match(/games\/([^/]+)/)
+          navigate({
+            pathname: `/games/${c}`,
+            search: location.search,
+          })
         }}
       >
         スピードを始める（データ初期化）
@@ -73,6 +82,13 @@ export function Header({
             payload: {
               collection,
             },
+          })
+
+          // TODO functions を直したほうがいい
+          const [, c] = collection.match(/games\/([^/]+)/)
+          navigate({
+            pathname: `/games/${c}`,
+            search: location.search,
           })
         }}
       >
