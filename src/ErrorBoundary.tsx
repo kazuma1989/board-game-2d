@@ -51,6 +51,7 @@ function ErrorCat() {
         width="320"
         height="213"
         alt="keyboard cat"
+        style={{ borderRadius: 4 }}
       />
 
       <figcaption>

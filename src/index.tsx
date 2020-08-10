@@ -10,15 +10,13 @@ const App = React.lazy(() =>
   ),
 )
 
+function Loading() {
+  return <div className="bg2d-loading"></div>
+}
+
 render(
   <ErrorBoundary>
-    <Suspense
-      fallback={
-        <article>
-          <h3>Loading...</h3>
-        </article>
-      }
-    >
+    <Suspense fallback={<Loading />}>
       <App />
     </Suspense>
   </ErrorBoundary>,
