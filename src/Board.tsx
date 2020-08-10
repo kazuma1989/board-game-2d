@@ -168,6 +168,12 @@ export function Board() {
                           byCR(dest.col, dest.row),
                         )
 
+                        const timer = setTimeout(() => {
+                          dispatch({
+                            type: "Card.AwaitTransaction",
+                          })
+                        }, 1_000)
+
                         await db
                           .runTransaction(async t => {
                             const fromRef = pilesRef.doc(fromPile.id)
@@ -213,6 +219,11 @@ export function Board() {
                             })
                           })
                           .catch(console.warn)
+
+                        clearTimeout(timer)
+                        dispatch({
+                          type: "Card.AwaitTransaction.Finished",
+                        })
 
                         // Transaction の結果が onSnapshot リスナーに伝わるまである程度待つ
                         await ms(400)

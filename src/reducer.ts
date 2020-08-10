@@ -16,6 +16,10 @@ export type State = {
         }
       | undefined
   }
+
+  ui: {
+    longTransactionRunning: boolean
+  }
 }
 
 export type User = {
@@ -50,6 +54,9 @@ const initialState: State = {
   },
   piles: [],
   tempCardPosition: {},
+  ui: {
+    longTransactionRunning: false,
+  },
 }
 
 export type Action =
@@ -84,6 +91,12 @@ export type Action =
         cardId: Card["id"]
         timestamp: number
       }
+    }
+  | {
+      type: "Card.AwaitTransaction"
+    }
+  | {
+      type: "Card.AwaitTransaction.Finished"
     }
   | {
       type: "Game.IdSet"
@@ -175,6 +188,18 @@ export const reducer = produce((draft: State, action: Action) => {
       draft.game = undefined
       draft.piles = []
       draft.tempCardPosition = {}
+
+      return
+    }
+
+    case "Card.AwaitTransaction": {
+      draft.ui.longTransactionRunning = true
+
+      return
+    }
+
+    case "Card.AwaitTransaction.Finished": {
+      draft.ui.longTransactionRunning = false
 
       return
     }
