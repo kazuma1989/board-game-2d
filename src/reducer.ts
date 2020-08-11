@@ -130,10 +130,6 @@ export const reducer = produce((draft: State, action: Action) => {
       const { changes } = action.payload
 
       changes.forEach(change => {
-        const { id: pileId } = change
-        delete draft.tempCardPosition[pileId]
-        delete draft.tempCardSurface[pileId]
-
         switch (change.type) {
           case "added":
           case "modified": {
@@ -148,6 +144,11 @@ export const reducer = produce((draft: State, action: Action) => {
             const target = draft.piles.find(byId(pileId))
             if (target) {
               draft.piles[draft.piles.indexOf(target)] = pile
+
+              target.cards.forEach(c => {
+                delete draft.tempCardPosition[c.id]
+                delete draft.tempCardSurface[c.id]
+              })
             } else {
               draft.piles.push(pile)
             }
@@ -162,6 +163,11 @@ export const reducer = produce((draft: State, action: Action) => {
             if (!target) return
 
             draft.piles.splice(draft.piles.indexOf(target), 1)
+
+            target.cards.forEach(c => {
+              delete draft.tempCardPosition[c.id]
+              delete draft.tempCardSurface[c.id]
+            })
 
             return
           }
