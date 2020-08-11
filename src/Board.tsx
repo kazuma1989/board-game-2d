@@ -78,9 +78,13 @@ export function Board() {
         {piles
           .flatMap(({ cards, col, row, dragging }) => {
             return cards.map(
-              ({ id: cardId, text, src, surface }, index, { length }) => {
+              (
+                { id: cardId, text, src, surface: _surface },
+                index,
+                { length },
+              ) => {
                 const temp = tempCardPosition[cardId]
-                const tempSurface = tempCardSurface[cardId]
+                const surface = tempCardSurface[cardId]?.surface ?? _surface
 
                 return (
                   <Card
@@ -93,13 +97,18 @@ export function Board() {
                     locked={dragging && dragging !== userId}
                     text={text}
                     src={src}
-                    surface={tempSurface ?? surface}
+                    surface={surface}
                     // TODO イベントハンドラー内に大きなロジック書きたくないよね
                     onDoubleTap={async () => {
+                      const nextSurface = surface === "back" ? "face" : "back"
+
+                      const timestamp = Date.now()
                       dispatch({
                         type: "Card.DoubleTap",
                         payload: {
                           cardId,
+                          nextSurface,
+                          timestamp,
                         },
                       })
 
@@ -130,8 +139,7 @@ export function Board() {
 
                                 return {
                                   ...c,
-                                  surface:
-                                    c.surface === "back" ? "face" : "back",
+                                  surface: nextSurface,
                                 }
                               }),
                             })
@@ -146,6 +154,7 @@ export function Board() {
                         type: "Card.DoubleTap.Finished",
                         payload: {
                           cardId,
+                          timestamp,
                         },
                       })
                     }}

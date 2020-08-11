@@ -17,7 +17,12 @@ export type State = {
       | undefined
   }
   tempCardSurface: {
-    [cardId: string]: "back" | "face" | undefined
+    [cardId: string]:
+      | {
+          surface: "back" | "face" | undefined
+          timestamp: number
+        }
+      | undefined
   }
 
   ui: {
@@ -84,12 +89,15 @@ export type Action =
       type: "Card.DoubleTap"
       payload: {
         cardId: Card["id"]
+        nextSurface: "back" | "face"
+        timestamp: number
       }
     }
   | {
       type: "Card.DoubleTap.Finished"
       payload: {
         cardId: Card["id"]
+        timestamp: number
       }
     }
   | {
@@ -184,33 +192,24 @@ export const reducer = produce((draft: State, action: Action) => {
     }
 
     case "Card.DoubleTap": {
-      const { cardId } = action.payload
+      const { cardId, nextSurface, timestamp } = action.payload
 
-      const card = draft.piles.flatMap(p => p.cards).find(byId(cardId))
-      if (!card) return
-
-      switch (card.surface) {
-        case "back": {
-          draft.tempCardSurface[cardId] = "face"
-          return
-        }
-
-        case "face": {
-          draft.tempCardSurface[cardId] = "back"
-          return
-        }
-
-        default: {
-          const _: never = card.surface
-          return
+      if (draft.tempCardSurface[cardId]?.timestamp ?? -1 <= timestamp) {
+        draft.tempCardSurface[cardId] = {
+          surface: nextSurface,
+          timestamp,
         }
       }
+
+      return
     }
 
     case "Card.DoubleTap.Finished": {
-      const { cardId } = action.payload
+      const { cardId, timestamp } = action.payload
 
-      delete draft.tempCardSurface[cardId]
+      if (draft.tempCardSurface[cardId]?.timestamp === timestamp) {
+        delete draft.tempCardSurface[cardId]
+      }
 
       return
     }
