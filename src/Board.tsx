@@ -195,6 +195,9 @@ export function Board() {
                         const timer = setTimeout(() => {
                           dispatch({
                             type: "Card.AwaitTransaction",
+                            payload: {
+                              timestamp,
+                            },
                           })
                         }, 1_000)
 
@@ -275,6 +278,9 @@ export function Board() {
                         clearTimeout(timer)
                         dispatch({
                           type: "Card.AwaitTransaction.Finished",
+                          payload: {
+                            timestamp,
+                          },
                         })
 
                         // Transaction の結果が onSnapshot リスナーに伝わるまである程度待つ

@@ -38,7 +38,9 @@ export function Game({ id: gameId }: { id: Game["id"] }) {
 }
 
 function Container({ children }: { children?: React.ReactNode }) {
-  const running = useSelector(state => state.ui.longTransactionRunning)
+  const running = useSelector(
+    state => state.ui.runningLongTransaction.length >= 1,
+  )
 
   return (
     <div

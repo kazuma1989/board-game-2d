@@ -21,7 +21,7 @@ export type State = {
   }
 
   ui: {
-    longTransactionRunning: boolean
+    runningLongTransaction: number[]
   }
 }
 
@@ -59,7 +59,7 @@ const initialState: State = {
   tempCardPosition: {},
   tempCardSurface: {},
   ui: {
-    longTransactionRunning: false,
+    runningLongTransaction: [],
   },
 }
 
@@ -110,9 +110,15 @@ export type Action =
     }
   | {
       type: "Card.AwaitTransaction"
+      payload: {
+        timestamp: number
+      }
     }
   | {
       type: "Card.AwaitTransaction.Finished"
+      payload: {
+        timestamp: number
+      }
     }
   | {
       type: "Game.IdSet"
@@ -248,13 +254,19 @@ export const reducer = produce((draft: State, action: Action) => {
     }
 
     case "Card.AwaitTransaction": {
-      draft.ui.longTransactionRunning = true
+      const { timestamp } = action.payload
+
+      draft.ui.runningLongTransaction.push(timestamp)
 
       return
     }
 
     case "Card.AwaitTransaction.Finished": {
-      draft.ui.longTransactionRunning = false
+      const { timestamp } = action.payload
+
+      draft.ui.runningLongTransaction = draft.ui.runningLongTransaction.filter(
+        v => v !== timestamp,
+      )
 
       return
     }
