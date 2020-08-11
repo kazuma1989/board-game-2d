@@ -129,6 +129,12 @@ export type Action =
       }
     }
   | {
+      type: "Card.ClearTempInfo"
+      payload: {
+        timestamp: number
+      }
+    }
+  | {
       type: "Game.IdSet"
       payload: {
         gameId: Game["id"]
@@ -158,11 +164,6 @@ export const reducer = produce((draft: State, action: Action) => {
             const target = draft.piles.find(byId(pileId))
             if (target) {
               draft.piles[draft.piles.indexOf(target)] = pile
-
-              target.cards.forEach(c => {
-                delete draft.tempCardPosition[c.id]
-                delete draft.tempCardSurface[c.id]
-              })
             } else {
               draft.piles.push(pile)
             }
@@ -177,11 +178,6 @@ export const reducer = produce((draft: State, action: Action) => {
             if (!target) return
 
             draft.piles.splice(draft.piles.indexOf(target), 1)
-
-            target.cards.forEach(c => {
-              delete draft.tempCardPosition[c.id]
-              delete draft.tempCardSurface[c.id]
-            })
 
             return
           }
@@ -266,6 +262,28 @@ export const reducer = produce((draft: State, action: Action) => {
       draft.ui.runningLongTransaction = draft.ui.runningLongTransaction.filter(
         v => v !== timestamp,
       )
+
+      return
+    }
+
+    case "Card.ClearTempInfo": {
+      const { timestamp } = action.payload
+
+      Object.entries(draft.tempCardPosition).forEach(([cardId, temp]) => {
+        if (!temp) return
+
+        if (temp.timestamp <= timestamp) {
+          delete draft.tempCardPosition[cardId]
+        }
+      })
+
+      Object.entries(draft.tempCardSurface).forEach(([cardId, temp]) => {
+        if (!temp) return
+
+        if (temp.timestamp <= timestamp) {
+          delete draft.tempCardSurface[cardId]
+        }
+      })
 
       return
     }

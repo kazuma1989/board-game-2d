@@ -57,6 +57,29 @@ export function Board() {
   const pilesRef = useCollection()
   const db = pilesRef.firestore
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const state = store.getState()
+
+      if (
+        Object.keys(state.tempCardPosition).length === 0 &&
+        Object.keys(state.tempCardSurface).length === 0
+      )
+        return
+
+      dispatch({
+        type: "Card.ClearTempInfo",
+        payload: {
+          timestamp: Date.now() - 10_000,
+        },
+      })
+    }, 10_000)
+
+    return () => {
+      clearInterval(timer)
+    }
+  }, [])
+
   return (
     <Provider value={scale$}>
       <div
