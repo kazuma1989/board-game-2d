@@ -1,6 +1,6 @@
-import { css } from "https://cdn.skypack.dev/emotion"
+import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React, { useEffect } from "https://cdn.skypack.dev/react"
-import { useDispatch } from "https://cdn.skypack.dev/react-redux"
+import { useDispatch, useSelector } from "https://cdn.skypack.dev/react-redux"
 import { Board } from "./Board.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { Header } from "./Header.js"
@@ -28,19 +28,37 @@ export function Game({ id: gameId }: { id: Game["id"] }) {
     <PilesProvider gameId={gameId}>
       <FirestorePiles />
 
-      <div
-        className={css`
+      <Container>
+        <Header />
+
+        <Board />
+      </Container>
+    </PilesProvider>
+  )
+}
+
+function Container({ children }: { children?: React.ReactNode }) {
+  const running = useSelector(
+    state => state.ui.runningLongTransaction.length >= 1,
+  )
+
+  return (
+    <div
+      className={cx(
+        css`
           display: contents;
           touch-action: none;
           -webkit-user-select: none;
           user-select: none;
           -webkit-touch-callout: none;
-        `}
-      >
-        <Header />
-
-        <Board />
-      </div>
-    </PilesProvider>
+        `,
+        running &&
+          css`
+            cursor: progress;
+          `,
+      )}
+    >
+      {children}
+    </div>
   )
 }

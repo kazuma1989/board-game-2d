@@ -71,6 +71,8 @@ export function Card({
   return (
     <div
       onDoubleClick={() => {
+        if (locked || locked$.current) return
+
         onDoubleTap?.()
       }}
       onPointerDown={e => {
@@ -114,7 +116,7 @@ export function Card({
           onMoveStart?.()
 
           _onMoveEnd = onMoveEnd
-        }, 300)
+        }, 200)
 
         target.addEventListener(
           "pointerup",

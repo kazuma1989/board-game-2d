@@ -16,6 +16,18 @@ export type State = {
         }
       | undefined
   }
+  tempCardSurface: {
+    [cardId: string]:
+      | {
+          surface: "back" | "face" | undefined
+          timestamp: number
+        }
+      | undefined
+  }
+
+  ui: {
+    runningLongTransaction: number[]
+  }
 }
 
 export type User = {
@@ -50,6 +62,10 @@ const initialState: State = {
   },
   piles: [],
   tempCardPosition: {},
+  tempCardSurface: {},
+  ui: {
+    runningLongTransaction: [],
+  },
 }
 
 export type Action =
@@ -70,6 +86,21 @@ export type Action =
       }
     }
   | {
+      type: "Card.DoubleTap"
+      payload: {
+        cardId: Card["id"]
+        nextSurface: "back" | "face"
+        timestamp: number
+      }
+    }
+  | {
+      type: "Card.DoubleTap.Finished"
+      payload: {
+        cardId: Card["id"]
+        timestamp: number
+      }
+    }
+  | {
       type: "Card.MoveEnd"
       payload: {
         cardId: Card["id"]
@@ -82,6 +113,24 @@ export type Action =
       type: "Card.MoveEnd.Finished"
       payload: {
         cardId: Card["id"]
+        timestamp: number
+      }
+    }
+  | {
+      type: "Card.AwaitTransaction"
+      payload: {
+        timestamp: number
+      }
+    }
+  | {
+      type: "Card.AwaitTransaction.Finished"
+      payload: {
+        timestamp: number
+      }
+    }
+  | {
+      type: "Card.ClearTempInfo"
+      payload: {
         timestamp: number
       }
     }
@@ -101,9 +150,6 @@ export const reducer = produce((draft: State, action: Action) => {
       const { changes } = action.payload
 
       changes.forEach(change => {
-        const { id: pileId } = change
-        delete draft.tempCardPosition[pileId]
-
         switch (change.type) {
           case "added":
           case "modified": {
@@ -137,6 +183,29 @@ export const reducer = produce((draft: State, action: Action) => {
           }
         }
       })
+
+      return
+    }
+
+    case "Card.DoubleTap": {
+      const { cardId, nextSurface, timestamp } = action.payload
+
+      if (draft.tempCardSurface[cardId]?.timestamp ?? -1 <= timestamp) {
+        draft.tempCardSurface[cardId] = {
+          surface: nextSurface,
+          timestamp,
+        }
+      }
+
+      return
+    }
+
+    case "Card.DoubleTap.Finished": {
+      const { cardId, timestamp } = action.payload
+
+      if (draft.tempCardSurface[cardId]?.timestamp === timestamp) {
+        delete draft.tempCardSurface[cardId]
+      }
 
       return
     }
@@ -175,6 +244,46 @@ export const reducer = produce((draft: State, action: Action) => {
       draft.game = undefined
       draft.piles = []
       draft.tempCardPosition = {}
+
+      return
+    }
+
+    case "Card.AwaitTransaction": {
+      const { timestamp } = action.payload
+
+      draft.ui.runningLongTransaction.push(timestamp)
+
+      return
+    }
+
+    case "Card.AwaitTransaction.Finished": {
+      const { timestamp } = action.payload
+
+      draft.ui.runningLongTransaction = draft.ui.runningLongTransaction.filter(
+        v => v !== timestamp,
+      )
+
+      return
+    }
+
+    case "Card.ClearTempInfo": {
+      const { timestamp } = action.payload
+
+      Object.entries(draft.tempCardPosition).forEach(([cardId, temp]) => {
+        if (!temp) return
+
+        if (temp.timestamp <= timestamp) {
+          delete draft.tempCardPosition[cardId]
+        }
+      })
+
+      Object.entries(draft.tempCardSurface).forEach(([cardId, temp]) => {
+        if (!temp) return
+
+        if (temp.timestamp <= timestamp) {
+          delete draft.tempCardSurface[cardId]
+        }
+      })
 
       return
     }
