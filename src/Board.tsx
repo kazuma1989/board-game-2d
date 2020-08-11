@@ -122,6 +122,7 @@ export function Board() {
                               return
 
                             t.update(fromRef, {
+                              dragging: firestore.FieldValue.delete(),
                               cards: from.cards.map(c => {
                                 if (c.id !== cardId) {
                                   return c
@@ -241,7 +242,24 @@ export function Board() {
                               row: dest.row,
                             })
                           })
-                          .catch(console.warn)
+                          .catch(e => {
+                            console.warn(e)
+
+                            // トランザクション失敗時に掴みっぱなしにならないよう掃除
+                            db.runTransaction(async t => {
+                              const fromRef = pilesRef.doc(fromPile.id)
+                              const from = await t
+                                .get(fromRef)
+                                .then(d => d.data())
+
+                              if (!from) return
+                              if (from.dragging !== state.user.id) return
+
+                              t.update(fromRef, {
+                                dragging: firestore.FieldValue.delete(),
+                              })
+                            }).catch(console.warn)
+                          })
 
                         clearTimeout(timer)
                         dispatch({
