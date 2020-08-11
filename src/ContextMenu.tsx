@@ -16,6 +16,7 @@ export function ContextMenu() {
         position: absolute;
         top: 0;
         left: 0;
+        min-width: 300px;
         border-radius: 4px;
 
         /* https://brumm.af/shadows */
@@ -58,6 +59,7 @@ function MenuItem({ children }: { children?: React.ReactNode }) {
     <button
       type="button"
       className={css`
+        display: block;
         width: 100%;
         border-radius: 0;
         border-top-color: transparent;
