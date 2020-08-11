@@ -27,6 +27,11 @@ export type State = {
 
   ui: {
     runningLongTransaction: number[]
+    contextMenu?: {
+      type: "onCard"
+      x: number
+      y: number
+    }
   }
 }
 

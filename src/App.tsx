@@ -6,6 +6,7 @@ import {
   Switch,
 } from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
+import { ContextMenu } from "./ContextMenu.js"
 import { Game } from "./Game.js"
 import { Header } from "./Header.js"
 import { reducer } from "./reducer.js"
@@ -46,6 +47,8 @@ export function App() {
           {/* fallback */}
           <Route render={() => <NotFound />} />
         </Switch>
+
+        <ContextMenu />
       </Router>
     </ReduxProvider>
   )
