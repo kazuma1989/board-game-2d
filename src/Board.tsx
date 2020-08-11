@@ -198,8 +198,19 @@ export function Board() {
                           })
                         }, 1_000)
 
+                        let canceled = false
+                        ms(2_000).then(() => {
+                          canceled = true
+                        })
+
                         await db
                           .runTransaction(async t => {
+                            if (canceled) {
+                              throw new Error(
+                                "Firestore.runTransaction canceled",
+                              )
+                            }
+
                             const fromRef = pilesRef.doc(fromPile.id)
                             const toRef = pilesRef.doc(
                               toPile?.id || [dest.col, dest.row].join(","),
