@@ -35,7 +35,7 @@ export function Game({ id: gameId }: { id: Game["id"] }) {
         <Board />
 
         <WsProvider gameId={gameId}>
-          <ActiveIndicatorContainer gameId={gameId} />
+          <ActiveIndicatorContainer />
         </WsProvider>
       </Container>
     </PilesProvider>
@@ -68,11 +68,8 @@ function Container({ children }: { children?: React.ReactNode }) {
   )
 }
 
-function ActiveIndicatorContainer({ gameId }: { gameId: string }) {
-  const ws = useWs()
-  // @ts-ignore
-  window.ws = ws
-  // const userId = useSelector(state => state.user.id)
+function ActiveIndicatorContainer() {
+  const achex = useWs()
 
   const container$ = useRef<HTMLDivElement>(null)
 
@@ -81,108 +78,77 @@ function ActiveIndicatorContainer({ gameId }: { gameId: string }) {
       [sid: number]: HTMLElement | undefined
     } = {}
 
-    let message
-    ws.addEventListener(
-      "message",
-      (message = (e: MessageEvent) => {
-        const data:
-          | {
-              auth: string
-              SID: number
-            }
-          | {
-              joinHub: string
-            }
-          | {
-              leaveHub: string
-            }
-          | {
-              leftHub: string
-              user: string
-              sID: number
-            }
-          | {
-              toH: string
-              FROM: string
-              sID: number
-              action: {
-                type: "move"
-                payload: {
-                  x: number
-                  y: number
-                }
-              }
-            } = JSON.parse(e.data)
+    return achex.on("message", data => {
+      if ("auth" in data) {
+        return
+      }
 
-        if ("auth" in data) {
-          return
-        }
+      if ("joinHub" in data) {
+        return
+      }
 
-        if ("joinHub" in data) {
-          return
-        }
+      if ("leaveHub" in data) {
+        return
+      }
 
-        if ("leaveHub" in data) {
-          return
-        }
+      if ("leftHub" in data) {
+        const { sID } = data
 
-        if ("leftHub" in data) {
-          const { sID } = data
+        const indicator = indicators[sID]
+        if (!indicator) return
 
-          const indicator = indicators[sID]
-          if (!indicator) return
+        indicator.parentNode?.removeChild(indicator)
 
-          indicator.parentNode?.removeChild(indicator)
+        delete indicators[sID]
 
-          delete indicators[sID]
+        return
+      }
 
-          return
-        }
-
-        if ("toH" in data) {
-          const { sID, action } = data
-
-          if (!indicators[sID]) {
-            const indicator = document.createElement("div")
-            indicators[sID] = indicator
-
-            indicator.dataset.sid = sID.toString()
-            indicator.className = css`
-              position: absolute;
-              width: 50px;
-              height: 50px;
-              margin-top: -25px;
-              margin-left: -25px;
-              border: solid 4px hsl(${((sID % 12) * 150) % 360}, 100%, 50%);
-              border-radius: 50%;
-              transition: transform 400ms;
-            `
-
-            container$.current?.appendChild(indicator)
+      if ("toH" in data) {
+        const { sID } = data
+        const action = data.action as {
+          type: "move"
+          payload: {
+            x: number
+            y: number
           }
-
-          switch (action.type) {
-            case "move": {
-              const indicator = indicators[sID]
-              if (!indicator) return
-
-              const { x, y } = action.payload
-              indicator.style.transform = `translate(${x}px, ${y}px)`
-
-              return
-            }
-          }
-
-          return
         }
-      }),
-      { passive: true },
-    )
 
-    return () => {
-      ws.removeEventListener("message", message)
-    }
-  }, [ws])
+        if (!indicators[sID]) {
+          const indicator = document.createElement("div")
+          indicators[sID] = indicator
+
+          indicator.dataset.sid = sID.toString()
+          indicator.className = css`
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            margin-top: -25px;
+            margin-left: -25px;
+            border: solid 4px hsl(${((sID % 12) * 150) % 360}, 100%, 50%);
+            border-radius: 50%;
+            transition: transform 400ms;
+          `
+
+          container$.current?.appendChild(indicator)
+        }
+
+        switch (action.type) {
+          case "move": {
+            const indicator = indicators[sID]
+            if (!indicator) return
+
+            const { x, y } = action.payload
+            indicator.style.transform = `translate(${x}px, ${y}px)`
+
+            return
+          }
+        }
+
+        return
+      }
+    })
+  }, [achex])
 
   useEffect(() => {
     let timer
@@ -196,18 +162,13 @@ function ActiveIndicatorContainer({ gameId }: { gameId: string }) {
 
         const { clientX, clientY } = e
         const send = () => {
-          ws.send(
-            JSON.stringify({
-              toH: gameId,
-              action: {
-                type: "move",
-                payload: {
-                  x: clientX,
-                  y: clientY,
-                },
-              },
-            }),
-          )
+          achex.dispatch({
+            type: "move",
+            payload: {
+              x: clientX,
+              y: clientY,
+            },
+          })
         }
 
         clearTimeout(timer)
@@ -225,7 +186,7 @@ function ActiveIndicatorContainer({ gameId }: { gameId: string }) {
     return () => {
       document.removeEventListener("pointermove", pointermove)
     }
-  }, [ws, gameId])
+  }, [achex])
 
   return (
     <div

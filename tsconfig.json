@@ -32,7 +32,8 @@
 
     // Useful type checks.
     "strictNullChecks": true,
-    "strictFunctionTypes": true
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true
   },
 
   "include": ["./src/**/*"]

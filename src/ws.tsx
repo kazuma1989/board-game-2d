@@ -13,53 +13,127 @@ export function Provider({
   gameId: string
   children?: React.ReactNode
 }) {
-  const ws = useMemo(
-    () => new WebSocket("wss://cloud.achex.ca/board-game-2d.web.app"),
-    [],
-  )
-
   const userId = useSelector(state => state.user.id)
 
+  const achex = useMemo(
+    // () => new Achex("wss://cloud.achex.ca/board-game-2d.web.app", gameId, userId),
+    () => new Achex("wss://localhost", gameId, userId),
+    [gameId, userId],
+  )
+
   useEffect(() => {
-    ws.addEventListener(
-      "open",
-      () => {
-        ws.send(
-          JSON.stringify({
-            auth: userId,
-          }),
-        )
-
-        ws.send(
-          JSON.stringify({
-            joinHub: gameId,
-          }),
-        )
-      },
-      { passive: true, once: true },
-    )
-
     return () => {
-      ws.send(
-        JSON.stringify({
-          leaveHub: gameId,
-        }),
-      )
-
-      ws.close()
+      achex.close()
     }
-  }, [ws, userId, gameId])
+  }, [achex])
 
-  return <context.Provider value={ws}>{children}</context.Provider>
+  return <context.Provider value={achex}>{children}</context.Provider>
 }
 
 export function useWs() {
-  const ws = useContext(context)
-  if (!ws) {
+  const achex = useContext(context)
+  if (!achex) {
     throw new Error("Not in the context of a ws provider")
   }
 
-  return ws
+  return achex
 }
 
-const context = createContext<WebSocket | null>(null)
+const context = createContext<Achex | null>(null)
+
+type AchexMessageReq<A = unknown> =
+  | {
+      auth: string
+      passwd?: string
+    }
+  | {
+      joinHub: string
+    }
+  | {
+      leaveHub: string
+    }
+  | {
+      toH: string
+      action?: A
+    }
+
+type AchexMessageResp<A = unknown> =
+  | {
+      auth: string
+      SID: number
+    }
+  | {
+      joinHub: string
+    }
+  | {
+      leaveHub: string
+    }
+  | {
+      leftHub: string
+      user: string
+      sID: number
+    }
+  | {
+      toH: string
+      FROM: string
+      sID: number
+      action?: A
+    }
+
+class Achex {
+  private readonly ws: WebSocket
+
+  constructor(
+    private readonly url: string,
+    private readonly gameId: string,
+    private readonly userId: string,
+  ) {
+    this.ws = new WebSocket(url)
+
+    this.ws.addEventListener(
+      "open",
+      () => {
+        this.send({ auth: userId })
+        this.send({ joinHub: gameId })
+      },
+      { passive: true },
+    )
+  }
+
+  dispatch<A = unknown>(action: A) {
+    this.send({
+      toH: this.gameId,
+      action,
+    })
+  }
+
+  on<K extends keyof WebSocketEventMap>(
+    type: "message",
+    listener: (data: AchexMessageResp) => void,
+  ) {
+    let _listener
+    this.ws.addEventListener(
+      type,
+      (_listener = (e: MessageEvent) => {
+        listener(e.data)
+      }),
+      { passive: true },
+    )
+
+    return () => {
+      this.ws.removeEventListener(type, _listener)
+    }
+  }
+
+  send(data: AchexMessageReq) {
+    this.ws.send(JSON.stringify(data))
+  }
+
+  close() {
+    this.send({
+      leaveHub: this.gameId,
+    })
+
+    this.ws.close()
+  }
+}
