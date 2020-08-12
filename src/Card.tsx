@@ -4,7 +4,6 @@ import React, {
   useRef,
   useState,
 } from "https://cdn.skypack.dev/react"
-import type { CSSProperties } from "react"
 import { useScale } from "./useScale.js"
 
 export function Card({
@@ -44,7 +43,7 @@ export function Card({
   onDoubleTap?(): void
 
   className?: string
-  style?: CSSProperties
+  style?: React.CSSProperties
 }) {
   const scale$ = useScale()
 

@@ -1,6 +1,5 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React, { useRef } from "https://cdn.skypack.dev/react"
-import type { CSSProperties } from "react"
 import { mode } from "./mode.js"
 
 export function Grid({
@@ -11,7 +10,7 @@ export function Grid({
 }: {
   onDrop?(dest: { col: number; row: number; x: number; y: number }): void
   className?: string
-  style?: CSSProperties
+  style?: React.CSSProperties
 }) {
   const indicator$ = useRef<HTMLDivElement>(null)
   const updateHighlight = (x: number, y: number) => {
