@@ -4,7 +4,6 @@ import React, {
   useRef,
   useState,
 } from "https://cdn.skypack.dev/react"
-import type { CSSProperties } from "react"
 import { useScale } from "./useScale.js"
 
 export function Card({
@@ -19,6 +18,7 @@ export function Card({
   onMoveStart,
   onMoveEnd,
   onDoubleTap,
+  onContextMenu,
   className,
   style,
   ...props
@@ -42,9 +42,10 @@ export function Card({
   onMoveStart?(): void
   onMoveEnd?(dest: { col: number; row: number; x: number; y: number }): void
   onDoubleTap?(): void
+  onContextMenu?(e: React.MouseEvent<HTMLDivElement, MouseEvent>): void
 
   className?: string
-  style?: CSSProperties
+  style?: React.CSSProperties
 }) {
   const scale$ = useScale()
 
@@ -70,6 +71,11 @@ export function Card({
 
   return (
     <div
+      onContextMenu={e => {
+        e.preventDefault()
+
+        onContextMenu?.(e)
+      }}
       onDoubleClick={() => {
         if (locked || locked$.current) return
 

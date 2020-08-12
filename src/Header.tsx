@@ -1,7 +1,6 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React from "https://cdn.skypack.dev/react"
 import { useHistory } from "https://cdn.skypack.dev/react-router-dom"
-import type { CSSProperties } from "react"
 import { functions } from "./firebase.js"
 
 export function Header({
@@ -10,7 +9,7 @@ export function Header({
   ...props
 }: {
   className?: string
-  style?: CSSProperties
+  style?: React.CSSProperties
 }) {
   const history = useHistory()
 

@@ -8,6 +8,10 @@ import {
 import { createStore } from "https://cdn.skypack.dev/redux"
 import { Game } from "./Game.js"
 import { Header } from "./Header.js"
+import {
+  PortalChildrenContainer,
+  Provider as PortalProvider,
+} from "./Portal.js"
 import { reducer } from "./reducer.js"
 
 export function App() {
@@ -19,34 +23,44 @@ export function App() {
 
   return (
     <ReduxProvider store={store}>
-      <Router>
-        <Switch>
-          <Route
-            exact
-            path="/"
-            render={() => (
-              <div>
-                <Header />
+      <PortalProvider>
+        <Router>
+          <Switch>
+            <Route
+              exact
+              path="/"
+              render={() => (
+                <div>
+                  <Header />
 
-                <article>
-                  <h1>Board Game 2D</h1>
-                </article>
-              </div>
-            )}
-          />
-          <Route
-            path="/games/:id"
-            render={({
-              match: {
-                params: { id },
-              },
-            }) => <Game id={id} />}
-          />
+                  <article>
+                    <h1>Board Game 2D</h1>
+                  </article>
+                </div>
+              )}
+            />
+            <Route
+              path="/games/:id"
+              render={({
+                match: {
+                  params: { id },
+                },
+              }) => <Game id={id} />}
+            />
 
-          {/* fallback */}
-          <Route render={() => <NotFound />} />
-        </Switch>
-      </Router>
+            {/* fallback */}
+            <Route render={() => <NotFound />} />
+          </Switch>
+        </Router>
+
+        <PortalChildrenContainer
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+          }}
+        />
+      </PortalProvider>
     </ReduxProvider>
   )
 }

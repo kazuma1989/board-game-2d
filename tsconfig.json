@@ -31,7 +31,8 @@
     "skipLibCheck": true,
 
     // Useful type checks.
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "strictFunctionTypes": true
   },
 
   "include": ["./src/**/*"]

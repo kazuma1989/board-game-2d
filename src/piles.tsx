@@ -21,7 +21,12 @@ export function Provider({
 }
 
 export function useCollection() {
-  return useContext(context)!
+  const pilesRef = useContext(context)
+  if (!pilesRef) {
+    throw new Error("Not in the context of a piles collection provider")
+  }
+
+  return pilesRef
 }
 
 const context = createContext<firebase.firestore.CollectionReference<
