@@ -192,7 +192,25 @@ export function Board() {
 
               <ContextMenu.Item
                 onClick={() => {
-                  console.log(contextMenu.cardId)
+                  closeContextMenu()
+
+                  const { cardId } = contextMenu
+
+                  const state = store.getState()
+
+                  const fromPile = state.piles.find(hasCard(byId(cardId)))
+                  if (fromPile) {
+                    db.runTransaction(async t => {
+                      const fromRef = pilesRef.doc(fromPile.id)
+                      const from = await t.get(fromRef).then(d => d.data())
+
+                      if (!from) return
+
+                      t.update(fromRef, {
+                        dragging: firestore.FieldValue.delete(),
+                      })
+                    }).catch(console.warn)
+                  }
                 }}
               >
                 ロックを解除する
