@@ -185,6 +185,7 @@ function ActiveIndicatorContainer({ gameId }: { gameId: string }) {
   }, [ws])
 
   useEffect(() => {
+    let timer
     let prevTime = Date.now()
 
     let pointermove
@@ -193,24 +194,30 @@ function ActiveIndicatorContainer({ gameId }: { gameId: string }) {
       (pointermove = (e: PointerEvent) => {
         if (!e.isPrimary) return
 
+        const { clientX, clientY } = e
+        const send = () => {
+          ws.send(
+            JSON.stringify({
+              toH: gameId,
+              action: {
+                type: "move",
+                payload: {
+                  x: clientX,
+                  y: clientY,
+                },
+              },
+            }),
+          )
+        }
+
+        clearTimeout(timer)
+        timer = setTimeout(send, 400)
+
         const currentTime = Date.now()
         if (currentTime - prevTime < 400) return
 
         prevTime = currentTime
-
-        const { clientX, clientY } = e
-        ws.send(
-          JSON.stringify({
-            toH: gameId,
-            action: {
-              type: "move",
-              payload: {
-                x: clientX,
-                y: clientY,
-              },
-            },
-          }),
-        )
+        send()
       }),
       { passive: true },
     )
