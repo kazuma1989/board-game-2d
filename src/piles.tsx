@@ -23,7 +23,7 @@ export function Provider({
 export function useCollection() {
   const pilesRef = useContext(context)
   if (!pilesRef) {
-    throw new Error("No piles collection given via Provider")
+    throw new Error("Not in the context of a piles collection provider")
   }
 
   return pilesRef
