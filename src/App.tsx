@@ -6,6 +6,7 @@ import {
   Switch,
 } from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
+import { ContextMenu } from "./ContextMenu.js"
 import { Game } from "./Game.js"
 import { Header } from "./Header.js"
 import {
@@ -86,16 +87,19 @@ function NotFound() {
 
       <Portal>
         {v && (
-          <div
+          <ContextMenu
+            onOutsideClick={() => {
+              setV(false)
+            }}
             style={{
-              width: 300,
-              height: 300,
-              background: "red",
-              transform: "translate(100px, 100px)",
+              transform: `translate(100px, 100px)`,
             }}
           >
-            HELLO!
-          </div>
+            <ContextMenu.Item>Menu 1</ContextMenu.Item>
+            <ContextMenu.Item>Menu 2</ContextMenu.Item>
+            <ContextMenu.Item>Menu 3</ContextMenu.Item>
+            <ContextMenu.Item>Menu 4</ContextMenu.Item>
+          </ContextMenu>
         )}
       </Portal>
     </article>
