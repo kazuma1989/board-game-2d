@@ -16,8 +16,9 @@ export function Provider({
   const userId = useSelector(state => state.user.id)
 
   const achex = useMemo(
-    // () => new Achex("wss://cloud.achex.ca/board-game-2d.web.app", gameId, userId),
-    () => new Achex("wss://localhost", gameId, userId),
+    () =>
+      new Achex("wss://cloud.achex.ca/board-game-2d.web.app", gameId, userId),
+    // () => new Achex("wss://localhost", gameId, userId),
     [gameId, userId],
   )
 
@@ -115,7 +116,7 @@ class Achex {
     this.ws.addEventListener(
       type,
       (_listener = (e: MessageEvent) => {
-        listener(e.data)
+        listener(JSON.parse(e.data))
       }),
       { passive: true },
     )
