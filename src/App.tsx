@@ -6,6 +6,7 @@ import {
   Switch,
 } from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
+import { AuthGuard, AuthRedirect, AuthWatcher } from "./auth.js"
 import { Game } from "./Game.js"
 import { Home } from "./Home.js"
 import {
@@ -23,17 +24,32 @@ export function App() {
 
   return (
     <ReduxProvider store={store}>
+      <AuthWatcher />
+
       <PortalProvider>
         <Router>
           <Switch>
-            <Route exact path="/" render={() => <Home />} />
+            <Route
+              exact
+              path="/"
+              render={() => (
+                <AuthRedirect>
+                  <Home />
+                </AuthRedirect>
+              )}
+            />
+
             <Route
               path="/games/:id"
               render={({
                 match: {
                   params: { id },
                 },
-              }) => <Game id={id} />}
+              }) => (
+                <AuthGuard>
+                  <Game id={id} />
+                </AuthGuard>
+              )}
             />
 
             {/* fallback */}

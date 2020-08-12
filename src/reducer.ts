@@ -33,6 +33,7 @@ export type State = {
 
 export type User = {
   id: string & { readonly u: unique symbol }
+  signedIn: boolean
 }
 
 export type Game = {
@@ -60,6 +61,7 @@ export type Card = {
 const initialState: State = {
   user: {
     id: randomId() as User["id"],
+    signedIn: false,
   },
   piles: [],
   tempCardPosition: {},
@@ -85,6 +87,15 @@ export type Action =
             }
         )[]
       }
+    }
+  | {
+      type: "Auth.SignIn"
+      payload: {
+        userId: string
+      }
+    }
+  | {
+      type: "Auth.SignOut"
     }
   | {
       type: "Card.DoubleTap"
@@ -185,6 +196,21 @@ export const reducer: Reducer<State, Action> = produce(
             }
           }
         })
+
+        return
+      }
+
+      case "Auth.SignIn": {
+        const { userId } = action.payload
+
+        draft.user.signedIn = true
+        draft.user.id = userId as User["id"]
+
+        return
+      }
+
+      case "Auth.SignOut": {
+        draft.user.signedIn = false
 
         return
       }
