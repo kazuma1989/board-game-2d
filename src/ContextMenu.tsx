@@ -21,7 +21,7 @@ export function ContextMenu({
       ref={ref$}
       className={cx(
         css`
-          min-width: 300px;
+          min-width: 240px;
           border-radius: 4px;
 
           /* https://brumm.af/shadows */
@@ -59,7 +59,15 @@ export function ContextMenu({
   )
 }
 
-function MenuItem({ children }: { children?: React.ReactNode }) {
+function MenuItem({
+  children,
+  ...props
+}: {
+  onClick?(): void
+  className?: string
+  style?: React.CSSProperties
+  children?: React.ReactNode
+}) {
   return (
     <button
       type="button"
@@ -71,6 +79,7 @@ function MenuItem({ children }: { children?: React.ReactNode }) {
         border-bottom-color: transparent;
         text-align: initial;
       `}
+      {...props}
     >
       {children}
     </button>

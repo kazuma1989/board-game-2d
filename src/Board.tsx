@@ -91,6 +91,9 @@ export function Board() {
     x: number
     y: number
   }>()
+  const closeContextMenu = () => {
+    setContextMenu(undefined)
+  }
 
   return (
     <Provider value={scale$}>
@@ -113,17 +116,87 @@ export function Board() {
         <Portal>
           {contextMenu && (
             <ContextMenu
-              onOutsideClick={() => {
-                setContextMenu(undefined)
-              }}
+              onOutsideClick={closeContextMenu}
               style={{
                 transform: `translate(${contextMenu.x}px, ${contextMenu.y}px)`,
               }}
             >
-              <ContextMenu.Item>{contextMenu.cardId}</ContextMenu.Item>
-              <ContextMenu.Item>Menu 2</ContextMenu.Item>
-              <ContextMenu.Item>Menu 3</ContextMenu.Item>
-              <ContextMenu.Item>Menu 4</ContextMenu.Item>
+              <ContextMenu.Item
+                // TODO コピペ実装のリファクタリング
+                onClick={async () => {
+                  closeContextMenu()
+
+                  const { cardId } = contextMenu
+                  const surface = piles.flatMap(p => p.cards).find(byId(cardId))
+                    ?.surface
+                  if (!surface) return
+
+                  const nextSurface = surface === "back" ? "face" : "back"
+
+                  const timestamp = Date.now()
+                  dispatch({
+                    type: "Card.DoubleTap",
+                    payload: {
+                      cardId,
+                      nextSurface,
+                      timestamp,
+                    },
+                  })
+
+                  const state = store.getState()
+
+                  const fromPile = state.piles.find(hasCard(byId(cardId)))
+                  if (fromPile) {
+                    await db
+                      .runTransaction(async t => {
+                        const fromRef = pilesRef.doc(fromPile.id)
+                        const from = (await t
+                          .get(fromRef)
+                          .then(d => d.data())) as Pile | undefined
+
+                        if (!from) return
+                        if (from.dragging && from.dragging !== state.user.id)
+                          return
+
+                        t.update(fromRef, {
+                          dragging: firestore.FieldValue.delete(),
+                          cards: from.cards.map(c => {
+                            if (c.id !== cardId) {
+                              return c
+                            }
+
+                            return {
+                              ...c,
+                              surface: nextSurface,
+                            }
+                          }),
+                        })
+                      })
+                      .catch(console.warn)
+
+                    // Transaction の結果が onSnapshot リスナーに伝わるまである程度待つ
+                    await ms(400)
+                  }
+
+                  dispatch({
+                    type: "Card.DoubleTap.Finished",
+                    payload: {
+                      cardId,
+                      timestamp,
+                    },
+                  })
+                }}
+              >
+                めくる
+              </ContextMenu.Item>
+
+              <ContextMenu.Item
+                onClick={() => {
+                  console.log(contextMenu.cardId)
+                }}
+              >
+                ロックを解除する
+              </ContextMenu.Item>
             </ContextMenu>
           )}
         </Portal>
