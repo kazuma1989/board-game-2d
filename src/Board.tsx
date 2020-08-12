@@ -122,6 +122,19 @@ export function Board() {
               }}
             >
               <ContextMenu.Item
+                disabled={(() => {
+                  const state = store.getState()
+
+                  const { cardId } = contextMenu
+                  const target = piles.find(hasCard(byId(cardId)))
+                  if (!target) {
+                    return true
+                  }
+
+                  if (target.dragging && target.dragging !== state.user.id) {
+                    return true
+                  }
+                })()}
                 // TODO コピペ実装のリファクタリング
                 onClick={async () => {
                   closeContextMenu()
@@ -191,6 +204,21 @@ export function Board() {
               </ContextMenu.Item>
 
               <ContextMenu.Item
+                disabled={(() => {
+                  const state = store.getState()
+
+                  const { cardId } = contextMenu
+                  const target = piles.find(hasCard(byId(cardId)))
+                  if (!target) {
+                    return true
+                  }
+
+                  if (target.dragging && target.dragging !== state.user.id) {
+                    return false
+                  }
+
+                  return true
+                })()}
                 onClick={() => {
                   closeContextMenu()
 

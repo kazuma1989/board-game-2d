@@ -21,7 +21,7 @@ export function ContextMenu({
       ref={ref$}
       className={cx(
         css`
-          min-width: 240px;
+          min-width: 264px;
           border-radius: 4px;
 
           /* https://brumm.af/shadows */
@@ -63,6 +63,7 @@ function MenuItem({
   children,
   ...props
 }: {
+  disabled?: boolean
   onClick?(): void
   className?: string
   style?: React.CSSProperties
@@ -77,6 +78,8 @@ function MenuItem({
         border-radius: 0;
         border-top-color: transparent;
         border-bottom-color: transparent;
+        padding-inline-start: 16px;
+        padding-inline-end: 16px;
         text-align: initial;
       `}
       {...props}
