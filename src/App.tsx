@@ -7,7 +7,7 @@ import {
 } from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
 import { Game } from "./Game.js"
-import { Header } from "./Header.js"
+import { Home } from "./Home.js"
 import {
   PortalChildrenContainer,
   Provider as PortalProvider,
@@ -26,19 +26,7 @@ export function App() {
       <PortalProvider>
         <Router>
           <Switch>
-            <Route
-              exact
-              path="/"
-              render={() => (
-                <div>
-                  <Header />
-
-                  <article>
-                    <h1>Board Game 2D</h1>
-                  </article>
-                </div>
-              )}
-            />
+            <Route exact path="/" render={() => <Home />} />
             <Route
               path="/games/:id"
               render={({
