@@ -2,11 +2,12 @@ import React, { useMemo } from "https://cdn.skypack.dev/react"
 import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
 import {
   BrowserRouter as Router,
+  Link,
   Route,
   Switch,
 } from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
-import { AuthGuard, AuthRedirect, AuthWatcher } from "./auth.js"
+import { AuthGuard, AuthListener, AuthRedirect } from "./auth.js"
 import { Game } from "./Game.js"
 import { Home } from "./Home.js"
 import {
@@ -14,6 +15,7 @@ import {
   Provider as PortalProvider,
 } from "./Portal.js"
 import { reducer } from "./reducer.js"
+import { SignIn } from "./SignIn.js"
 
 export function App() {
   const store = useMemo(
@@ -24,17 +26,18 @@ export function App() {
 
   return (
     <ReduxProvider store={store}>
-      <AuthWatcher />
+      <AuthListener />
 
       <PortalProvider>
         <Router>
           <Switch>
+            <Route exact path="/" render={() => <Home />} />
+
             <Route
-              exact
-              path="/"
+              path="/sign-in"
               render={() => (
                 <AuthRedirect>
-                  <Home />
+                  <SignIn />
                 </AuthRedirect>
               )}
             />
@@ -73,6 +76,18 @@ function NotFound() {
   return (
     <article>
       <h2>404 Not Found</h2>
+
+      <p>
+        <Link
+          to={{
+            pathname: "/",
+            search: location.search,
+            hash: location.hash,
+          }}
+        >
+          Go to top
+        </Link>
+      </p>
     </article>
   )
 }

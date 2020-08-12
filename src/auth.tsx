@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "https://cdn.skypack.dev/react-redux"
 import { Redirect } from "https://cdn.skypack.dev/react-router-dom"
 import { auth } from "./firebase.js"
 
-export function AuthWatcher() {
+export function AuthListener() {
   const dispatch = useDispatch()
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export function AuthGuard({ children }: { children?: React.ReactNode }) {
     return (
       <Redirect
         to={{
-          pathname: "/",
+          pathname: "/sign-in",
           search: search.toString(),
           hash: location.hash,
         }}
