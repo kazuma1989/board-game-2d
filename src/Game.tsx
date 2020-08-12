@@ -1,11 +1,12 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { useEffect } from "https://cdn.skypack.dev/react"
+import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
 import { useDispatch, useSelector } from "https://cdn.skypack.dev/react-redux"
 import { Board } from "./Board.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { Header } from "./Header.js"
 import { Provider as PilesProvider } from "./piles.js"
 import type { Game } from "./reducer"
+import { Provider as WsProvider, useWs } from "./ws.js"
 
 export function Game({ id: gameId }: { id: Game["id"] }) {
   const dispatch = useDispatch()
@@ -32,6 +33,10 @@ export function Game({ id: gameId }: { id: Game["id"] }) {
         <Header />
 
         <Board />
+
+        <WsProvider gameId={gameId}>
+          <ActiveIndicatorContainer gameId={gameId} />
+        </WsProvider>
       </Container>
     </PilesProvider>
   )
@@ -60,5 +65,170 @@ function Container({ children }: { children?: React.ReactNode }) {
     >
       {children}
     </div>
+  )
+}
+
+function ActiveIndicatorContainer({ gameId }: { gameId: string }) {
+  const ws = useWs()
+  // @ts-ignore
+  window.ws = ws
+  // const userId = useSelector(state => state.user.id)
+
+  const container$ = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const indicators: {
+      [sid: number]: HTMLElement | undefined
+    } = {}
+
+    let message
+    ws.addEventListener(
+      "message",
+      (message = (e: MessageEvent) => {
+        const data:
+          | {
+              auth: string
+              SID: number
+            }
+          | {
+              joinHub: string
+            }
+          | {
+              leaveHub: string
+            }
+          | {
+              leftHub: string
+              user: string
+              sID: number
+            }
+          | {
+              toH: string
+              FROM: string
+              sID: number
+              action: {
+                type: "move"
+                payload: {
+                  x: number
+                  y: number
+                }
+              }
+            } = JSON.parse(e.data)
+
+        if ("auth" in data) {
+          return
+        }
+
+        if ("joinHub" in data) {
+          return
+        }
+
+        if ("leaveHub" in data) {
+          return
+        }
+
+        if ("leftHub" in data) {
+          const { sID } = data
+
+          const indicator = indicators[sID]
+          if (!indicator) return
+
+          indicator.parentNode?.removeChild(indicator)
+
+          delete indicators[sID]
+
+          return
+        }
+
+        if ("toH" in data) {
+          const { sID, action } = data
+
+          if (!indicators[sID]) {
+            const indicator = document.createElement("div")
+            indicators[sID] = indicator
+
+            indicator.dataset.sid = sID.toString()
+            indicator.className = css`
+              position: absolute;
+              width: 50px;
+              height: 50px;
+              margin-top: -25px;
+              margin-left: -25px;
+              border: solid 4px hsl(${((sID % 12) * 150) % 360}, 100%, 50%);
+              border-radius: 50%;
+              transition: transform 400ms;
+            `
+
+            container$.current?.appendChild(indicator)
+          }
+
+          switch (action.type) {
+            case "move": {
+              const indicator = indicators[sID]
+              if (!indicator) return
+
+              const { x, y } = action.payload
+              indicator.style.transform = `translate(${x}px, ${y}px)`
+
+              return
+            }
+          }
+
+          return
+        }
+      }),
+      { passive: true },
+    )
+
+    return () => {
+      ws.removeEventListener("message", message)
+    }
+  }, [ws])
+
+  useEffect(() => {
+    let prevTime = Date.now()
+
+    let pointermove
+    document.addEventListener(
+      "pointermove",
+      (pointermove = (e: PointerEvent) => {
+        if (!e.isPrimary) return
+
+        const currentTime = Date.now()
+        if (currentTime - prevTime < 400) return
+
+        prevTime = currentTime
+
+        const { clientX, clientY } = e
+        ws.send(
+          JSON.stringify({
+            toH: gameId,
+            action: {
+              type: "move",
+              payload: {
+                x: clientX,
+                y: clientY,
+              },
+            },
+          }),
+        )
+      }),
+      { passive: true },
+    )
+
+    return () => {
+      document.removeEventListener("pointermove", pointermove)
+    }
+  }, [ws, gameId])
+
+  return (
+    <div
+      ref={container$}
+      className={css`
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+      `}
+    ></div>
   )
 }
