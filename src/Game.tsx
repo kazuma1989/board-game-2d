@@ -1,6 +1,7 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React, { useEffect } from "https://cdn.skypack.dev/react"
 import { useDispatch, useSelector } from "https://cdn.skypack.dev/react-redux"
+import { Provider as AchexProvider } from "./achex.js"
 import { Board } from "./Board.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { Header } from "./Header.js"
@@ -28,11 +29,13 @@ export function Game({ id: gameId }: { id: Game["id"] }) {
     <PilesProvider gameId={gameId}>
       <FirestorePiles />
 
-      <Container>
-        <Header />
+      <AchexProvider gameId={gameId}>
+        <Container>
+          <Header />
 
-        <Board />
-      </Container>
+          <Board />
+        </Container>
+      </AchexProvider>
     </PilesProvider>
   )
 }

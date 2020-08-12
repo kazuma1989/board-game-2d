@@ -1,9 +1,14 @@
 import { createContext, useContext } from "https://cdn.skypack.dev/react"
 
-const ctx = createContext<React.MutableRefObject<number>>({ current: 1 })
+const context = createContext<React.MutableRefObject<number> | null>(null)
 
-export const Provider = ctx.Provider
+export const Provider = context.Provider
 
 export function useScale() {
-  return useContext(ctx)
+  const scale$ = useContext(context)
+  if (!scale$) {
+    throw new Error("Not in the context of a scale provider or no value given")
+  }
+
+  return scale$
 }
