@@ -1,5 +1,5 @@
 import produce from "https://cdn.skypack.dev/immer"
-import { Reducer } from "redux"
+import type { Reducer } from "redux"
 import { byId, randomId } from "./util.js"
 
 export type State = {
