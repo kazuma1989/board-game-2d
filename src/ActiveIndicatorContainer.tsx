@@ -1,8 +1,10 @@
 import { css } from "https://cdn.skypack.dev/emotion"
 import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
 import { useAchex } from "./achex.js"
+import { useScale } from "./useScale.js"
 
 export function ActiveIndicatorContainer() {
+  const scale$ = useScale()
   const achex = useAchex()
 
   const container$ = useRef<HTMLDivElement>(null)
@@ -94,13 +96,18 @@ export function ActiveIndicatorContainer() {
       (pointermove = (e: PointerEvent) => {
         if (!e.isPrimary) return
 
+        const container = container$.current
+        if (!container) return
+
+        const { x, y } = container.getBoundingClientRect()
         const { clientX, clientY } = e
+
         const send = () => {
           achex.dispatch({
             type: "move",
             payload: {
-              x: clientX,
-              y: clientY,
+              x: (clientX - x) / scale$.current,
+              y: (clientY - y) / scale$.current,
             },
           })
         }

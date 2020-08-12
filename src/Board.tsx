@@ -9,6 +9,7 @@ import {
   useSelector,
   useStore,
 } from "https://cdn.skypack.dev/react-redux"
+import { ActiveIndicatorContainer } from "./ActiveIndicatorContainer.js"
 import { Card } from "./Card.js"
 import { ContextMenu } from "./ContextMenu.js"
 import { firestore } from "./firebase.js"
@@ -529,6 +530,8 @@ export function Board() {
             (e1, e2) =>
               e1.key?.toString().localeCompare(e2.key?.toString() ?? "") ?? 0,
           )}
+
+        <ActiveIndicatorContainer />
       </div>
     </Provider>
   )
