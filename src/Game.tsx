@@ -1,12 +1,12 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
 import { useDispatch, useSelector } from "https://cdn.skypack.dev/react-redux"
+import { Provider as AchexProvider, useAchex } from "./achex.js"
 import { Board } from "./Board.js"
 import { FirestorePiles } from "./FirestorePiles.js"
 import { Header } from "./Header.js"
 import { Provider as PilesProvider } from "./piles.js"
 import type { Game } from "./reducer"
-import { Provider as WsProvider, useWs } from "./ws.js"
 
 export function Game({ id: gameId }: { id: Game["id"] }) {
   const dispatch = useDispatch()
@@ -34,9 +34,9 @@ export function Game({ id: gameId }: { id: Game["id"] }) {
 
         <Board />
 
-        <WsProvider gameId={gameId}>
+        <AchexProvider gameId={gameId}>
           <ActiveIndicatorContainer />
-        </WsProvider>
+        </AchexProvider>
       </Container>
     </PilesProvider>
   )
@@ -69,7 +69,7 @@ function Container({ children }: { children?: React.ReactNode }) {
 }
 
 function ActiveIndicatorContainer() {
-  const achex = useWs()
+  const achex = useAchex()
 
   const container$ = useRef<HTMLDivElement>(null)
 

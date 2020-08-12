@@ -30,7 +30,7 @@ export function Provider({
   return <context.Provider value={achex}>{children}</context.Provider>
 }
 
-export function useWs() {
+export function useAchex() {
   const achex = useContext(context)
   if (!achex) {
     throw new Error("Not in the context of a ws provider")
