@@ -1,16 +1,22 @@
 import { css } from "https://cdn.skypack.dev/emotion"
-import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "https://cdn.skypack.dev/react"
 import {
   useDispatch,
   useSelector,
   useStore,
 } from "https://cdn.skypack.dev/react-redux"
 import { Card } from "./Card.js"
+import { ContextMenu } from "./ContextMenu.js"
 import { firestore } from "./firebase.js"
 import { Grid } from "./Grid.js"
 import { initPanzoom } from "./Panzoom.js"
 import { useCollection } from "./piles.js"
-import type { Pile } from "./reducer.js"
+import { Portal } from "./Portal.js"
+import type { Card as CardType, Pile } from "./reducer.js"
 import { Provider } from "./useScale.js"
 import { byCR, byId, hasCard, ms } from "./util.js"
 
@@ -80,6 +86,12 @@ export function Board() {
     }
   }, [])
 
+  const [contextMenu, setContextMenu] = useState<{
+    cardId: CardType["id"]
+    x: number
+    y: number
+  }>()
+
   return (
     <Provider value={scale$}>
       <div
@@ -97,6 +109,24 @@ export function Board() {
             color: rgba(0, 255, 0, 0.4);
           `}
         />
+
+        <Portal>
+          {contextMenu && (
+            <ContextMenu
+              onOutsideClick={() => {
+                setContextMenu(undefined)
+              }}
+              style={{
+                transform: `translate(${contextMenu.x}px, ${contextMenu.y}px)`,
+              }}
+            >
+              <ContextMenu.Item>{contextMenu.cardId}</ContextMenu.Item>
+              <ContextMenu.Item>Menu 2</ContextMenu.Item>
+              <ContextMenu.Item>Menu 3</ContextMenu.Item>
+              <ContextMenu.Item>Menu 4</ContextMenu.Item>
+            </ContextMenu>
+          )}
+        </Portal>
 
         {piles
           .flatMap(({ cards, col, row, dragging }) => {
@@ -121,6 +151,15 @@ export function Board() {
                     text={text}
                     src={src}
                     surface={surface}
+                    onContextMenu={e => {
+                      const { clientX, clientY } = e
+
+                      setContextMenu({
+                        cardId,
+                        x: clientX,
+                        y: clientY,
+                      })
+                    }}
                     // TODO イベントハンドラー内に大きなロジック書きたくないよね
                     onDoubleTap={async () => {
                       const nextSurface = surface === "back" ? "face" : "back"

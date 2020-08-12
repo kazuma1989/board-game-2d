@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "https://cdn.skypack.dev/react"
+import React, { useMemo } from "https://cdn.skypack.dev/react"
 import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
 import {
   BrowserRouter as Router,
@@ -6,11 +6,9 @@ import {
   Switch,
 } from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
-import { ContextMenu } from "./ContextMenu.js"
 import { Game } from "./Game.js"
 import { Header } from "./Header.js"
 import {
-  Portal,
   PortalChildrenContainer,
   Provider as PortalProvider,
 } from "./Portal.js"
@@ -68,40 +66,9 @@ export function App() {
 }
 
 function NotFound() {
-  const [v, setV] = useState(false)
-
   return (
     <article>
       <h2>404 Not Found</h2>
-
-      <p>
-        <button
-          type="button"
-          onClick={() => {
-            setV(v => !v)
-          }}
-        >
-          Toggle
-        </button>
-      </p>
-
-      <Portal>
-        {v && (
-          <ContextMenu
-            onOutsideClick={() => {
-              setV(false)
-            }}
-            style={{
-              transform: `translate(100px, 100px)`,
-            }}
-          >
-            <ContextMenu.Item>Menu 1</ContextMenu.Item>
-            <ContextMenu.Item>Menu 2</ContextMenu.Item>
-            <ContextMenu.Item>Menu 3</ContextMenu.Item>
-            <ContextMenu.Item>Menu 4</ContextMenu.Item>
-          </ContextMenu>
-        )}
-      </Portal>
     </article>
   )
 }
