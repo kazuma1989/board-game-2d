@@ -205,19 +205,15 @@ export function Board() {
 
               <ContextMenu.Item
                 disabled={(() => {
-                  const state = store.getState()
-
                   const { cardId } = contextMenu
                   const target = piles.find(hasCard(byId(cardId)))
                   if (!target) {
                     return true
                   }
 
-                  if (target.dragging && target.dragging !== state.user.id) {
-                    return false
+                  if (!target.dragging) {
+                    return true
                   }
-
-                  return true
                 })()}
                 onClick={() => {
                   closeContextMenu()
@@ -242,6 +238,45 @@ export function Board() {
                 }}
               >
                 ロックを解除する
+              </ContextMenu.Item>
+
+              <ContextMenu.Item
+                disabled={(() => {
+                  const state = store.getState()
+
+                  const { cardId } = contextMenu
+                  const target = piles.find(hasCard(byId(cardId)))
+                  if (!target) {
+                    return true
+                  }
+
+                  if (target.dragging === state.user.id) {
+                    return true
+                  }
+                })()}
+                onClick={() => {
+                  closeContextMenu()
+
+                  const { cardId } = contextMenu
+
+                  const state = store.getState()
+
+                  const fromPile = state.piles.find(hasCard(byId(cardId)))
+                  if (fromPile) {
+                    db.runTransaction(async t => {
+                      const fromRef = pilesRef.doc(fromPile.id)
+                      const from = await t.get(fromRef).then(d => d.data())
+
+                      if (!from) return
+
+                      t.update(fromRef, {
+                        dragging: state.user.id,
+                      })
+                    }).catch(console.warn)
+                  }
+                }}
+              >
+                ロックする
               </ContextMenu.Item>
             </ContextMenu>
           )}
