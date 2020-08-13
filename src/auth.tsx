@@ -7,6 +7,10 @@ export function AuthListener() {
   const dispatch = useDispatch()
 
   useEffect(() => {
+    dispatch({
+      type: "Auth.SignIn.Start",
+    })
+
     return auth().onAuthStateChanged(user => {
       if (user) {
         dispatch({
@@ -27,7 +31,7 @@ export function AuthListener() {
 }
 
 export function AuthGuard({ children }: { children?: React.ReactNode }) {
-  const signedIn = useSelector(state => state.user.signedIn)
+  const signedIn = useSelector(state => state.user.auth === "SIGNED_IN")
 
   if (!signedIn) {
     const search = new URLSearchParams(location.search)
@@ -48,7 +52,7 @@ export function AuthGuard({ children }: { children?: React.ReactNode }) {
 }
 
 export function AuthRedirect({ children }: { children?: React.ReactNode }) {
-  const signedIn = useSelector(state => state.user.signedIn)
+  const signedIn = useSelector(state => state.user.auth === "SIGNED_IN")
 
   const search = new URLSearchParams(location.search)
   if (signedIn && search.has("redirect")) {

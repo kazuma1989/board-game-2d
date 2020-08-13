@@ -1,26 +1,45 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
 import React from "https://cdn.skypack.dev/react"
+import { useSelector } from "https://cdn.skypack.dev/react-redux"
 import { auth } from "./firebase.js"
 
 export function SignIn() {
+  const authState = useSelector(state => state.user.auth)
+
   return (
     <article>
       <h1>Board Game 2D</h1>
 
-      <p>サインインしてください。</p>
+      {authState === "CHECKING" ? (
+        <>
+          <p>サインイン中・・・</p>
 
-      <p>
-        <ButtonWithImage
-          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-          onClick={() => {
-            const provider = new auth.GoogleAuthProvider()
+          <p
+            className={css`
+              text-align: center;
+            `}
+          >
+            <bg2d-loading />
+          </p>
+        </>
+      ) : (
+        <>
+          <p>サインインしてください。</p>
 
-            auth().signInWithRedirect(provider)
-          }}
-        >
-          Sign in with Google
-        </ButtonWithImage>
-      </p>
+          <p>
+            <ButtonWithImage
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              onClick={() => {
+                const provider = new auth.GoogleAuthProvider()
+
+                auth().signInWithRedirect(provider)
+              }}
+            >
+              Sign in with Google
+            </ButtonWithImage>
+          </p>
+        </>
+      )}
     </article>
   )
 }
