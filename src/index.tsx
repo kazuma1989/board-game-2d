@@ -11,7 +11,18 @@ const App = React.lazy(() =>
 )
 
 function Loading() {
-  return <div className="bg2d-loading"></div>
+  return (
+    <div
+      style={{
+        display: "flex",
+        height: "50%",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <bg2d-loading></bg2d-loading>
+    </div>
+  )
 }
 
 render(
