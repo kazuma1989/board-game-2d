@@ -1,10 +1,33 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React from "https://cdn.skypack.dev/react"
+import React, { useEffect, useState } from "https://cdn.skypack.dev/react"
 import { useSelector } from "https://cdn.skypack.dev/react-redux"
+import { Redirect } from "https://cdn.skypack.dev/react-router-dom"
 import { auth } from "./firebase.js"
 
 export function SignIn() {
+  const [afterRedirect, setAfterRedirect] = useState(false)
+
+  useEffect(() => {
+    auth()
+      .getRedirectResult()
+      .then(e => {
+        setAfterRedirect(Boolean(e.user))
+      })
+  }, [])
+
   const authState = useSelector(state => state.user.auth)
+
+  if (afterRedirect && authState === "SIGNED_IN") {
+    return (
+      <Redirect
+        to={{
+          pathname: "/",
+          search: location.search,
+          hash: location.hash,
+        }}
+      />
+    )
+  }
 
   return (
     <article>
