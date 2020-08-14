@@ -30,33 +30,27 @@
         overscroll-behavior: none;
       }
 
-      .bg2d-loading {
-        display: flex;
-        height: 100%;
-        align-items: center;
-        justify-content: center;
+      body {
+        font-family: "Helvetica Neue", "Arial", "Hiragino Kaku Gothic ProN",
+          "Hiragino Sans", "Meiryo", sans-serif;
       }
 
-      .bg2d-loading::before {
-        content: "";
-        display: block;
+      input,
+      button,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      button {
+        height: auto;
+        padding: 6px 16px;
+      }
+
+      bg2d-loading {
         width: 50px;
         height: 50px;
-        border-radius: 50%;
-        border: 3px solid transparent;
-        border-top-color: currentColor;
-
-        /* https://easings.net/ja#easeInOutQuart */
-        animation: bg2d-spin 1.1s infinite cubic-bezier(0.76, 0, 0.24, 1);
-      }
-
-      @keyframes bg2d-spin {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
-        }
+        border-width: 2px;
       }
     </style>
 
@@ -65,7 +59,58 @@
 
   <body>
     <div id="app" style="display: contents;">
-      <div class="bg2d-loading"></div>
+      <div
+        style="
+          display: flex;
+          height: 50%;
+          align-items: center;
+          justify-content: center;
+        "
+      >
+        <bg2d-loading>Loading...</bg2d-loading>
+      </div>
     </div>
+
+    <script>
+      customElements.define(
+        "bg2d-loading",
+        class Loading extends HTMLElement {
+          constructor() {
+            super()
+
+            this.attachShadow({
+              mode: "open",
+            })
+
+            const html = String.raw
+            this.shadowRoot.innerHTML = html`
+              <style>
+                :host {
+                  box-sizing: border-box;
+                  display: inline-block;
+                  width: 1em;
+                  height: 1em;
+                  border-radius: 50%;
+                  border: 1px solid transparent;
+                  border-top-color: currentColor;
+
+                  /* https://easings.net/#easeInOutQuart */
+                  animation: spin 1.1s infinite cubic-bezier(0.76, 0, 0.24, 1);
+                }
+
+                @keyframes spin {
+                  from {
+                    transform: rotate(0deg);
+                  }
+                  to {
+                    transform: rotate(360deg);
+                  }
+                }
+              </style>
+            `
+          }
+        },
+      )
+    </script>
   </body>
 </html>

@@ -127,6 +127,8 @@ class Achex {
   }
 
   send(data: AchexMessageReq) {
+    if (this.ws.readyState !== WebSocket.OPEN) return
+
     this.ws.send(JSON.stringify(data))
   }
 
