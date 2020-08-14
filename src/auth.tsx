@@ -1,8 +1,15 @@
-import React, { useEffect } from "https://cdn.skypack.dev/react"
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "https://cdn.skypack.dev/react"
 import { useDispatch, useSelector } from "https://cdn.skypack.dev/react-redux"
 import { Redirect } from "https://cdn.skypack.dev/react-router-dom"
 import { auth } from "./firebase.js"
 
+/**
+ * 認証状態の変化をリッスンして Store に通知する
+ */
 export function AuthListener() {
   const dispatch = useDispatch()
 
@@ -25,49 +32,106 @@ export function AuthListener() {
         })
       }
     })
-  }, [])
+  }, [dispatch])
 
   return null
 }
 
-export function AuthGuard({ children }: { children?: React.ReactNode }) {
-  const signedIn = useSelector(state => state.user.auth === "SIGNED_IN")
+/**
+ * 認証済みでないときは指定の URL へリダイレクトする
+ */
+export function AuthGuard({
+  redirectTo,
+  indeterminate,
+  children,
+}: {
+  redirectTo: string
+  indeterminate?: React.ReactNode
+  children?: React.ReactNode
+}) {
+  const authState = useSelector(state => state.user.auth)
 
-  if (!signedIn) {
-    const search = new URLSearchParams(location.search)
-    search.set("redirect", location.pathname)
+  switch (authState) {
+    case "INITIAL":
+    case "CHECKING": {
+      return <>{indeterminate}</>
+    }
 
-    return (
-      <Redirect
-        to={{
-          pathname: "/sign-in",
-          search: search.toString(),
-          hash: location.hash,
-        }}
-      />
-    )
+    case "SIGNED_IN": {
+      return <>{children}</>
+    }
+
+    default: {
+      const search = new URLSearchParams(location.search)
+      search.set("redirect", location.pathname)
+
+      return (
+        <Redirect
+          to={{
+            pathname: redirectTo,
+            search: search.toString(),
+            hash: location.hash,
+          }}
+        />
+      )
+    }
   }
-
-  return <>{children}</>
 }
 
-export function AuthRedirect({ children }: { children?: React.ReactNode }) {
-  const signedIn = useSelector(state => state.user.auth === "SIGNED_IN")
+/**
+ * Firebase Auth のリダイレクト認証フローから帰ってきた直後に
+ * ?redirect=xxx で指定された URL へ遷移する
+ */
+export function AuthRedirect({
+  redirectToDefault,
+  children,
+}: {
+  redirectToDefault: string
+  children?: React.ReactNode
+}) {
+  const pathnameDefault$ = useRef(redirectToDefault)
+  useEffect(() => {
+    pathnameDefault$.current = redirectToDefault
+  })
 
-  const search = new URLSearchParams(location.search)
-  if (signedIn && search.has("redirect")) {
-    const redirect = search.get("redirect")
-    search.delete("redirect")
+  const [redirectTo, setRedirectTo] = useState<{
+    pathname: string
+    search: string
+    hash: string
+  }>()
 
-    return (
-      <Redirect
-        to={{
-          pathname: redirect,
-          search: search.toString(),
-          hash: location.hash,
-        }}
-      />
-    )
+  useEffect(() => {
+    auth()
+      .getRedirectResult()
+      .then(e => {
+        if (!e.user) {
+          setRedirectTo(undefined)
+
+          return
+        }
+
+        const search = new URLSearchParams(location.search)
+        const redirect = search.get("redirect")
+        if (redirect) {
+          search.delete("redirect")
+
+          setRedirectTo({
+            pathname: redirect,
+            search: search.toString(),
+            hash: location.hash,
+          })
+        } else {
+          setRedirectTo({
+            pathname: pathnameDefault$.current,
+            search: location.search,
+            hash: location.hash,
+          })
+        }
+      })
+  }, [])
+
+  if (redirectTo) {
+    return <Redirect to={redirectTo} />
   }
 
   return <>{children}</>

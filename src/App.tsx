@@ -10,6 +10,7 @@ import { createStore } from "https://cdn.skypack.dev/redux"
 import { AuthGuard, AuthListener, AuthRedirect } from "./auth.js"
 import { Game } from "./Game.js"
 import { Home } from "./Home.js"
+import { Loading } from "./Loading.js"
 import {
   PortalChildrenContainer,
   Provider as PortalProvider,
@@ -36,7 +37,7 @@ export function App() {
             <Route
               path="/sign-in"
               render={() => (
-                <AuthRedirect>
+                <AuthRedirect redirectToDefault="/">
                   <SignIn />
                 </AuthRedirect>
               )}
@@ -49,7 +50,7 @@ export function App() {
                   params: { id },
                 },
               }) => (
-                <AuthGuard>
+                <AuthGuard redirectTo="/sign-in" indeterminate={<Loading />}>
                   <Game id={id} />
                 </AuthGuard>
               )}
