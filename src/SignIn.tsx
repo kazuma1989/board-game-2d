@@ -22,12 +22,26 @@ export function SignIn() {
             <bg2d-loading />
           </p>
         </>
+      ) : authState === "SIGNED_IN" ? (
+        <>
+          <p></p>
+
+          <p>
+            <Button
+              onClick={() => {
+                auth().signOut()
+              }}
+            >
+              サインアウトする
+            </Button>
+          </p>
+        </>
       ) : (
         <>
           <p>サインインしてください。</p>
 
           <p>
-            <ButtonWithImage
+            <Button
               src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
               onClick={() => {
                 const provider = new auth.GoogleAuthProvider()
@@ -36,7 +50,7 @@ export function SignIn() {
               }}
             >
               Sign in with Google
-            </ButtonWithImage>
+            </Button>
           </p>
         </>
       )}
@@ -44,12 +58,12 @@ export function SignIn() {
   )
 }
 
-function ButtonWithImage({
+function Button({
   src,
   className,
   ...props
 }: {
-  src: string
+  src?: string
   onClick?(): void
   className?: string
   style?: React.CSSProperties
@@ -60,20 +74,23 @@ function ButtonWithImage({
       type="button"
       className={cx(
         css`
-          padding: 8px 16px;
-          height: auto;
-
-          ::before {
-            content: "";
-            display: inline-block;
-            vertical-align: bottom;
-            width: 20px;
-            height: 20px;
-            margin-right: 8px;
-            background-image: url(${src});
-            background-size: contain;
-          }
+          text-align: inherit;
         `,
+        src &&
+          css`
+            ::before {
+              content: "";
+              display: inline-block;
+              vertical-align: -0.14em;
+              width: 1em;
+              height: 1em;
+              margin-right: 8px;
+              background-image: url(${src});
+              background-size: contain;
+              background-repeat: no-repeat;
+              background-position: center;
+            }
+          `,
         className,
       )}
       {...props}
