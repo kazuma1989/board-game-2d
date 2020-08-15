@@ -16,6 +16,7 @@ type Body = {
 export const games = functions
   .region(functions.config().functions?.region ?? "us-central1")
   .https.onCall(async (body: Body | undefined, { auth }) => {
+    // 認証チェック
     if (!auth) {
       throw new functions.https.HttpsError(
         "failed-precondition",
@@ -23,33 +24,32 @@ export const games = functions
       )
     }
 
-    const genData = await import(`../data/${body?.type}`)
-      .then(m => m.default as () => object)
-      .catch(() => {
+    const ownerRef = db.collection("users").doc(auth.uid)
+
+    const genData = await db.runTransaction(async t => {
+      const owner = await t.get(ownerRef).then(d => d.data())
+
+      // ここに来るのは、Auth と Firestore の連携ミス
+      if (!owner) {
         throw new functions.https.HttpsError(
-          "unimplemented",
-          `Unknown game type: "${body?.type}"`,
+          "internal",
+          `User data not found: ${ownerRef.id}`,
           {
-            type: body?.type,
+            userId: ownerRef.id,
           },
         )
-      })
+      }
 
-    const ownerRef = db.collection("users").doc(auth.uid)
-    const owner = ownerRef.id
-
-    await db.runTransaction(async t => {
-      const owner = await t.get(ownerRef).then(d => d.data())
-      if (!owner) return
-
-      const maxCount = 3
+      // 作成の最大数を超えていないかチェック
+      const MAX_COUNT = 3
       const { ownerGamesCount = 0 } = owner
-      if (ownerGamesCount >= maxCount) {
+      if (ownerGamesCount >= MAX_COUNT) {
         throw new functions.https.HttpsError(
           "resource-exhausted",
-          `Exceeded max games: ${maxCount}`,
+          `Exceeded max games: ${MAX_COUNT}`,
           {
-            maxCount,
+            currentCount: ownerGamesCount,
+            maxCount: MAX_COUNT,
           },
         )
       }
@@ -57,13 +57,35 @@ export const games = functions
       t.update(ownerRef, {
         ownerGamesCount: ownerGamesCount + 1,
       })
+
+      // type が対応可能なものかチェックする
+      const genData = await import(`../data/${body?.type}`)
+        .then(m => m.default as () => object)
+        .catch(() => {
+          throw new functions.https.HttpsError(
+            "unimplemented",
+            `Unknown game type: "${body?.type}"`,
+            {
+              type: body?.type,
+            },
+          )
+        })
+
+      return genData
     })
 
+    // 新しい Game doc を生成する
     const gameRef = await db.collection("games").add({
-      owner,
+      owner: ownerRef.id,
       players: [],
     })
-    const gameId = gameRef.id
+
+    // User のサブコレクションを更新する
+    await ownerRef.collection("ownerGames").doc(gameRef.id).set({
+      owner: ownerRef.id,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    })
 
     const bw = db.bulkWriter()
 
@@ -75,14 +97,9 @@ export const games = functions
       })
     })
 
-    // User のサブコレクションを更新する
-    bw.create(ownerRef.collection("ownerGames").doc(gameId), {
-      owner,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    })
-
     await bw.close()
+
+    const gameId = gameRef.id
 
     return {
       code: "game-created",
