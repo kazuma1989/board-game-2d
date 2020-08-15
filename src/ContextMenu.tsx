@@ -78,9 +78,8 @@ function MenuItem({
         border-radius: 0;
         border-top-color: transparent;
         border-bottom-color: transparent;
-        padding-inline-start: 16px;
-        padding-inline-end: 16px;
         text-align: initial;
+        font-size: smaller;
       `}
       {...props}
     >

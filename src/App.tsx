@@ -8,9 +8,11 @@ import {
 } from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
 import { AuthGuard, AuthListener, AuthRedirect } from "./auth.js"
+import { DebugMenu } from "./DebugMenu.js"
 import { Game } from "./Game.js"
 import { Home } from "./Home.js"
 import { Loading } from "./Loading.js"
+import { mode } from "./mode.js"
 import {
   PortalChildrenContainer,
   Provider as PortalProvider,
@@ -31,6 +33,8 @@ export function App() {
 
       <PortalProvider>
         <Router>
+          {mode === "debug" && <DebugMenu />}
+
           <Switch>
             <Route exact path="/" render={() => <Home />} />
 

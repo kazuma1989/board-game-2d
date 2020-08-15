@@ -1,8 +1,10 @@
 import * as admin from "firebase-admin"
-import * as functions from "firebase-functions"
-import { randomId } from "../util"
+import { https } from "firebase-functions"
+import { functions } from "../functions"
+import { createdAt } from "../timestamp"
 
 const db = admin.app().firestore()
+const { HttpsError } = https
 
 type Body = {
   type?: string
@@ -14,13 +16,37 @@ type Body = {
     type: "speed",
   })
  */
-export const games = functions
-  .region(functions.config().functions?.region ?? "us-central1")
-  .https.onCall(async (body: Body | undefined, context) => {
+export const games = functions.https.onCall(
+  async (body: Body | undefined, { auth }) => {
+    // 認証チェック
+    if (!auth) {
+      throw new HttpsError(
+        "failed-precondition",
+        "The function must be called while authenticated.",
+      )
+    }
+
+    const ownerRef = db.collection("users").doc(auth.uid)
+
+    // 作成の最大数を超えていないかチェック
+    const MAX_COUNT = 3
+    const games = await ownerRef.collection("ownerGames").listDocuments()
+    if (games.length >= MAX_COUNT) {
+      throw new HttpsError(
+        "resource-exhausted",
+        `Exceeded max games: ${MAX_COUNT}`,
+        {
+          currentCount: games.length,
+          maxCount: MAX_COUNT,
+        },
+      )
+    }
+
+    // type が対応可能なものかチェックする
     const genData = await import(`../data/${body?.type}`)
       .then(m => m.default as () => object)
       .catch(() => {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "unimplemented",
           `Unknown game type: "${body?.type}"`,
           {
@@ -29,35 +55,26 @@ export const games = functions
         )
       })
 
-    const bulkWriter = (db as any).bulkWriter() as BulkWriter
-
-    const gameId = randomId()
-    const gameRef = db.collection("games").doc(gameId)
-
-    const createGame$ = bulkWriter.create(gameRef, {})
-
-    await bulkWriter.flush()
-
-    await createGame$.catch(() => {
-      throw new functions.https.HttpsError(
-        "already-exists",
-        `A game already exists. Id: ${gameId}`,
-        {
-          gameId,
-          documentPath: `games/${gameId}`,
-        },
-      )
+    // 新しい Game doc を生成する
+    const gameRef = await db.collection("games").add({
+      owner: ownerRef.id,
+      players: [],
+      ...createdAt(),
     })
 
-    const data = genData()
+    const bw = db.bulkWriter()
 
+    // Game データを用意する
+    const data = genData()
     Object.entries(data).forEach(([subPath, docs]) => {
       Object.entries(docs as any).forEach(([key, data]) => {
-        bulkWriter.create(gameRef.collection(subPath).doc(key), data)
+        bw.create(gameRef.collection(subPath).doc(key), data as any)
       })
     })
 
-    await bulkWriter.close()
+    await bw.close()
+
+    const gameId = gameRef.id
 
     return {
       code: "game-created",
@@ -70,18 +87,5 @@ export const games = functions
         }),
       },
     }
-  })
-
-/**
- * @see https://googleapis.dev/nodejs/firestore/latest/BulkWriter.html
- */
-type BulkWriter = {
-  create(
-    ref: FirebaseFirestore.DocumentReference,
-    data: any,
-  ): Promise<admin.firestore.WriteResult>
-
-  flush(): Promise<void>
-
-  close(): Promise<void>
-}
+  },
+)
