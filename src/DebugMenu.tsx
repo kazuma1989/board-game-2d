@@ -82,6 +82,27 @@ export function DebugMenu() {
           </ContextMenu.Item>
 
           <ContextMenu.Item
+            onClick={async () => {
+              close()
+
+              const [, , gameId] = location.pathname.split("/")
+
+              const gameRef = firestore().collection("games").doc(gameId)
+              const game = await gameRef.get().then(d => d.data())
+
+              const userId = "QM3Yv0kshz1dyNaNiabU"
+
+              await gameRef.collection("applicants").doc(userId).set({
+                gameOwner: game?.owner,
+                createdAt: firestore.FieldValue.serverTimestamp(),
+                updatedAt: firestore.FieldValue.serverTimestamp(),
+              })
+            }}
+          >
+            参加希望を送ってもらう
+          </ContextMenu.Item>
+
+          <ContextMenu.Item
             onClick={() => {
               close()
 
