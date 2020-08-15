@@ -4,6 +4,7 @@ import { useStore } from "https://cdn.skypack.dev/react-redux"
 import { useHistory } from "https://cdn.skypack.dev/react-router-dom"
 import { ContextMenu } from "./ContextMenu.js"
 import { firestore, functions } from "./firebase.js"
+import { randomId } from "./util.js"
 
 export function DebugMenu() {
   const [menuVisible, setMenuVisible] = useState(false)
@@ -75,10 +76,15 @@ export function DebugMenu() {
                 .where("gameOwner", "==", state.user.id)
                 .get()
 
-              console.log(docs.map(d => d.data()))
+              console.log(
+                docs.map(d => ({
+                  id: d.id,
+                  ...d.data(),
+                })),
+              )
             }}
           >
-            collectionGroup("applicants")
+            console.log(collectionGroup("applicants"))
           </ContextMenu.Item>
 
           <ContextMenu.Item
@@ -90,7 +96,7 @@ export function DebugMenu() {
               const gameRef = firestore().collection("games").doc(gameId)
               const game = await gameRef.get().then(d => d.data())
 
-              const userId = "QM3Yv0kshz1dyNaNiabU"
+              const userId = randomId()
 
               await gameRef.collection("applicants").doc(userId).set({
                 gameOwner: game?.owner,
