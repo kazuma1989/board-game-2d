@@ -8,6 +8,10 @@ service cloud.firestore {
                             || request.auth.uid in resource.data.players;
       allow update, delete: if request.auth.uid == resource.data.owner;
 
+      function owner() {
+        return request.auth.uid == get(/databases/$(database)/documents/games/$(game)).data.owner;
+      }
+
       function ownerOrPlayer() {
         return request.auth.uid == get(/databases/$(database)/documents/games/$(game)).data.owner
             || request.auth.uid in get(/databases/$(database)/documents/games/$(game)).data.players;
@@ -16,6 +20,16 @@ service cloud.firestore {
       match /piles/{document=**} {
         allow read, write: if ownerOrPlayer();
       }
+
+      match /applicants/{document=**} {
+        allow   read, create: if true;
+        allow update, delete: if owner();
+      }
+    }
+
+    // Allow `db.collectionGroup("applicants")`
+    match /{path=**}/applicants/{applicant} {
+      allow read: if true;
     }
   }
 }

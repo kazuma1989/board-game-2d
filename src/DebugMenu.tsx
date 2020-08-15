@@ -1,8 +1,9 @@
 import { css } from "https://cdn.skypack.dev/emotion"
 import React, { useState } from "https://cdn.skypack.dev/react"
+import { useStore } from "https://cdn.skypack.dev/react-redux"
 import { useHistory } from "https://cdn.skypack.dev/react-router-dom"
 import { ContextMenu } from "./ContextMenu.js"
-import { functions } from "./firebase.js"
+import { firestore, functions } from "./firebase.js"
 
 export function DebugMenu() {
   const [menuVisible, setMenuVisible] = useState(false)
@@ -10,6 +11,8 @@ export function DebugMenu() {
   const close = () => setMenuVisible(false)
 
   const navigate = useNavigate()
+
+  const store = useStore()
 
   return (
     <div
@@ -28,8 +31,9 @@ export function DebugMenu() {
         <ContextMenu onOutsideClick={close}>
           <ContextMenu.Item
             onClick={() => {
-              navigate("/")
               close()
+
+              navigate("/")
             }}
           >
             Home
@@ -37,8 +41,9 @@ export function DebugMenu() {
 
           <ContextMenu.Item
             onClick={() => {
-              navigate("/sign-in")
               close()
+
+              navigate("/sign-in")
             }}
           >
             SignIn
@@ -46,23 +51,41 @@ export function DebugMenu() {
 
           <ContextMenu.Item
             onClick={async () => {
+              close()
+
               const { data } = await functions.httpsCallable("games")({
                 type: "speed",
               })
 
               const { gameId } = data.details
               navigate(`/games/${gameId}`)
-
-              close()
             }}
           >
             Game (type=speed) 作成
           </ContextMenu.Item>
 
           <ContextMenu.Item
-            onClick={() => {
-              navigate("/not-defined-path-so-fallback-to-404")
+            onClick={async () => {
               close()
+
+              const state = store.getState()
+
+              const { docs } = await firestore()
+                .collectionGroup("applicants")
+                .where("gameOwner", "==", state.user.id)
+                .get()
+
+              console.log(docs.map(d => d.data()))
+            }}
+          >
+            collectionGroup("applicants")
+          </ContextMenu.Item>
+
+          <ContextMenu.Item
+            onClick={() => {
+              close()
+
+              navigate("/not-defined-path-so-fallback-to-404")
             }}
           >
             NotFound
