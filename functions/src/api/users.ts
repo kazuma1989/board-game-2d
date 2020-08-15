@@ -13,6 +13,8 @@ export const userCreate = functions
     return db.collection("users").doc(uid).set({
       displayName,
       photoURL,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     })
   })
 

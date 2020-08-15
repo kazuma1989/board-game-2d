@@ -1,6 +1,5 @@
 import * as admin from "firebase-admin"
 import * as functions from "firebase-functions"
-import { randomId } from "../util"
 
 const db = admin.app().firestore()
 
@@ -16,8 +15,8 @@ type Body = {
  */
 export const games = functions
   .region(functions.config().functions?.region ?? "us-central1")
-  .https.onCall(async (body: Body | undefined, context) => {
-    if (!context.auth) {
+  .https.onCall(async (body: Body | undefined, { auth }) => {
+    if (!auth) {
       throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called while authenticated.",
@@ -36,37 +35,32 @@ export const games = functions
         )
       })
 
+    const owner = auth.uid
+    const gameRef = await db.collection("games").add({
+      owner,
+      players: [],
+    })
+    const gameId = gameRef.id
+
     const bw = db.bulkWriter()
 
-    const gameId = randomId()
-    const gameRef = db.collection("games").doc(gameId)
-
-    const createGame$ = bw.create(gameRef, {
-      owner: context.auth.uid,
-      players: [],
-      applicants: [],
-    })
-
-    await bw.flush()
-
-    await createGame$.catch(() => {
-      throw new functions.https.HttpsError(
-        "already-exists",
-        `A game already exists. Id: ${gameId}`,
-        {
-          gameId,
-          documentPath: `games/${gameId}`,
-        },
-      )
-    })
-
+    // Game データを用意する
     const data = genData()
-
     Object.entries(data).forEach(([subPath, docs]) => {
       Object.entries(docs as any).forEach(([key, data]) => {
         bw.create(gameRef.collection(subPath).doc(key), data as any)
       })
     })
+
+    // User のサブコレクションを更新する
+    bw.create(
+      db.collection("users").doc(owner).collection("ownerGames").doc(gameId),
+      {
+        owner,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+    )
 
     await bw.close()
 
