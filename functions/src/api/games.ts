@@ -17,6 +17,13 @@ type Body = {
 export const games = functions
   .region(functions.config().functions?.region ?? "us-central1")
   .https.onCall(async (body: Body | undefined, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called while authenticated.",
+      )
+    }
+
     const genData = await import(`../data/${body?.type}`)
       .then(m => m.default as () => object)
       .catch(() => {
@@ -34,7 +41,11 @@ export const games = functions
     const gameId = randomId()
     const gameRef = db.collection("games").doc(gameId)
 
-    const createGame$ = bulkWriter.create(gameRef, {})
+    const createGame$ = bulkWriter.create(gameRef, {
+      owner: context.auth.uid,
+      players: [],
+      applicants: [],
+    })
 
     await bulkWriter.flush()
 
