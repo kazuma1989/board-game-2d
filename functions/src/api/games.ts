@@ -35,7 +35,30 @@ export const games = functions
         )
       })
 
-    const owner = auth.uid
+    const ownerRef = db.collection("users").doc(auth.uid)
+    const owner = ownerRef.id
+
+    await db.runTransaction(async t => {
+      const owner = await t.get(ownerRef).then(d => d.data())
+      if (!owner) return
+
+      const maxCount = 3
+      const { ownerGamesCount = 0 } = owner
+      if (ownerGamesCount >= maxCount) {
+        throw new functions.https.HttpsError(
+          "resource-exhausted",
+          `Exceeded max games: ${maxCount}`,
+          {
+            maxCount,
+          },
+        )
+      }
+
+      t.update(ownerRef, {
+        ownerGamesCount: ownerGamesCount + 1,
+      })
+    })
+
     const gameRef = await db.collection("games").add({
       owner,
       players: [],
@@ -53,14 +76,11 @@ export const games = functions
     })
 
     // User のサブコレクションを更新する
-    bw.create(
-      db.collection("users").doc(owner).collection("ownerGames").doc(gameId),
-      {
-        owner,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-    )
+    bw.create(ownerRef.collection("ownerGames").doc(gameId), {
+      owner,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    })
 
     await bw.close()
 
