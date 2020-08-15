@@ -36,18 +36,18 @@ export const games = functions
         )
       })
 
-    const bulkWriter = (db as any).bulkWriter() as BulkWriter
+    const bw = db.bulkWriter()
 
     const gameId = randomId()
     const gameRef = db.collection("games").doc(gameId)
 
-    const createGame$ = bulkWriter.create(gameRef, {
+    const createGame$ = bw.create(gameRef, {
       owner: context.auth.uid,
       players: [],
       applicants: [],
     })
 
-    await bulkWriter.flush()
+    await bw.flush()
 
     await createGame$.catch(() => {
       throw new functions.https.HttpsError(
@@ -64,11 +64,11 @@ export const games = functions
 
     Object.entries(data).forEach(([subPath, docs]) => {
       Object.entries(docs as any).forEach(([key, data]) => {
-        bulkWriter.create(gameRef.collection(subPath).doc(key), data)
+        bw.create(gameRef.collection(subPath).doc(key), data as any)
       })
     })
 
-    await bulkWriter.close()
+    await bw.close()
 
     return {
       code: "game-created",
@@ -82,17 +82,3 @@ export const games = functions
       },
     }
   })
-
-/**
- * @see https://googleapis.dev/nodejs/firestore/latest/BulkWriter.html
- */
-type BulkWriter = {
-  create(
-    ref: FirebaseFirestore.DocumentReference,
-    data: any,
-  ): Promise<admin.firestore.WriteResult>
-
-  flush(): Promise<void>
-
-  close(): Promise<void>
-}
