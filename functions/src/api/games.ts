@@ -1,7 +1,10 @@
 import * as admin from "firebase-admin"
-import * as functions from "firebase-functions"
+import { https } from "firebase-functions"
+import { functions } from "../functions"
+import { createdAt } from "../timestamp"
 
 const db = admin.app().firestore()
+const { HttpsError } = https
 
 type Body = {
   type?: string
@@ -13,12 +16,11 @@ type Body = {
     type: "speed",
   })
  */
-export const games = functions
-  .region(functions.config().functions?.region ?? "us-central1")
-  .https.onCall(async (body: Body | undefined, { auth }) => {
+export const games = functions.https.onCall(
+  async (body: Body | undefined, { auth }) => {
     // 認証チェック
     if (!auth) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "failed-precondition",
         "The function must be called while authenticated.",
       )
@@ -30,7 +32,7 @@ export const games = functions
     const MAX_COUNT = 3
     const games = await ownerRef.collection("ownerGames").listDocuments()
     if (games.length >= MAX_COUNT) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         "resource-exhausted",
         `Exceeded max games: ${MAX_COUNT}`,
         {
@@ -44,7 +46,7 @@ export const games = functions
     const genData = await import(`../data/${body?.type}`)
       .then(m => m.default as () => object)
       .catch(() => {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           "unimplemented",
           `Unknown game type: "${body?.type}"`,
           {
@@ -57,6 +59,7 @@ export const games = functions
     const gameRef = await db.collection("games").add({
       owner: ownerRef.id,
       players: [],
+      ...createdAt(),
     })
 
     const bw = db.bulkWriter()
@@ -84,4 +87,5 @@ export const games = functions
         }),
       },
     }
-  })
+  },
+)
