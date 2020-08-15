@@ -6,7 +6,7 @@
   "homepage": "https://board-game-2d.web.app",
   "main": "dist/index.html",
   "scripts": {
-    "start": "firebase emulators:start",
+    "start": "firebase emulators:start --import=./data --export-on-exit",
     "serve": "npx servor ./public/ --reload",
     "serve:hosting": "firebase serve --only hosting",
     "format": "prettier --write \"./src/**/*.{ts,tsx}\"",
