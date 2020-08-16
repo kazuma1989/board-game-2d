@@ -30,6 +30,32 @@ export function DebugMenu() {
       {menuVisible && (
         <ContextMenu onOutsideClick={close}>
           <ContextMenu.Item
+            onClick={async () => {
+              close()
+
+              const { data } = await functions.httpsCallable("games")({
+                type: "speed",
+              })
+
+              const { gameId } = data.details
+              navigate(`/games/${gameId}`)
+            }}
+          >
+            Game (type=speed) 作成
+          </ContextMenu.Item>
+
+          <ContextMenu.Item
+            onClick={async () => {
+              close()
+
+              const { user } = store.getState()
+              alert(user.id)
+            }}
+          >
+            userId チェック
+          </ContextMenu.Item>
+
+          <ContextMenu.Item
             onClick={() => {
               close()
 
@@ -47,21 +73,6 @@ export function DebugMenu() {
             }}
           >
             SignIn
-          </ContextMenu.Item>
-
-          <ContextMenu.Item
-            onClick={async () => {
-              close()
-
-              const { data } = await functions.httpsCallable("games")({
-                type: "speed",
-              })
-
-              const { gameId } = data.details
-              navigate(`/games/${gameId}`)
-            }}
-          >
-            Game (type=speed) 作成
           </ContextMenu.Item>
 
           <ContextMenu.Item

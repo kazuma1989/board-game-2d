@@ -2,16 +2,18 @@ import React, { useMemo } from "https://cdn.skypack.dev/react"
 import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
 import {
   BrowserRouter as Router,
-  Link,
   Route,
   Switch,
 } from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
-import { AuthListener, AuthRedirect } from "./auth.js"
+import { AuthListener, AuthRedirect, useAuthLoaded } from "./auth.js"
 import { DebugMenu } from "./DebugMenu.js"
+import { Provider as DexieProvider } from "./dexie.js"
 import { Game } from "./Game.js"
 import { Home } from "./Home.js"
+import { Loading } from "./Loading.js"
 import { mode } from "./mode.js"
+import { NotFound } from "./NotFound.js"
 import {
   PortalChildrenContainer,
   Provider as PortalProvider,
@@ -28,66 +30,59 @@ export function App() {
 
   return (
     <ReduxProvider store={store}>
-      <AuthListener />
+      <DexieProvider dbName="App">
+        <AuthListener />
 
-      <PortalProvider>
-        <Router>
-          {mode === "debug" && <DebugMenu />}
+        <PortalProvider>
+          <Router>
+            {mode === "debug" && <DebugMenu />}
 
-          <Switch>
-            <Route exact path="/" render={() => <Home />} />
+            <SwitchPages />
+          </Router>
 
-            <Route
-              path="/sign-in"
-              render={() => (
-                <AuthRedirect redirectToDefault="/">
-                  <SignIn />
-                </AuthRedirect>
-              )}
-            />
-
-            <Route
-              path="/games/:id"
-              render={({
-                match: {
-                  params: { id },
-                },
-              }) => <Game id={id} />}
-            />
-
-            {/* fallback */}
-            <Route render={() => <NotFound />} />
-          </Switch>
-        </Router>
-
-        <PortalChildrenContainer
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-          }}
-        />
-      </PortalProvider>
+          <PortalChildrenContainer
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+            }}
+          />
+        </PortalProvider>
+      </DexieProvider>
     </ReduxProvider>
   )
 }
 
-function NotFound() {
-  return (
-    <article>
-      <h2>404 Not Found</h2>
+function SwitchPages() {
+  const loaded = useAuthLoaded()
+  if (!loaded) {
+    return <Loading />
+  }
 
-      <p>
-        <Link
-          to={{
-            pathname: "/",
-            search: location.search,
-            hash: location.hash,
-          }}
-        >
-          Go to top
-        </Link>
-      </p>
-    </article>
+  return (
+    <Switch>
+      <Route exact path="/" render={() => <Home />} />
+
+      <Route
+        path="/sign-in"
+        render={() => (
+          <AuthRedirect redirectToDefault="/">
+            <SignIn />
+          </AuthRedirect>
+        )}
+      />
+
+      <Route
+        path="/games/:id"
+        render={({
+          match: {
+            params: { id },
+          },
+        }) => <Game id={id} />}
+      />
+
+      {/* fallback */}
+      <Route render={() => <NotFound />} />
+    </Switch>
   )
 }

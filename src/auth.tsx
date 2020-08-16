@@ -5,20 +5,23 @@ import React, {
 } from "https://cdn.skypack.dev/react"
 import { useDispatch, useSelector } from "https://cdn.skypack.dev/react-redux"
 import { Redirect } from "https://cdn.skypack.dev/react-router-dom"
+import { useDexie } from "./dexie.js"
 import { auth } from "./firebase.js"
+import { randomId } from "./util.js"
 
 /**
  * 認証状態の変化をリッスンして Store に通知する
  */
 export function AuthListener() {
   const dispatch = useDispatch()
+  const dexie = useDexie()
 
   useEffect(() => {
     dispatch({
       type: "Auth.SignIn.Start",
     })
 
-    return auth().onAuthStateChanged(user => {
+    return auth().onAuthStateChanged(async user => {
       if (user) {
         dispatch({
           type: "Auth.SignIn",
@@ -26,15 +29,47 @@ export function AuthListener() {
             userId: user.uid,
           },
         })
-      } else {
-        dispatch({
-          type: "Auth.SignOut",
-        })
+
+        await dexie.table("config").delete("auth")
+
+        return
       }
+
+      dispatch({
+        type: "Auth.SignOut",
+      })
+
+      // サインインしていない状態だったら、IndexedDB 内の userId を持ってきて匿名サインイン状態にする。
+      // ブラウザーを閉じても userId を保つのがいろいろ都合がよいので。
+      let entry = await dexie.table("config").get("auth")
+      if (!entry) {
+        entry = {
+          key: "auth",
+          value: randomId(),
+        }
+
+        await dexie.table("config").put(entry)
+      }
+
+      dispatch({
+        type: "Auth.SignIn",
+        payload: {
+          userId: entry.value,
+        },
+      })
     })
   }, [dispatch])
 
   return null
+}
+
+/**
+ * 認証情報を読み込めたら true を返す
+ */
+export function useAuthLoaded() {
+  const loaded = useSelector(state => Boolean(state.user.id))
+
+  return loaded
 }
 
 /**
