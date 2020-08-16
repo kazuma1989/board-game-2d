@@ -34,7 +34,7 @@ export function Provider({
 export function useAchex() {
   const achex = useContext(context)
   if (!achex) {
-    throw new Error("Not in the context of a ws provider")
+    throw new Error("Not in the context of a Achex provider")
   }
 
   return achex
