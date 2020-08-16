@@ -2,7 +2,6 @@ import React, { useMemo } from "https://cdn.skypack.dev/react"
 import { Provider as ReduxProvider } from "https://cdn.skypack.dev/react-redux"
 import {
   BrowserRouter as Router,
-  Link,
   Route,
   Switch,
 } from "https://cdn.skypack.dev/react-router-dom"
@@ -13,6 +12,7 @@ import { Provider as DexieProvider } from "./dexie.js"
 import { Game } from "./Game.js"
 import { Home } from "./Home.js"
 import { mode } from "./mode.js"
+import { NotFound } from "./NotFound.js"
 import {
   PortalChildrenContainer,
   Provider as PortalProvider,
@@ -72,25 +72,5 @@ export function App() {
         </PortalProvider>
       </DexieProvider>
     </ReduxProvider>
-  )
-}
-
-function NotFound() {
-  return (
-    <article>
-      <h2>404 Not Found</h2>
-
-      <p>
-        <Link
-          to={{
-            pathname: "/",
-            search: location.search,
-            hash: location.hash,
-          }}
-        >
-          Go to top
-        </Link>
-      </p>
-    </article>
   )
 }
