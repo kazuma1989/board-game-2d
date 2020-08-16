@@ -5,6 +5,7 @@ import React, {
 } from "https://cdn.skypack.dev/react"
 import { useDispatch, useSelector } from "https://cdn.skypack.dev/react-redux"
 import { Redirect } from "https://cdn.skypack.dev/react-router-dom"
+import { useDexie } from "./dexie.js"
 import { auth } from "./firebase.js"
 
 /**
@@ -12,11 +13,22 @@ import { auth } from "./firebase.js"
  */
 export function AuthListener() {
   const dispatch = useDispatch()
+  const dexie = useDexie()
 
   useEffect(() => {
     dispatch({
       type: "Auth.SignIn.Start",
     })
+
+    dexie
+      .table("config")
+      .put({
+        key: "auth",
+        value: "aaaa",
+      })
+      .then(async () => {
+        console.log(await dexie.table("config").get("auth"))
+      })
 
     return auth().onAuthStateChanged(user => {
       if (user) {

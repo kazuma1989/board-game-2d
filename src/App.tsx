@@ -9,6 +9,7 @@ import {
 import { createStore } from "https://cdn.skypack.dev/redux"
 import { AuthListener, AuthRedirect } from "./auth.js"
 import { DebugMenu } from "./DebugMenu.js"
+import { Provider as DexieProvider } from "./dexie.js"
 import { Game } from "./Game.js"
 import { Home } from "./Home.js"
 import { mode } from "./mode.js"
@@ -28,46 +29,48 @@ export function App() {
 
   return (
     <ReduxProvider store={store}>
-      <AuthListener />
+      <DexieProvider dbName="App">
+        <AuthListener />
 
-      <PortalProvider>
-        <Router>
-          {mode === "debug" && <DebugMenu />}
+        <PortalProvider>
+          <Router>
+            {mode === "debug" && <DebugMenu />}
 
-          <Switch>
-            <Route exact path="/" render={() => <Home />} />
+            <Switch>
+              <Route exact path="/" render={() => <Home />} />
 
-            <Route
-              path="/sign-in"
-              render={() => (
-                <AuthRedirect redirectToDefault="/">
-                  <SignIn />
-                </AuthRedirect>
-              )}
-            />
+              <Route
+                path="/sign-in"
+                render={() => (
+                  <AuthRedirect redirectToDefault="/">
+                    <SignIn />
+                  </AuthRedirect>
+                )}
+              />
 
-            <Route
-              path="/games/:id"
-              render={({
-                match: {
-                  params: { id },
-                },
-              }) => <Game id={id} />}
-            />
+              <Route
+                path="/games/:id"
+                render={({
+                  match: {
+                    params: { id },
+                  },
+                }) => <Game id={id} />}
+              />
 
-            {/* fallback */}
-            <Route render={() => <NotFound />} />
-          </Switch>
-        </Router>
+              {/* fallback */}
+              <Route render={() => <NotFound />} />
+            </Switch>
+          </Router>
 
-        <PortalChildrenContainer
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-          }}
-        />
-      </PortalProvider>
+          <PortalChildrenContainer
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+            }}
+          />
+        </PortalProvider>
+      </DexieProvider>
     </ReduxProvider>
   )
 }
