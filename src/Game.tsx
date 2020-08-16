@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "https://cdn.skypack.dev/react-redux"
 import { Provider as AchexProvider } from "./achex.js"
 import { Board } from "./Board.js"
 import { FirestorePiles } from "./FirestorePiles.js"
-import { Header } from "./Header.js"
 import { Provider as PilesProvider } from "./piles.js"
 import type { Game } from "./reducer"
 
@@ -31,7 +30,7 @@ export function Game({ id: gameId }: { id: Game["id"] }) {
 
       <AchexProvider gameId={gameId}>
         <Container>
-          <Header />
+          {/* <Header /> */}
 
           <Board />
         </Container>

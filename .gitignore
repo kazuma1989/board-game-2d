@@ -2,6 +2,8 @@
 .vscode/
 node_modules/
 
+/data/
+
 /public/__/
 /public/dist/
 

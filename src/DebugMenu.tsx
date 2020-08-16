@@ -3,7 +3,7 @@ import React, { useState } from "https://cdn.skypack.dev/react"
 import { useStore } from "https://cdn.skypack.dev/react-redux"
 import { useHistory } from "https://cdn.skypack.dev/react-router-dom"
 import { ContextMenu } from "./ContextMenu.js"
-import { firestore, functions } from "./firebase.js"
+import { functions } from "./firebase.js"
 
 export function DebugMenu() {
   const [menuVisible, setMenuVisible] = useState(false)
@@ -62,23 +62,6 @@ export function DebugMenu() {
             }}
           >
             Game (type=speed) 作成
-          </ContextMenu.Item>
-
-          <ContextMenu.Item
-            onClick={async () => {
-              close()
-
-              const state = store.getState()
-
-              const { docs } = await firestore()
-                .collectionGroup("applicants")
-                .where("gameOwner", "==", state.user.id)
-                .get()
-
-              console.log(docs.map(d => d.data()))
-            }}
-          >
-            collectionGroup("applicants")
           </ContextMenu.Item>
 
           <ContextMenu.Item

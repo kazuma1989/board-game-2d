@@ -1,5 +1,5 @@
-import type { Store, Dispatch, StoreEnhancer } from "redux"
-import type { State, Action } from "./reducer"
+import type { Dispatch, Store, StoreEnhancer } from "redux"
+import type { Action, State } from "./reducer"
 
 declare global {
   module "https://*"
@@ -23,6 +23,7 @@ declare global {
 declare module "https://cdn.skypack.dev/emotion" {
   export function css(...args: any[]): string
   export function cx(...args: any[]): string
+  export function injectGlobal(...args: any[]): string
 }
 
 declare module "react-redux" {

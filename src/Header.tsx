@@ -11,7 +11,7 @@ export function Header({
   className?: string
   style?: React.CSSProperties
 }) {
-  const history = useHistory()
+  const navigate = useNavigate()
 
   return (
     <div
@@ -40,11 +40,7 @@ export function Header({
           })
 
           const { gameId } = data.details
-          history.push({
-            pathname: `/games/${gameId}`,
-            search: location.search,
-            hash: location.hash,
-          })
+          navigate(`/games/${gameId}`)
         }}
       >
         スピードを始める（データ初期化）
@@ -58,15 +54,23 @@ export function Header({
           })
 
           const { gameId } = data.details
-          history.push({
-            pathname: `/games/${gameId}`,
-            search: location.search,
-            hash: location.hash,
-          })
+          navigate(`/games/${gameId}`)
         }}
       >
         神経衰弱を始める（データ初期化）
       </button>
     </div>
   )
+}
+
+function useNavigate() {
+  const history = useHistory()
+
+  return (pathname: string) => {
+    history.push({
+      pathname,
+      search: location.search,
+      hash: location.hash,
+    })
+  }
 }
