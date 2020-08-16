@@ -6,11 +6,12 @@ import {
   Switch,
 } from "https://cdn.skypack.dev/react-router-dom"
 import { createStore } from "https://cdn.skypack.dev/redux"
-import { AuthListener, AuthRedirect } from "./auth.js"
+import { AuthListener, AuthRedirect, useAuthLoaded } from "./auth.js"
 import { DebugMenu } from "./DebugMenu.js"
 import { Provider as DexieProvider } from "./dexie.js"
 import { Game } from "./Game.js"
 import { Home } from "./Home.js"
+import { Loading } from "./Loading.js"
 import { mode } from "./mode.js"
 import { NotFound } from "./NotFound.js"
 import {
@@ -36,30 +37,7 @@ export function App() {
           <Router>
             {mode === "debug" && <DebugMenu />}
 
-            <Switch>
-              <Route exact path="/" render={() => <Home />} />
-
-              <Route
-                path="/sign-in"
-                render={() => (
-                  <AuthRedirect redirectToDefault="/">
-                    <SignIn />
-                  </AuthRedirect>
-                )}
-              />
-
-              <Route
-                path="/games/:id"
-                render={({
-                  match: {
-                    params: { id },
-                  },
-                }) => <Game id={id} />}
-              />
-
-              {/* fallback */}
-              <Route render={() => <NotFound />} />
-            </Switch>
+            <SwitchPages />
           </Router>
 
           <PortalChildrenContainer
@@ -72,5 +50,39 @@ export function App() {
         </PortalProvider>
       </DexieProvider>
     </ReduxProvider>
+  )
+}
+
+function SwitchPages() {
+  const loaded = useAuthLoaded()
+  if (!loaded) {
+    return <Loading />
+  }
+
+  return (
+    <Switch>
+      <Route exact path="/" render={() => <Home />} />
+
+      <Route
+        path="/sign-in"
+        render={() => (
+          <AuthRedirect redirectToDefault="/">
+            <SignIn />
+          </AuthRedirect>
+        )}
+      />
+
+      <Route
+        path="/games/:id"
+        render={({
+          match: {
+            params: { id },
+          },
+        }) => <Game id={id} />}
+      />
+
+      {/* fallback */}
+      <Route render={() => <NotFound />} />
+    </Switch>
   )
 }

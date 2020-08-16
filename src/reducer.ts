@@ -1,6 +1,6 @@
 import produce from "https://cdn.skypack.dev/immer"
 import type { Reducer } from "redux"
-import { byId, randomId } from "./util.js"
+import { byId } from "./util.js"
 
 export type State = {
   user: User
@@ -60,7 +60,7 @@ export type Card = {
 
 const initialState: State = {
   user: {
-    id: randomId() as User["id"],
+    id: "" as User["id"],
     auth: "INITIAL",
   },
   piles: [],
