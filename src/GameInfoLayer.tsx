@@ -7,21 +7,42 @@ import { Portal } from "./Portal.js"
 export function GameInfoLayer() {
   const gameId = useSelector(state => state.game?.id)
 
-  const [applicants, setApplicants] = useState([] as { id: string }[])
+  const [applicants, setApplicants] = useState(
+    [] as {
+      id: string
+      displayName: string
+    }[],
+  )
   useEffect(() => {
     if (!gameId) return
 
-    firestore()
-      .collection("games")
+    const db = firestore()
+
+    db.collection("games")
       .doc(gameId)
       .collection("applicants")
-      .onSnapshot(applicants$ => {
-        setApplicants(
-          applicants$.docs.map(d => ({
-            id: d.id,
-            ...d.data(),
-          })),
+      .onSnapshot(async applicants$ => {
+        const applicants = await Promise.all(
+          applicants$.docs.map(async d => {
+            const user = await db
+              .collection("users")
+              .doc(d.id)
+              .get()
+              .then(
+                d =>
+                  d.data() as {
+                    displayName: string
+                  },
+              )
+
+            return {
+              id: d.id,
+              ...user,
+            }
+          }),
         )
+
+        setApplicants(applicants)
       })
   }, [gameId])
 
@@ -58,7 +79,7 @@ export function GameInfoLayer() {
 
             <ul>
               {applicants.map(a => {
-                return <li key={a.id}>{a.id}</li>
+                return <li key={a.id}>{a.displayName}</li>
               })}
             </ul>
           </article>
