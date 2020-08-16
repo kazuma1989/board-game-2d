@@ -1,8 +1,7 @@
 import { css, cx } from "https://cdn.skypack.dev/emotion"
-import React, { useEffect, useState } from "https://cdn.skypack.dev/react"
-import { useSelector } from "https://cdn.skypack.dev/react-redux"
+import React from "https://cdn.skypack.dev/react"
 import { useHistory } from "https://cdn.skypack.dev/react-router-dom"
-import { firestore, functions } from "./firebase.js"
+import { functions } from "./firebase.js"
 
 export function Header({
   className,
@@ -13,21 +12,6 @@ export function Header({
   style?: React.CSSProperties
 }) {
   const navigate = useNavigate()
-
-  const gameId = useSelector(state => state.game?.id)
-
-  const [applicants, setApplicants] = useState(0)
-  useEffect(() => {
-    if (!gameId) return
-
-    firestore()
-      .collection("games")
-      .doc(gameId)
-      .collection("applicants")
-      .onSnapshot(applicants$ => {
-        setApplicants(applicants$.docs.length)
-      })
-  }, [gameId])
 
   return (
     <div
@@ -48,8 +32,6 @@ export function Header({
       style={style}
       {...props}
     >
-      <div>{applicants} 件の参加希望</div>
-
       <button
         type="button"
         onClick={async () => {

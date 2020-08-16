@@ -3,8 +3,7 @@ import React, { useState } from "https://cdn.skypack.dev/react"
 import { useStore } from "https://cdn.skypack.dev/react-redux"
 import { useHistory } from "https://cdn.skypack.dev/react-router-dom"
 import { ContextMenu } from "./ContextMenu.js"
-import { firestore, functions } from "./firebase.js"
-import { randomId } from "./util.js"
+import { functions } from "./firebase.js"
 
 export function DebugMenu() {
   const [menuVisible, setMenuVisible] = useState(false)
@@ -63,49 +62,6 @@ export function DebugMenu() {
             }}
           >
             Game (type=speed) 作成
-          </ContextMenu.Item>
-
-          <ContextMenu.Item
-            onClick={async () => {
-              close()
-
-              const state = store.getState()
-
-              const { docs } = await firestore()
-                .collectionGroup("applicants")
-                .where("gameOwner", "==", state.user.id)
-                .get()
-
-              console.log(
-                docs.map(d => ({
-                  id: d.id,
-                  ...d.data(),
-                })),
-              )
-            }}
-          >
-            console.log(collectionGroup("applicants"))
-          </ContextMenu.Item>
-
-          <ContextMenu.Item
-            onClick={async () => {
-              close()
-
-              const [, , gameId] = location.pathname.split("/")
-
-              const gameRef = firestore().collection("games").doc(gameId)
-              const game = await gameRef.get().then(d => d.data())
-
-              const userId = randomId()
-
-              await gameRef.collection("applicants").doc(userId).set({
-                gameOwner: game?.owner,
-                createdAt: firestore.FieldValue.serverTimestamp(),
-                updatedAt: firestore.FieldValue.serverTimestamp(),
-              })
-            }}
-          >
-            参加希望を送ってもらう
           </ContextMenu.Item>
 
           <ContextMenu.Item
