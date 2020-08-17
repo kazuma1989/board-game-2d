@@ -157,13 +157,13 @@ export function Card({
 
           ::after {
             content: ${JSON.stringify(text)};
-            background-color: white;
+            background-color: var(--white);
             background-image: url(${JSON.stringify(src?.face)});
           }
 
           ::before {
             content: "";
-            background-color: silver;
+            background-color: var(--silver);
             background-image: url(${JSON.stringify(src?.back)});
           }
         `,
@@ -181,7 +181,7 @@ export function Card({
               width: 100%;
               height: 100%;
               border-radius: 4px;
-              box-shadow: 0 1px 3px hsla(0, 0%, 7%, 0.4);
+              box-shadow: var(--shadow-tiny);
               backface-visibility: hidden;
               background-size: cover;
               background-repeat: no-repeat;

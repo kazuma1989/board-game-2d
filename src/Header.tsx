@@ -25,7 +25,7 @@ export function Header({
           display: flex;
           align-items: center;
           justify-content: flex-end;
-          background-color: hsla(0, 0%, 50%, 0.5);
+          background-color: var(--black-alpha);
         `,
         className,
       )}

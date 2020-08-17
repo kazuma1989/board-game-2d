@@ -110,7 +110,7 @@ export function Board() {
       >
         <Grid
           className={css`
-            color: rgba(0, 255, 0, 0.4);
+            color: var(--green-alpha);
           `}
         />
 

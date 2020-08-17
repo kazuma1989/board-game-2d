@@ -61,10 +61,13 @@ export function ActiveIndicatorContainer() {
             height: 50px;
             margin-top: -25px;
             margin-left: -25px;
-            border: solid 4px hsl(${((sID % 12) * 150) % 360}, 100%, 50%);
+            border: solid 4px transparent;
             border-radius: 50%;
             transition: transform 400ms;
           `
+          indicator.style.borderColor = `hsl(${
+            ((sID % 12) * 150) % 360
+          }, 100%, 50%)`
 
           container$.current?.appendChild(indicator)
         }
