@@ -103,7 +103,7 @@ export function Board() {
         className={css`
           width: 2000px;
           height: 2000px;
-          background: url("/bg.svg") no-repeat;
+          background: url("/assets/bg/bg.svg") no-repeat;
           background-size: 1500px 1500px;
           background-position: center;
         `}
