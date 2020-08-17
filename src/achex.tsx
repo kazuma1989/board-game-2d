@@ -101,7 +101,7 @@ class Achex {
     )
   }
 
-  dispatch<A = unknown>(action: A) {
+  dispatch(action: unknown) {
     this.send({
       toH: this.gameId,
       action,
@@ -109,14 +109,18 @@ class Achex {
   }
 
   on<K extends keyof WebSocketEventMap>(
-    type: "message",
-    listener: (data: AchexMessageResp) => void,
+    type: K,
+    listener: (...args: ListenerParameterMap[K]) => void,
   ) {
     let _listener
     this.ws.addEventListener(
       type,
-      (_listener = (e: MessageEvent) => {
-        listener(JSON.parse(e.data))
+      (_listener = (e: WebSocketEventMap[K]) => {
+        if (type === "message") {
+          // 面倒なので無理やり通す
+          // @ts-expect-error
+          listener(JSON.parse(e.data))
+        }
       }),
       { passive: true },
     )
@@ -139,4 +143,11 @@ class Achex {
 
     this.ws.close()
   }
+}
+
+type ListenerParameterMap = {
+  close: []
+  error: []
+  message: [AchexMessageResp]
+  open: []
 }
