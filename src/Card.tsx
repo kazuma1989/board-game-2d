@@ -4,7 +4,7 @@ import React, {
   useRef,
   useState,
 } from "https://cdn.skypack.dev/react"
-import { useScale } from "./useScale.js"
+import { useScale } from "./Panzoom.js"
 
 export function Card({
   col,

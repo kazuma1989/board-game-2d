@@ -1,7 +1,11 @@
 import { css } from "https://cdn.skypack.dev/emotion"
 import Panzoom from "https://cdn.skypack.dev/panzoom"
-import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
-import { Provider } from "./useScale.js"
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+} from "https://cdn.skypack.dev/react"
 
 type Panzoom = {
   on(
@@ -202,4 +206,17 @@ function preventPanzoomListeners(
     owner.removeEventListener("touchstart", touchstart)
     owner.removeEventListener("mousedown", mousedown)
   }
+}
+
+const context = createContext<React.MutableRefObject<number> | null>(null)
+
+const Provider = context.Provider
+
+export function useScale() {
+  const scale$ = useContext(context)
+  if (!scale$) {
+    throw new Error("Not in the context of a scale provider or no value given")
+  }
+
+  return scale$
 }

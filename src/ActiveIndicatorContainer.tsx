@@ -1,7 +1,7 @@
 import { css } from "https://cdn.skypack.dev/emotion"
 import React, { useEffect, useRef } from "https://cdn.skypack.dev/react"
 import { useAchex } from "./achex.js"
-import { useScale } from "./useScale.js"
+import { useScale } from "./Panzoom.js"
 
 export function ActiveIndicatorContainer() {
   const scale$ = useScale()
