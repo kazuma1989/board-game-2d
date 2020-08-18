@@ -26,8 +26,13 @@ export function Game({ id: gameId }: { id: Game["id"] }) {
 
   useEffect(() => {
     const rootStyle = css`
-      overflow: hidden;
-      /* overscroll-behavior: none; */
+      &,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
     `
 
     document.documentElement.classList.add(rootStyle)
