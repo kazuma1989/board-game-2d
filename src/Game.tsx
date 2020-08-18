@@ -24,22 +24,39 @@ export function Game({ id: gameId }: { id: Game["id"] }) {
     }
   }, [gameId])
 
+  useEffect(() => {
+    const rootStyle = css`
+      &,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+    `
+
+    document.documentElement.classList.add(rootStyle)
+    return () => {
+      document.documentElement.classList.remove(rootStyle)
+    }
+  }, [])
+
   return (
     <PilesProvider gameId={gameId}>
       <FirestorePiles />
 
       <AchexProvider gameId={gameId}>
-        <Container>
+        <CursorController>
           {/* <Header /> */}
 
           <Board />
-        </Container>
+        </CursorController>
       </AchexProvider>
     </PilesProvider>
   )
 }
 
-function Container({ children }: { children?: React.ReactNode }) {
+function CursorController({ children }: { children?: React.ReactNode }) {
   const running = useSelector(
     state => state.ui.runningLongTransaction.length >= 1,
   )

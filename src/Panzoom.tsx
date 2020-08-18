@@ -1,4 +1,11 @@
+import { css } from "https://cdn.skypack.dev/emotion"
 import Panzoom from "https://cdn.skypack.dev/panzoom"
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+} from "https://cdn.skypack.dev/react"
 
 type Panzoom = {
   on(
@@ -15,6 +22,80 @@ type Transform = {
   scale: number
 }
 
+export function PanzoomContainer({
+  maxZoom,
+  minZoom,
+  noPannableSelector,
+  onInit,
+  className,
+  style,
+  children,
+}: {
+  maxZoom?: number
+  minZoom?: number
+  noPannableSelector?: string
+  onInit?(panzoom: Panzoom): void
+  className?: string
+  style?: React.CSSProperties
+  children?: React.ReactNode
+}) {
+  const onInit$ = useRef({
+    called: false,
+    call: onInit,
+  })
+  useEffect(() => {
+    onInit$.current.call = onInit
+  })
+
+  const scale$ = useRef(1)
+  const container$ = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const container = container$.current
+    if (!container) return
+
+    const panzoom = initPanzoom(
+      container,
+      {
+        maxZoom,
+        minZoom,
+      },
+      {
+        noPannableSelector,
+      },
+    )
+
+    panzoom.on("zoom", e => {
+      scale$.current = e.getTransform().scale
+    })
+
+    if (!onInit$.current.called) {
+      onInit$.current.called = true
+      onInit$.current.call?.(panzoom)
+    }
+
+    return () => {
+      panzoom.dispose()
+    }
+  }, [maxZoom, minZoom, noPannableSelector])
+
+  return (
+    <Provider value={scale$}>
+      <div
+        className={css`
+          :focus {
+            outline: none;
+          }
+        `}
+      >
+        <div ref={container$} className={className} style={style}>
+          {children}
+        </div>
+      </div>
+    </Provider>
+  )
+}
+
 type PanzoomOption = {
   maxZoom?: number
   minZoom?: number
@@ -23,7 +104,7 @@ type PanzoomOption = {
 
 type CustomOption = Parameters<typeof preventPanzoomListeners>[1]
 
-export function initPanzoom(
+function initPanzoom(
   target: HTMLElement,
   option?: PanzoomOption,
   customOption?: CustomOption,
@@ -125,4 +206,17 @@ function preventPanzoomListeners(
     owner.removeEventListener("touchstart", touchstart)
     owner.removeEventListener("mousedown", mousedown)
   }
+}
+
+const context = createContext<React.MutableRefObject<number> | null>(null)
+
+const Provider = context.Provider
+
+export function useScale() {
+  const scale$ = useContext(context)
+  if (!scale$) {
+    throw new Error("Not in the context of a scale provider or no value given")
+  }
+
+  return scale$
 }

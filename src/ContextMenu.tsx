@@ -30,8 +30,8 @@ export function ContextMenu({
             content: "";
             display: block;
             height: 8px;
-            background-color: #f2f2f2;
-            border: solid 1px #aaa;
+            background-color: var(--button-bg);
+            border: solid 1px var(--button-border);
           }
           ::before {
             border-radius: 4px 4px 0 0;
