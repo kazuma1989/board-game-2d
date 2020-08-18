@@ -93,42 +93,41 @@ export function ActiveIndicatorContainer() {
     let timer
     let prevTime = Date.now()
 
-    let pointermove
-    document.addEventListener(
-      "pointermove",
-      (pointermove = (e: PointerEvent) => {
-        if (!e.isPrimary) return
+    const sendLocation = (e: PointerEvent) => {
+      if (!e.isPrimary) return
 
-        const container = container$.current
-        if (!container) return
+      const container = container$.current
+      if (!container) return
 
-        const { x, y } = container.getBoundingClientRect()
-        const { clientX, clientY } = e
+      const { x, y } = container.getBoundingClientRect()
+      const { clientX, clientY } = e
 
-        const send = () => {
-          achex.dispatch({
-            type: "move",
-            payload: {
-              x: (clientX - x) / scale$.current,
-              y: (clientY - y) / scale$.current,
-            },
-          })
-        }
+      const send = () => {
+        achex.dispatch({
+          type: "move",
+          payload: {
+            x: (clientX - x) / scale$.current,
+            y: (clientY - y) / scale$.current,
+          },
+        })
+      }
 
-        clearTimeout(timer)
-        timer = setTimeout(send, 400)
+      clearTimeout(timer)
+      timer = setTimeout(send, 400)
 
-        const currentTime = Date.now()
-        if (currentTime - prevTime < 400) return
+      const currentTime = Date.now()
+      if (currentTime - prevTime < 400) return
 
-        prevTime = currentTime
-        send()
-      }),
-      { passive: true },
-    )
+      prevTime = currentTime
+      send()
+    }
+
+    document.addEventListener("pointerdown", sendLocation, { passive: true })
+    document.addEventListener("pointermove", sendLocation, { passive: true })
 
     return () => {
-      document.removeEventListener("pointermove", pointermove)
+      document.removeEventListener("pointerdown", sendLocation)
+      document.removeEventListener("pointermove", sendLocation)
     }
   }, [achex])
 
