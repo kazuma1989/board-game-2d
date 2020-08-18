@@ -41,8 +41,8 @@ export function Board() {
     )
 
     panzoom.moveTo(
-      -(1000 - document.body.clientWidth / 2),
-      -(1000 - document.body.clientHeight / 2),
+      -(1000 - document.documentElement.clientWidth / 2),
+      -(1000 - document.documentElement.clientHeight / 2),
     )
 
     panzoom.on("zoom", e => {
