@@ -9,14 +9,27 @@ import ReactDOM from "https://cdn.skypack.dev/react-dom"
  * このコンポーネントの children は、DOM ツリー上は PortalChildrenContainer の子要素として描画される。
  *
  * @example
- * <Portal>
- *   <div>HELLO</div>
- * </Portal>
+ * <div>
+ *   HELLO
+ *   <Portal>
+ *     <div>I'm in a portal.</div>
+ *   </Portal>
+ * </div>
  *
  * <PortalChildrenContainer />
+ *
+ * --- renders
+ *
+ * <div>
+ *   HELLO
+ * </div>
+ *
+ * <div>
+ *   <div>I'm in a portal.</div>
+ * </div>
  */
 export function Portal({ children }: { children?: React.ReactNode }) {
-  const ref$ = useContext(portalContext)
+  const ref$ = useContext(context)
   if (!ref$.current) {
     return null
   }
@@ -28,19 +41,17 @@ export function PortalChildrenContainer(props: {
   className?: string
   style?: React.CSSProperties
 }) {
-  const ref$ = useContext(portalContext)
+  const ref$ = useContext(context)
 
   return <div ref={ref$} {...props}></div>
 }
 
-const portalContext = createContext<React.RefObject<HTMLDivElement>>({
-  current: null,
-})
-
 export function Provider({ children }: { children?: React.ReactNode }) {
   const ref$ = useRef<HTMLDivElement>(null)
 
-  return (
-    <portalContext.Provider value={ref$}>{children}</portalContext.Provider>
-  )
+  return <context.Provider value={ref$}>{children}</context.Provider>
 }
+
+const context = createContext<React.RefObject<HTMLDivElement>>({
+  current: null,
+})

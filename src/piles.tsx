@@ -13,7 +13,7 @@ export function Provider({
   children?: React.ReactNode
 }) {
   const pilesRef = useMemo(
-    () => firestore().collection(`games/${gameId}/piles`),
+    () => firestore().collection("games").doc(gameId).collection("piles"),
     [gameId],
   )
 
