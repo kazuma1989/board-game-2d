@@ -41,7 +41,10 @@ export function AuthListener() {
 
       // サインインしていない状態だったら、IndexedDB 内の userId を持ってきて匿名サインイン状態にする。
       // ブラウザーを閉じても userId を保つのがいろいろ都合がよいので。
-      let entry = await dexie.table("config").get("auth")
+      let entry = (await dexie.table("config").get("auth")) as {
+        key: "auth"
+        value: string
+      }
       if (!entry) {
         entry = {
           key: "auth",
